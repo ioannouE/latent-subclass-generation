@@ -1,6 +1,15 @@
 import numpy as np
+import pytest
+import torch
 
-from lsgen.data.duplicates import duplicate_table, hamming_min, hamming_pairs
+from lsgen.data.duplicates import duplicate_table, hamming_min, hamming_pairs, resolve_device, within_table
+
+
+@pytest.mark.skipif(torch.cuda.is_available(), reason="checks the no-GPU guard")
+def test_sscd_refuses_cpu_without_flag():
+    with pytest.raises(RuntimeError, match="GPU"):
+        resolve_device("cuda")
+    assert resolve_device("cuda", allow_cpu=True).type == "cpu"
 
 
 def test_hamming_pairs_known():
@@ -27,3 +36,13 @@ def test_duplicate_table_flags_both_criteria():
     assert d.loc["r2", "flag_sscd"] and not d.loc["r2", "flag_phash"]
     assert d.loc["r4", "flag_phash"] and d.loc["r4", "phash_hamming"] == 2
     assert nn.sscd_nn_train_id[0] == "r2" and abs(nn.sscd_nn_sim[0] - 1) < 1e-5
+
+
+def test_threshold_is_inclusive_and_within_table_excludes_self():
+    e = np.eye(4, dtype=np.float32)
+    e[1] = [0.75, np.sqrt(1 - 0.75**2), 0, 0]  # cos(e0, e1) = 0.75 exactly
+    h = np.array([0, 2**40, 2**50, 2**60], dtype=np.uint64)  # all pairwise Hamming = 1 or 2
+    w = within_table(["a", "b", "c", "d"], h, e, 0, 0.75)
+    assert set(zip(w.id_a, w.id_b)) == {("a", "b")} and w.flag_sscd.all()
+    w = within_table(["a", "b", "c", "d"], h, e, 2, 0.99)
+    assert len(w) == 6 and w.flag_phash.all() and not w.flag_sscd.any()

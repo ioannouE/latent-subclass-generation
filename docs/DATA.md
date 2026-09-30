@@ -1,6 +1,8 @@
 # Data protocol (Step 1, Milestone 1)
 
-Built by `make prepare` (`scripts/prepare_data.py --config configs/data.yaml`). CPU only; runs on a login node.
+Built by `sbatch slurm/prepare_data.sh` on a GPU node (runs `scripts/prepare_data.py --config configs/data.yaml`,
+then `scripts/build_episodes.py --config configs/episodes.yaml`).
+The SSCD step of the `duplicates` stage needs a GPU; the other stages use CPU workers.
 
 ## Raw data (read-only)
 `raw_root = /nvme/h/eioannou/data_p315/Stanford_Cars/kaggle/` (Kaggle mirror `eduardo4jesus/stanford-cars-dataset`).
@@ -57,10 +59,40 @@ orig_W, orig_H, raw_sha256, near_duplicate, n_near_duplicates.
 
 Determinism: a random subset of 300 images is regenerated and must match the written files byte for byte.
 
+**Padding decision (30 Sep 2026).** The spec's pad gate (stop if > 10% of images have pad_fraction > 0.10) fails:
+74% of images exceed it, because in 85% of photos the car's longer side is longer than the image's short side. We keep
+A2b unchanged (whole car always inside, constant letterbox padding; median pad_fraction 0.19) rather than cutting the car's
+ends. The gate is kept in the report (`pad_gate_action: warn`); the hard check is that no image is padded where the
+window fits.
+
 ## Near-duplicate audit
-Raw official-train vs official-test images: 64-bit pHash (Hamming <= 8) OR SSCD disc_mixup cosine > 0.5 (small_288
-transform). Candidate pairs: `data/duplicates.csv`; flagged images are marked in metadata (`near_duplicate`), never removed.
+Raw images, 64-bit pHash (Hamming <= 4) OR SSCD disc_mixup cosine >= 0.75 (small_288 transform, GPU):
+- official train vs test: `data/duplicates.csv` (marked in metadata as `near_duplicate`, never removed);
+- within official test: `data/duplicates_within_test.csv` (`n_near_duplicates_within_test`); used by episodes.
+
+Thresholds revised on 30 Sep 2026 after the first audit (initially pHash <= 8 / SSCD > 0.5 flagged 1,279 pairs, mostly
+different photos of the same design). Raw scores are always kept in the CSVs.
 The per-test-image nearest-train SSCD similarity (`duplicates/sscd_nn_test_to_train.parquet`) is the null distribution for G7.
+
+## Label noise (decision 30 Sep 2026)
+Byte-identical files carrying different official fine labels (first audit: 18 train/test pairs and 19 within-split groups)
+are marked `label_conflict`. They stay in the data, but the test ones are excluded from every test-side evaluation
+reference and from episodes: `data/splits/eval_exclude.txt`, `metadata.eval_exclude`, `load_split(..., exclude_eval=True)`.
+Label-conflict train images are never used as episode supports. Their use for training the evaluator classifier is
+decided in Milestone 3.
+
+## Episodes (use case B, Milestone 2)
+`scripts/build_episodes.py --config configs/episodes.yaml` -> `data/episodes/*.json` (frozen; refuses to overwrite
+without `--overwrite`), `data/episodes/manifest.json`, `reports/episodes.md`.
+- `single_test_k{1,5,10}`: for every fine class with >= k + 10 test images (after exclusions), 5 episodes: S = k test
+  images, T = the remaining test images of that class.
+- `single_train_k{1,5,10}`: S = k images from the `train` split (not val), T = all test images of the class.
+- `mixed_k10`: two subclasses a, b of the same make, S = round(r*10) images of a + the rest of b, r in {0.2, 0.5, 0.8},
+  5 episodes per (pair, ratio); all pairs per make, or a seeded sample of 10 if there are more; each subclass keeps
+  >= 10 targets.
+- S is redrawn (up to 100 times) to avoid any known near-duplicate pair between S and T; the remaining count is
+  stored as `n_near_dup_S_T`. Each episode stores its own seed.
+- Episode files contain fine ids (for evaluation). Methods receive only the support images.
 
 ## Native pipelines
 `lsgen/data/native.py` (`native_finegan`, `native_c3gan`) only for reproducing published numbers; never used in comparison tables.

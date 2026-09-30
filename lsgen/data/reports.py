@@ -33,7 +33,7 @@ def _hist(ax, x, bins, title, xlabel, logy=False):
         ax.set_yscale("log")
 
 
-def preprocessing_report(meta, derived_root, out_dir, prov, gate_frac, gate_share, determinism, seed=0):
+def preprocessing_report(meta, derived_root, out_dir, prov, gate_frac, gate_share, determinism, seed=0, gate_action="stop"):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     derived_root = Path(derived_root)
@@ -84,8 +84,12 @@ def preprocessing_report(meta, derived_root, out_dir, prov, gate_frac, gate_shar
         f"| original short side < 128 / < 256 | {(np.minimum(meta.orig_W, meta.orig_H) < 128).sum()} / {(np.minimum(meta.orig_W, meta.orig_H) < 256).sum()} |",
         f"| crop side < 128 / < 256 px (upsampled) | {(meta.side < 128).sum()} / {(meta.side < 256).sum()} |",
         "",
-        f"**Pad gate** (stop if > {gate_share:.0%} of images have pad_fraction > {gate_frac}): "
-        f"{'PASS' if gate_ok else 'FAIL - STOP'} ({big_pad.mean():.2%}).", "",
+        f"**Pad gate** (> {gate_share:.0%} of images with pad_fraction > {gate_frac}; action: {gate_action}): "
+        f"{'PASS' if gate_ok else ('FAIL - STOP' if gate_action == 'stop' else 'EXCEEDED - accepted')} ({big_pad.mean():.2%}).", "",
+        *([] if gate_ok or gate_action == "stop" else [
+            "Decision (30 Sep 2026): keep the A2b spec (whole car always inside the square, constant letterbox padding). "
+            "Padding is geometrically unavoidable here: in most images the car's longer side exceeds the image's short "
+            "side. The gate is kept as a report; the hard check is that no image is padded where the window fits.", ""]),
         f"**Determinism**: {determinism}", "",
         "## Unit tests (tests/test_crops.py)", "",
         "- 1-indexed inclusive devkit bbox -> 0-indexed half-open, checked pixel-exactly on a synthetic image.",
@@ -152,7 +156,7 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
         "## Near-duplicate audit (official train vs test, raw images)", "",
     ]
     if dup_cfg:
-        lines += [f"Criteria: pHash Hamming <= {dup_cfg['phash_max_hamming']} (64-bit) OR SSCD disc_mixup cosine > "
+        lines += [f"Criteria: pHash Hamming <= {dup_cfg['phash_max_hamming']} (64-bit) OR SSCD disc_mixup cosine >= "
                   f"{dup_cfg['sscd_threshold']} (small_288 transform). Pairs are marked in metadata, never removed.", ""]
     lines += [
         f"- Candidate pairs: {len(dups)} (SSCD: {int(dups.flag_sscd.sum()) if len(dups) else 0}, "
@@ -173,6 +177,12 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
     within = sha_groups[(sha_groups.n > 1) & ~sha_groups.splits.str.contains(r"\+")]
     lines.append(f"- Byte-identical groups within one official split: {len(within)} "
                  f"({int((within.n_fine > 1).sum())} with conflicting fine labels)")
+    if "label_conflict" in meta:
+        lines.append(f"- Label-conflict images (byte-identical, different fine labels): {int(meta.label_conflict.sum())}; "
+                     f"excluded from test-side evaluation and episodes (`data/splits/eval_exclude.txt`): {int(meta.eval_exclude.sum())}")
+    if "n_near_duplicates_within_test" in meta:
+        lines.append(f"- Test images with a near-duplicate inside test: {int((meta.n_near_duplicates_within_test > 0).sum())} "
+                     f"(`data/duplicates_within_test.csv`; episodes avoid such pairs across S and T)")
     if nn_summary is not None:
         qs = nn_summary.sscd_nn_sim.quantile([0.5, 0.9, 0.99, 0.999]).round(3).tolist()
         lines.append(f"- Test->train SSCD nearest-neighbour similarity, quantiles 50/90/99/99.9%: {qs} "

@@ -2,6 +2,8 @@
 !/data/hierarchy.csv
 !/data/make_model.csv
 !/data/duplicates.csv
+!/data/duplicates_within_test.csv
+!/data/episodes/
 !/data/splits/
 !/data/manifests/
 /outputs/

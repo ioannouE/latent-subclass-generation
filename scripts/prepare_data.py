@@ -1,7 +1,9 @@
 """Milestone 1: verify raw data, build hierarchy, crops, splits, duplicate audit, metadata, reports.
 
-CPU only (login node). Usage:
+Run on a GPU node via `sbatch slurm/prepare_data.sh` (the `duplicates` stage needs a GPU for SSCD; the others use
+CPU workers). Usage:
     python scripts/prepare_data.py --config configs/data.yaml [--stages raw hierarchy crops splits duplicates finalize reports]
+                                   [--recompute-embeddings] [--allow-cpu]
 Each stage reads the previous stages' outputs from disk, so stages can be re-run individually.
 """
 import argparse
@@ -14,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import torch
 from PIL import Image
 
 from lsgen.data import duplicates as dup
@@ -45,6 +48,8 @@ class Paths:
         self.splits = self.data / "splits"
         self.hierarchy = self.data / "hierarchy.csv"
         self.duplicates = self.data / "duplicates.csv"
+        self.duplicates_within_test = self.data / "duplicates_within_test.csv"
+        self.eval_exclude = self.splits / "eval_exclude.txt"
 
 
 def dataset_hash(P):
@@ -127,19 +132,29 @@ def stage_crops(cfg, P):
         raise RuntimeError("non-deterministic crops: " + det)
     write_json(P.derived / "crops_shas.json", shas)
     log.info("crops written: %d files; determinism: %s", len(shas), det)
-    _preprocessing_report(cfg, P, cm, idx, det)
+    _preprocessing_report(cfg, P)
 
 
-def _preprocessing_report(cfg, P, cm, idx, det):
+def _preprocessing_report(cfg, P):
     c = cfg["crops"]
-    meta = cm.merge(idx[["id", "orig_W", "orig_H", "bbox_clipped"]], on="id")
+    idx = pd.read_parquet(P.raw_index)
+    meta = pd.read_parquet(P.crops_meta).merge(idx[["id", "orig_W", "orig_H", "bbox_clipped"]], on="id")
+    # hard sanity check: padding only where the side unavoidably exceeds an image dimension
+    avoidable = (meta.pad_fraction > 0) & (meta.side <= np.minimum(meta.orig_W, meta.orig_H))
+    if avoidable.any():
+        raise RuntimeError(f"{avoidable.sum()} images padded although the window fits: {meta.id[avoidable].tolist()[:10]}")
+    det = json.loads((P.derived / "crops_determinism.json").read_text())["result"]
     ok, share = preprocessing_report(meta, P.derived, P.reports, provenance(cfg, cfg["seed"], dataset_hash(P)),
-                                     c["pad_gate_fraction"], c["pad_gate_share"], det, cfg["seed"])
-    if not ok:
+                                     c["pad_gate_fraction"], c["pad_gate_share"], det, cfg["seed"], c["pad_gate_action"])
+    if ok:
+        log.info("pad gate passed: %.2f%% of images have pad_fraction > %s", 100 * share, c["pad_gate_fraction"])
+    elif c["pad_gate_action"] == "stop":
         log.error("STOP: %.2f%% of images have pad_fraction > %s (gate %.0f%%). See reports/preprocessing.md",
                   100 * share, c["pad_gate_fraction"], 100 * c["pad_gate_share"])
         sys.exit(2)
-    log.info("pad gate passed: %.2f%% of images have pad_fraction > %s", 100 * share, c["pad_gate_fraction"])
+    else:
+        log.warning("pad gate exceeded (%.2f%% of images have pad_fraction > %s); accepted by decision, see docs/DATA.md",
+                    100 * share, c["pad_gate_fraction"])
 
 
 def stage_splits(cfg, P):
@@ -168,11 +183,18 @@ def stage_duplicates(cfg, P):
     model, wpath, wsha = dup.get_sscd(P.weights, d["sscd_url"])
     if d.get("sscd_sha256") and d["sscd_sha256"] != wsha:
         raise ValueError(f"SSCD weights sha256 {wsha} != config {d['sscd_sha256']}")
-    emb_file = P.dup_dir / "sscd_raw_embeddings.npy"
-    if not emb_file.exists():
-        log.info("SSCD embeddings on CPU for %d raw images (threads=%d)", len(paths), d["torch_threads"])
-        np.save(emb_file, dup.sscd_embed(model, paths, d["sscd_resize"], min(8, cfg["num_workers"]), d["torch_threads"]))
+    emb_file, emb_info = P.dup_dir / "sscd_raw_embeddings.npy", P.dup_dir / "sscd_raw_embeddings.json"
+    if cfg["_recompute_embeddings"] or not emb_file.exists():
+        device = dup.resolve_device(d["device"], cfg["_allow_cpu"])
+        log.info("SSCD embeddings on %s for %d raw images", device, len(paths))
+        np.save(emb_file, dup.sscd_embed(model, paths, d["sscd_resize"], min(8, cfg["num_workers"]), d["torch_threads"], device))
+        write_json(emb_info, {**provenance(cfg, cfg["seed"], dataset_hash(P)), "device": str(device),
+                              "gpu": torch.cuda.get_device_name(0) if device.type == "cuda" else None,
+                              "torch": torch.__version__, "sscd_weights_sha256": wsha})
+    else:
+        log.info("using cached SSCD embeddings %s (pass --recompute-embeddings to regenerate)", emb_file)
     emb = np.load(emb_file)
+    emb_device = json.loads(emb_info.read_text())["device"] if emb_info.exists() else "cpu (login node, before device logging)"
     pd.DataFrame({"id": ids}).to_csv(P.dup_dir / "embedding_ids.csv", index=False)
 
     te, tr = (idx.official_split == "test").to_numpy(), (idx.official_split == "train").to_numpy()
@@ -184,14 +206,22 @@ def stage_duplicates(cfg, P):
     table["label_conflict"] = by_id.loc[table.test_id, "fine_id"].to_numpy() != by_id.loc[table.train_id, "fine_id"].to_numpy()
     table.to_csv(P.duplicates, index=False, float_format="%.4f")
     nn.to_parquet(P.dup_dir / "sscd_nn_test_to_train.parquet", index=False)
+    # within official test: support and target sets of use-case-B episodes are both drawn from test
+    wt = dup.within_table(list(np.array(ids)[te]), ph[te], emb[te], d["phash_max_hamming"], d["sscd_threshold"])
+    wt["exact_duplicate"] = by_id.loc[wt.id_a, "sha256"].to_numpy() == by_id.loc[wt.id_b, "sha256"].to_numpy()
+    wt["label_conflict"] = by_id.loc[wt.id_a, "fine_id"].to_numpy() != by_id.loc[wt.id_b, "fine_id"].to_numpy()
+    wt.to_csv(P.duplicates_within_test, index=False, float_format="%.4f")
     write_json(P.manifests / "duplicates.json", {**provenance(cfg, cfg["seed"], dataset_hash(P)),
                "n_pairs": len(table), "n_flag_sscd": int(table.flag_sscd.sum()), "n_flag_phash": int(table.flag_phash.sum()),
                "n_exact_duplicate": int(table.exact_duplicate.sum()),
                "n_exact_duplicate_label_conflict": int((table.exact_duplicate & table.label_conflict).sum()),
-               "sscd_weights": str(wpath), "sscd_weights_sha256": wsha, "duplicates_csv_sha256": sha256_file(P.duplicates)})
-    log.info("near-duplicate pairs: %d (SSCD %d, pHash %d); byte-identical %d, of which label conflicts %d",
-             len(table), table.flag_sscd.sum(), table.flag_phash.sum(), table.exact_duplicate.sum(),
-             (table.exact_duplicate & table.label_conflict).sum())
+               "n_pairs_within_test": len(wt),
+               "sscd_weights": str(wpath), "sscd_weights_sha256": wsha, "sscd_embedding_device": emb_device,
+               "duplicates_csv_sha256": sha256_file(P.duplicates),
+               "duplicates_within_test_csv_sha256": sha256_file(P.duplicates_within_test)})
+    log.info("near-duplicate pairs: %d (SSCD %d, pHash %d); byte-identical %d, of which label conflicts %d; "
+             "within test: %d pairs", len(table), table.flag_sscd.sum(), table.flag_phash.sum(),
+             table.exact_duplicate.sum(), (table.exact_duplicate & table.label_conflict).sum(), len(wt))
 
 
 def stage_finalize(cfg, P):
@@ -210,11 +240,21 @@ def stage_finalize(cfg, P):
     n_dup = pd.concat([dups.test_id, dups.train_id]).value_counts()
     meta["n_near_duplicates"] = meta.id.map(n_dup).fillna(0).astype(int)
     meta["near_duplicate"] = meta.n_near_duplicates > 0
+    wt = pd.read_csv(P.duplicates_within_test)
+    meta["n_near_duplicates_within_test"] = meta.id.map(pd.concat([wt.id_a, wt.id_b]).value_counts()).fillna(0).astype(int)
+    # label noise: byte-identical files (any splits) carrying different official fine labels.
+    # Decision 30 Sep 2026: kept in the data, excluded from test-side evaluation references and episodes.
+    n_labels = meta.groupby("raw_sha256").fine_id.transform("nunique")
+    meta["label_conflict"] = n_labels > 1
+    meta["eval_exclude"] = meta.label_conflict & (meta.split == "test")
+    P.eval_exclude.write_text("".join(f"{i}\n" for i in sorted(meta.id[meta.eval_exclude])))
+    log.info("label-conflict images: %d (%s); excluded from test-side evaluation/episodes: %d",
+             meta.label_conflict.sum(), meta[meta.label_conflict].split.value_counts().to_dict(), meta.eval_exclude.sum())
     meta["path"] = "bbox15_128/" + meta.id + ".png"
     cols = ["id", "path", "rel_path", "official_split", "split", "test_half", "make_id", "fine_id", "model_id",
             *BBOX_COLS, "bbox_clipped", "crop_x0", "crop_y0", "crop_x1", "crop_y1", "side",
             *[c for c in meta.columns if c.startswith("scale_")], "pad_l", "pad_t", "pad_r", "pad_b", "pad_fraction",
-            "margin_used", "was_grayscale", "raw_mode", "orig_W", "orig_H", "raw_sha256", "near_duplicate", "n_near_duplicates"]
+            "margin_used", "was_grayscale", "raw_mode", "orig_W", "orig_H", "raw_sha256", "near_duplicate", "n_near_duplicates", "n_near_duplicates_within_test", "label_conflict", "eval_exclude"]
     meta = meta[cols].sort_values("id", ignore_index=True)
     meta.to_parquet(P.metadata, index=False)
 
@@ -234,6 +274,7 @@ def stage_finalize(cfg, P):
 
 
 def stage_reports(cfg, P):
+    _preprocessing_report(cfg, P)
     meta = pd.read_parquet(P.metadata)
     h = pd.read_csv(P.hierarchy)
     nn_file = P.dup_dir / "sscd_nn_test_to_train.parquet"
@@ -246,9 +287,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/data.yaml")
     ap.add_argument("--stages", nargs="+", default=list(STAGES), choices=STAGES)
+    ap.add_argument("--recompute-embeddings", action="store_true", help="regenerate cached SSCD embeddings")
+    ap.add_argument("--allow-cpu", action="store_true", help="allow SSCD on CPU when no GPU is visible")
     args = ap.parse_args()
     setup_logging()
     cfg = load_config(args.config)
+    cfg["_recompute_embeddings"], cfg["_allow_cpu"] = args.recompute_embeddings, args.allow_cpu
     P = Paths(cfg)
     for s in STAGES:
         if s in args.stages:

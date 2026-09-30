@@ -70,30 +70,57 @@ class _SSCDImages(torch.utils.data.Dataset):
             return self.tf(im.convert("RGB"))
 
 
+def resolve_device(device, allow_cpu=False):
+    """GPU is required unless allow_cpu: SSCD on the login-node CPU takes ~1 h."""
+    if device == "cuda" and not torch.cuda.is_available():
+        if not allow_cpu:
+            raise RuntimeError("SSCD embedding needs a GPU: submit slurm/prepare_data.sh on a GPU node "
+                               "(or pass --allow-cpu to run it on CPU)")
+        log.warning("no GPU available; running SSCD on CPU (--allow-cpu)")
+        device = "cpu"
+    return torch.device(device)
+
+
 @torch.no_grad()
-def sscd_embed(model, paths, resize=288, num_workers=8, threads=16):
-    torch.set_num_threads(threads)
-    dl = torch.utils.data.DataLoader(_SSCDImages(paths, resize), batch_size=None, num_workers=num_workers)
+def sscd_embed(model, paths, resize=288, num_workers=8, threads=16, device="cpu"):
+    """One image per forward pass (variable aspect ratios, as in the SSCD small_288 protocol); fp32."""
+    device = torch.device(device)
+    if device.type == "cpu":
+        torch.set_num_threads(threads)
+    model = model.to(device)
+    dl = torch.utils.data.DataLoader(_SSCDImages(paths, resize), batch_size=None, num_workers=num_workers,
+                                     pin_memory=device.type == "cuda")
     out = np.zeros((len(paths), 512), np.float32)
     for k, x in enumerate(dl):
-        out[k] = torch.nn.functional.normalize(model(x[None]), dim=1)[0].numpy()
+        out[k] = torch.nn.functional.normalize(model(x[None].to(device, non_blocking=True)), dim=1)[0].cpu().numpy()
         if k % 1000 == 0:
             log.info("SSCD %d/%d", k, len(paths))
     return out
 
 
+def _candidate_pairs(ids_a, ids_b, h_a, h_b, sim, phash_max, sscd_thr, cols, upper_only=False):
+    """Pairs with pHash Hamming <= phash_max OR SSCD cosine >= sscd_thr, with both scores."""
+    ph = hamming_pairs(h_a, h_b, phash_max)
+    si, sj = np.nonzero(sim >= sscd_thr)
+    pairs = set(map(tuple, ph[:, :2].tolist())) | set(zip(si.tolist(), sj.tolist()))
+    if upper_only:
+        pairs = {(i, j) for i, j in pairs if i < j}
+    rows = [(ids_a[i], ids_b[j], float(sim[i, j]), int(np.bitwise_count(h_a[i] ^ h_b[j]))) for i, j in sorted(pairs)]
+    df = pd.DataFrame(rows, columns=[*cols, "sscd_sim", "phash_hamming"])
+    df["flag_sscd"] = df.sscd_sim >= sscd_thr
+    df["flag_phash"] = df.phash_hamming <= phash_max
+    return df.sort_values("sscd_sim", ascending=False, ignore_index=True)
+
+
 def duplicate_table(test_ids, train_ids, h_test, h_train, e_test, e_train, phash_max, sscd_thr):
-    """Candidate pairs flagged by either criterion, with both scores. Also returns per-test NN summary."""
+    """Test-vs-train candidate pairs flagged by either criterion. Also returns the per-test NN summary."""
     sim = e_test @ e_train.T
     nn = sim.argmax(1)
     nn_summary = pd.DataFrame({"test_id": test_ids, "sscd_nn_train_id": np.asarray(train_ids)[nn],
                                "sscd_nn_sim": sim[np.arange(len(test_ids)), nn], "phash_min_hamming": hamming_min(h_test, h_train)})
-    ph = hamming_pairs(h_test, h_train, phash_max)
-    si, sj = np.nonzero(sim > sscd_thr)
-    pairs = set(map(tuple, ph[:, :2].tolist())) | set(zip(si.tolist(), sj.tolist()))
-    rows = [(test_ids[i], train_ids[j], float(sim[i, j]), int(np.bitwise_count(h_test[i] ^ h_train[j])))
-            for i, j in sorted(pairs)]
-    df = pd.DataFrame(rows, columns=["test_id", "train_id", "sscd_sim", "phash_hamming"])
-    df["flag_sscd"] = df.sscd_sim > sscd_thr
-    df["flag_phash"] = df.phash_hamming <= phash_max
-    return df.sort_values("sscd_sim", ascending=False, ignore_index=True), nn_summary
+    return _candidate_pairs(test_ids, train_ids, h_test, h_train, sim, phash_max, sscd_thr, ("test_id", "train_id")), nn_summary
+
+
+def within_table(ids, h, e, phash_max, sscd_thr):
+    """Near-duplicate pairs within one set of images (id_a < id_b by position)."""
+    return _candidate_pairs(ids, ids, h, h, e @ e.T, phash_max, sscd_thr, ("id_a", "id_b"), upper_only=True)

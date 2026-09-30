@@ -6,7 +6,7 @@ reports_root: reports
 
 seed: 0
 val_frac: 0.10
-num_workers: 16
+num_workers: 8              # match --cpus-per-task in slurm/prepare_data.sh
 
 crops:
   sizes: [128, 256]
@@ -14,14 +14,18 @@ crops:
     margin: 1.5
     min_margin: 1.02
     pad_color: [124, 116, 104]
-  pad_gate_fraction: 0.10   # STOP if more than pad_gate_share of images have pad_fraction > this
+  pad_gate_fraction: 0.10   # gate: more than pad_gate_share of images have pad_fraction > this
   pad_gate_share: 0.10
+  pad_gate_action: warn     # "stop" or "warn". Decision 30 Sep 2026: padding accepted (docs/DATA.md)
   determinism_check_n: 300  # images re-cropped into a temp dir and compared byte-for-byte
 
 duplicates:
-  phash_max_hamming: 8
+  # thresholds revised 30 Sep 2026 after the first audit (was pHash <= 8 / SSCD > 0.5: mostly
+  # different photos of the same design); raw scores are always kept in the CSV
+  phash_max_hamming: 4
   sscd_url: https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt
-  sscd_sha256: null          # filled in the manifest on first download
+  sscd_sha256: 9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56
   sscd_resize: 288           # SSCD "small_288" eval transform (short side)
-  sscd_threshold: 0.5
-  torch_threads: 16
+  sscd_threshold: 0.75       # flag if cosine >= this
+  device: cuda               # SSCD refuses to run on CPU unless --allow-cpu
+  torch_threads: 8           # CPU fallback only

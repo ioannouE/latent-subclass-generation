@@ -31,5 +31,11 @@ def save_splits(splits, out_dir):
         (out_dir / f"{name}.txt").write_text("\n".join(ids) + "\n")
 
 
-def load_split(out_dir, name):
-    return Path(out_dir, f"{name}.txt").read_text().split()
+def load_split(out_dir, name, exclude_eval=False):
+    """exclude_eval=True drops the label-conflict test images (eval_exclude.txt): use it for every
+    test-side evaluation reference."""
+    ids = Path(out_dir, f"{name}.txt").read_text().split()
+    if exclude_eval:
+        drop = set(Path(out_dir, "eval_exclude.txt").read_text().split())
+        ids = [i for i in ids if i not in drop]
+    return ids
