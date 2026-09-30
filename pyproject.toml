@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lsgen"
+version = "0.1.0"
+description = "Benchmark for subclass-preserving image generation (Stanford Cars)"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=2.0",
+  "pandas",
+  "pyarrow",
+  "scipy",
+  "pillow",
+  "pyyaml",
+  "matplotlib",
+  "scikit-learn",
+  "torch",
+  "torchvision",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["lsgen*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

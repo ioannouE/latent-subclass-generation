@@ -1,0 +1,7 @@
+# Documents the environment used (conda env "diffusion", Python 3.10). Exact versions: environment.lock.txt
+name: diffusion
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - -e .[dev]
