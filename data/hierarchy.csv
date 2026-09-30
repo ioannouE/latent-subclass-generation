@@ -1,0 +1,197 @@
+fine_id,class_name,make,model,year,make_model,make_id,model_id,K_c
+0,AM General Hummer SUV 2000,AM General,Hummer SUV,2000,AM General Hummer SUV,0,0,1
+1,Acura RL Sedan 2012,Acura,RL Sedan,2012,Acura RL Sedan,1,1,6
+2,Acura TL Sedan 2012,Acura,TL Sedan,2012,Acura TL Sedan,1,2,6
+3,Acura TL Type-S 2008,Acura,TL Type-S,2008,Acura TL Type-S,1,3,6
+4,Acura TSX Sedan 2012,Acura,TSX Sedan,2012,Acura TSX Sedan,1,4,6
+5,Acura Integra Type R 2001,Acura,Integra Type R,2001,Acura Integra Type R,1,5,6
+6,Acura ZDX Hatchback 2012,Acura,ZDX Hatchback,2012,Acura ZDX Hatchback,1,6,6
+7,Aston Martin V8 Vantage Convertible 2012,Aston Martin,V8 Vantage Convertible,2012,Aston Martin V8 Vantage Convertible,2,7,4
+8,Aston Martin V8 Vantage Coupe 2012,Aston Martin,V8 Vantage Coupe,2012,Aston Martin V8 Vantage Coupe,2,8,4
+9,Aston Martin Virage Convertible 2012,Aston Martin,Virage Convertible,2012,Aston Martin Virage Convertible,2,9,4
+10,Aston Martin Virage Coupe 2012,Aston Martin,Virage Coupe,2012,Aston Martin Virage Coupe,2,10,4
+11,Audi RS 4 Convertible 2008,Audi,RS 4 Convertible,2008,Audi RS 4 Convertible,3,11,14
+12,Audi A5 Coupe 2012,Audi,A5 Coupe,2012,Audi A5 Coupe,3,12,14
+13,Audi TTS Coupe 2012,Audi,TTS Coupe,2012,Audi TTS Coupe,3,13,14
+14,Audi R8 Coupe 2012,Audi,R8 Coupe,2012,Audi R8 Coupe,3,14,14
+15,Audi V8 Sedan 1994,Audi,V8 Sedan,1994,Audi V8 Sedan,3,15,14
+16,Audi 100 Sedan 1994,Audi,100 Sedan,1994,Audi 100 Sedan,3,16,14
+17,Audi 100 Wagon 1994,Audi,100 Wagon,1994,Audi 100 Wagon,3,17,14
+18,Audi TT Hatchback 2011,Audi,TT Hatchback,2011,Audi TT Hatchback,3,18,14
+19,Audi S6 Sedan 2011,Audi,S6 Sedan,2011,Audi S6 Sedan,3,19,14
+20,Audi S5 Convertible 2012,Audi,S5 Convertible,2012,Audi S5 Convertible,3,20,14
+21,Audi S5 Coupe 2012,Audi,S5 Coupe,2012,Audi S5 Coupe,3,21,14
+22,Audi S4 Sedan 2012,Audi,S4 Sedan,2012,Audi S4 Sedan,3,22,14
+23,Audi S4 Sedan 2007,Audi,S4 Sedan,2007,Audi S4 Sedan,3,22,14
+24,Audi TT RS Coupe 2012,Audi,TT RS Coupe,2012,Audi TT RS Coupe,3,23,14
+25,BMW ActiveHybrid 5 Sedan 2012,BMW,ActiveHybrid 5 Sedan,2012,BMW ActiveHybrid 5 Sedan,4,24,13
+26,BMW 1 Series Convertible 2012,BMW,1 Series Convertible,2012,BMW 1 Series Convertible,4,25,13
+27,BMW 1 Series Coupe 2012,BMW,1 Series Coupe,2012,BMW 1 Series Coupe,4,26,13
+28,BMW 3 Series Sedan 2012,BMW,3 Series Sedan,2012,BMW 3 Series Sedan,4,27,13
+29,BMW 3 Series Wagon 2012,BMW,3 Series Wagon,2012,BMW 3 Series Wagon,4,28,13
+30,BMW 6 Series Convertible 2007,BMW,6 Series Convertible,2007,BMW 6 Series Convertible,4,29,13
+31,BMW X5 SUV 2007,BMW,X5 SUV,2007,BMW X5 SUV,4,30,13
+32,BMW X6 SUV 2012,BMW,X6 SUV,2012,BMW X6 SUV,4,31,13
+33,BMW M3 Coupe 2012,BMW,M3 Coupe,2012,BMW M3 Coupe,4,32,13
+34,BMW M5 Sedan 2010,BMW,M5 Sedan,2010,BMW M5 Sedan,4,33,13
+35,BMW M6 Convertible 2010,BMW,M6 Convertible,2010,BMW M6 Convertible,4,34,13
+36,BMW X3 SUV 2012,BMW,X3 SUV,2012,BMW X3 SUV,4,35,13
+37,BMW Z4 Convertible 2012,BMW,Z4 Convertible,2012,BMW Z4 Convertible,4,36,13
+38,Bentley Continental Supersports Conv. Convertible 2012,Bentley,Continental Supersports Conv. Convertible,2012,Bentley Continental Supersports Conv. Convertible,5,37,6
+39,Bentley Arnage Sedan 2009,Bentley,Arnage Sedan,2009,Bentley Arnage Sedan,5,38,6
+40,Bentley Mulsanne Sedan 2011,Bentley,Mulsanne Sedan,2011,Bentley Mulsanne Sedan,5,39,6
+41,Bentley Continental GT Coupe 2012,Bentley,Continental GT Coupe,2012,Bentley Continental GT Coupe,5,40,6
+42,Bentley Continental GT Coupe 2007,Bentley,Continental GT Coupe,2007,Bentley Continental GT Coupe,5,40,6
+43,Bentley Continental Flying Spur Sedan 2007,Bentley,Continental Flying Spur Sedan,2007,Bentley Continental Flying Spur Sedan,5,41,6
+44,Bugatti Veyron 16.4 Convertible 2009,Bugatti,Veyron 16.4 Convertible,2009,Bugatti Veyron 16.4 Convertible,6,42,2
+45,Bugatti Veyron 16.4 Coupe 2009,Bugatti,Veyron 16.4 Coupe,2009,Bugatti Veyron 16.4 Coupe,6,43,2
+46,Buick Regal GS 2012,Buick,Regal GS,2012,Buick Regal GS,7,44,4
+47,Buick Rainier SUV 2007,Buick,Rainier SUV,2007,Buick Rainier SUV,7,45,4
+48,Buick Verano Sedan 2012,Buick,Verano Sedan,2012,Buick Verano Sedan,7,46,4
+49,Buick Enclave SUV 2012,Buick,Enclave SUV,2012,Buick Enclave SUV,7,47,4
+50,Cadillac CTS-V Sedan 2012,Cadillac,CTS-V Sedan,2012,Cadillac CTS-V Sedan,8,48,3
+51,Cadillac SRX SUV 2012,Cadillac,SRX SUV,2012,Cadillac SRX SUV,8,49,3
+52,Cadillac Escalade EXT Crew Cab 2007,Cadillac,Escalade EXT Crew Cab,2007,Cadillac Escalade EXT Crew Cab,8,50,3
+53,Chevrolet Silverado 1500 Hybrid Crew Cab 2012,Chevrolet,Silverado 1500 Hybrid Crew Cab,2012,Chevrolet Silverado 1500 Hybrid Crew Cab,9,51,22
+54,Chevrolet Corvette Convertible 2012,Chevrolet,Corvette Convertible,2012,Chevrolet Corvette Convertible,9,52,22
+55,Chevrolet Corvette ZR1 2012,Chevrolet,Corvette ZR1,2012,Chevrolet Corvette ZR1,9,53,22
+56,Chevrolet Corvette Ron Fellows Edition Z06 2007,Chevrolet,Corvette Ron Fellows Edition Z06,2007,Chevrolet Corvette Ron Fellows Edition Z06,9,54,22
+57,Chevrolet Traverse SUV 2012,Chevrolet,Traverse SUV,2012,Chevrolet Traverse SUV,9,55,22
+58,Chevrolet Camaro Convertible 2012,Chevrolet,Camaro Convertible,2012,Chevrolet Camaro Convertible,9,56,22
+59,Chevrolet HHR SS 2010,Chevrolet,HHR SS,2010,Chevrolet HHR SS,9,57,22
+60,Chevrolet Impala Sedan 2007,Chevrolet,Impala Sedan,2007,Chevrolet Impala Sedan,9,58,22
+61,Chevrolet Tahoe Hybrid SUV 2012,Chevrolet,Tahoe Hybrid SUV,2012,Chevrolet Tahoe Hybrid SUV,9,59,22
+62,Chevrolet Sonic Sedan 2012,Chevrolet,Sonic Sedan,2012,Chevrolet Sonic Sedan,9,60,22
+63,Chevrolet Express Cargo Van 2007,Chevrolet,Express Cargo Van,2007,Chevrolet Express Cargo Van,9,61,22
+64,Chevrolet Avalanche Crew Cab 2012,Chevrolet,Avalanche Crew Cab,2012,Chevrolet Avalanche Crew Cab,9,62,22
+65,Chevrolet Cobalt SS 2010,Chevrolet,Cobalt SS,2010,Chevrolet Cobalt SS,9,63,22
+66,Chevrolet Malibu Hybrid Sedan 2010,Chevrolet,Malibu Hybrid Sedan,2010,Chevrolet Malibu Hybrid Sedan,9,64,22
+67,Chevrolet TrailBlazer SS 2009,Chevrolet,TrailBlazer SS,2009,Chevrolet TrailBlazer SS,9,65,22
+68,Chevrolet Silverado 2500HD Regular Cab 2012,Chevrolet,Silverado 2500HD Regular Cab,2012,Chevrolet Silverado 2500HD Regular Cab,9,66,22
+69,Chevrolet Silverado 1500 Classic Extended Cab 2007,Chevrolet,Silverado 1500 Classic Extended Cab,2007,Chevrolet Silverado 1500 Classic Extended Cab,9,67,22
+70,Chevrolet Express Van 2007,Chevrolet,Express Van,2007,Chevrolet Express Van,9,68,22
+71,Chevrolet Monte Carlo Coupe 2007,Chevrolet,Monte Carlo Coupe,2007,Chevrolet Monte Carlo Coupe,9,69,22
+72,Chevrolet Malibu Sedan 2007,Chevrolet,Malibu Sedan,2007,Chevrolet Malibu Sedan,9,70,22
+73,Chevrolet Silverado 1500 Extended Cab 2012,Chevrolet,Silverado 1500 Extended Cab,2012,Chevrolet Silverado 1500 Extended Cab,9,71,22
+74,Chevrolet Silverado 1500 Regular Cab 2012,Chevrolet,Silverado 1500 Regular Cab,2012,Chevrolet Silverado 1500 Regular Cab,9,72,22
+75,Chrysler Aspen SUV 2009,Chrysler,Aspen SUV,2009,Chrysler Aspen SUV,10,73,6
+76,Chrysler Sebring Convertible 2010,Chrysler,Sebring Convertible,2010,Chrysler Sebring Convertible,10,74,6
+77,Chrysler Town and Country Minivan 2012,Chrysler,Town and Country Minivan,2012,Chrysler Town and Country Minivan,10,75,6
+78,Chrysler 300 SRT-8 2010,Chrysler,300 SRT-8,2010,Chrysler 300 SRT-8,10,76,6
+79,Chrysler Crossfire Convertible 2008,Chrysler,Crossfire Convertible,2008,Chrysler Crossfire Convertible,10,77,6
+80,Chrysler PT Cruiser Convertible 2008,Chrysler,PT Cruiser Convertible,2008,Chrysler PT Cruiser Convertible,10,78,6
+81,Daewoo Nubira Wagon 2002,Daewoo,Nubira Wagon,2002,Daewoo Nubira Wagon,11,79,1
+82,Dodge Caliber Wagon 2012,Dodge,Caliber Wagon,2012,Dodge Caliber Wagon,12,80,15
+83,Dodge Caliber Wagon 2007,Dodge,Caliber Wagon,2007,Dodge Caliber Wagon,12,80,15
+84,Dodge Caravan Minivan 1997,Dodge,Caravan Minivan,1997,Dodge Caravan Minivan,12,81,15
+85,Dodge Ram Pickup 3500 Crew Cab 2010,Dodge,Ram Pickup 3500 Crew Cab,2010,Dodge Ram Pickup 3500 Crew Cab,12,82,15
+86,Dodge Ram Pickup 3500 Quad Cab 2009,Dodge,Ram Pickup 3500 Quad Cab,2009,Dodge Ram Pickup 3500 Quad Cab,12,83,15
+87,Dodge Sprinter Cargo Van 2009,Dodge,Sprinter Cargo Van,2009,Dodge Sprinter Cargo Van,12,84,15
+88,Dodge Journey SUV 2012,Dodge,Journey SUV,2012,Dodge Journey SUV,12,85,15
+89,Dodge Dakota Crew Cab 2010,Dodge,Dakota Crew Cab,2010,Dodge Dakota Crew Cab,12,86,15
+90,Dodge Dakota Club Cab 2007,Dodge,Dakota Club Cab,2007,Dodge Dakota Club Cab,12,87,15
+91,Dodge Magnum Wagon 2008,Dodge,Magnum Wagon,2008,Dodge Magnum Wagon,12,88,15
+92,Dodge Challenger SRT8 2011,Dodge,Challenger SRT8,2011,Dodge Challenger SRT8,12,89,15
+93,Dodge Durango SUV 2012,Dodge,Durango SUV,2012,Dodge Durango SUV,12,90,15
+94,Dodge Durango SUV 2007,Dodge,Durango SUV,2007,Dodge Durango SUV,12,90,15
+95,Dodge Charger Sedan 2012,Dodge,Charger Sedan,2012,Dodge Charger Sedan,12,91,15
+96,Dodge Charger SRT-8 2009,Dodge,Charger SRT-8,2009,Dodge Charger SRT-8,12,92,15
+97,Eagle Talon Hatchback 1998,Eagle,Talon Hatchback,1998,Eagle Talon Hatchback,13,93,1
+98,FIAT 500 Abarth 2012,FIAT,500 Abarth,2012,FIAT 500 Abarth,14,94,2
+99,FIAT 500 Convertible 2012,FIAT,500 Convertible,2012,FIAT 500 Convertible,14,95,2
+100,Ferrari FF Coupe 2012,Ferrari,FF Coupe,2012,Ferrari FF Coupe,15,96,4
+101,Ferrari California Convertible 2012,Ferrari,California Convertible,2012,Ferrari California Convertible,15,97,4
+102,Ferrari 458 Italia Convertible 2012,Ferrari,458 Italia Convertible,2012,Ferrari 458 Italia Convertible,15,98,4
+103,Ferrari 458 Italia Coupe 2012,Ferrari,458 Italia Coupe,2012,Ferrari 458 Italia Coupe,15,99,4
+104,Fisker Karma Sedan 2012,Fisker,Karma Sedan,2012,Fisker Karma Sedan,16,100,1
+105,Ford F-450 Super Duty Crew Cab 2012,Ford,F-450 Super Duty Crew Cab,2012,Ford F-450 Super Duty Crew Cab,17,101,12
+106,Ford Mustang Convertible 2007,Ford,Mustang Convertible,2007,Ford Mustang Convertible,17,102,12
+107,Ford Freestar Minivan 2007,Ford,Freestar Minivan,2007,Ford Freestar Minivan,17,103,12
+108,Ford Expedition EL SUV 2009,Ford,Expedition EL SUV,2009,Ford Expedition EL SUV,17,104,12
+109,Ford Edge SUV 2012,Ford,Edge SUV,2012,Ford Edge SUV,17,105,12
+110,Ford Ranger SuperCab 2011,Ford,Ranger SuperCab,2011,Ford Ranger SuperCab,17,106,12
+111,Ford GT Coupe 2006,Ford,GT Coupe,2006,Ford GT Coupe,17,107,12
+112,Ford F-150 Regular Cab 2012,Ford,F-150 Regular Cab,2012,Ford F-150 Regular Cab,17,108,12
+113,Ford F-150 Regular Cab 2007,Ford,F-150 Regular Cab,2007,Ford F-150 Regular Cab,17,108,12
+114,Ford Focus Sedan 2007,Ford,Focus Sedan,2007,Ford Focus Sedan,17,109,12
+115,Ford E-Series Wagon Van 2012,Ford,E-Series Wagon Van,2012,Ford E-Series Wagon Van,17,110,12
+116,Ford Fiesta Sedan 2012,Ford,Fiesta Sedan,2012,Ford Fiesta Sedan,17,111,12
+117,GMC Terrain SUV 2012,GMC,Terrain SUV,2012,GMC Terrain SUV,18,112,5
+118,GMC Savana Van 2012,GMC,Savana Van,2012,GMC Savana Van,18,113,5
+119,GMC Yukon Hybrid SUV 2012,GMC,Yukon Hybrid SUV,2012,GMC Yukon Hybrid SUV,18,114,5
+120,GMC Acadia SUV 2012,GMC,Acadia SUV,2012,GMC Acadia SUV,18,115,5
+121,GMC Canyon Extended Cab 2012,GMC,Canyon Extended Cab,2012,GMC Canyon Extended Cab,18,116,5
+122,Geo Metro Convertible 1993,Geo,Metro Convertible,1993,Geo Metro Convertible,19,117,1
+123,HUMMER H3T Crew Cab 2010,HUMMER,H3T Crew Cab,2010,HUMMER H3T Crew Cab,20,118,2
+124,HUMMER H2 SUT Crew Cab 2009,HUMMER,H2 SUT Crew Cab,2009,HUMMER H2 SUT Crew Cab,20,119,2
+125,Honda Odyssey Minivan 2012,Honda,Odyssey Minivan,2012,Honda Odyssey Minivan,21,120,4
+126,Honda Odyssey Minivan 2007,Honda,Odyssey Minivan,2007,Honda Odyssey Minivan,21,120,4
+127,Honda Accord Coupe 2012,Honda,Accord Coupe,2012,Honda Accord Coupe,21,121,4
+128,Honda Accord Sedan 2012,Honda,Accord Sedan,2012,Honda Accord Sedan,21,122,4
+129,Hyundai Veloster Hatchback 2012,Hyundai,Veloster Hatchback,2012,Hyundai Veloster Hatchback,22,123,11
+130,Hyundai Santa Fe SUV 2012,Hyundai,Santa Fe SUV,2012,Hyundai Santa Fe SUV,22,124,11
+131,Hyundai Tucson SUV 2012,Hyundai,Tucson SUV,2012,Hyundai Tucson SUV,22,125,11
+132,Hyundai Veracruz SUV 2012,Hyundai,Veracruz SUV,2012,Hyundai Veracruz SUV,22,126,11
+133,Hyundai Sonata Hybrid Sedan 2012,Hyundai,Sonata Hybrid Sedan,2012,Hyundai Sonata Hybrid Sedan,22,127,11
+134,Hyundai Elantra Sedan 2007,Hyundai,Elantra Sedan,2007,Hyundai Elantra Sedan,22,128,11
+135,Hyundai Accent Sedan 2012,Hyundai,Accent Sedan,2012,Hyundai Accent Sedan,22,129,11
+136,Hyundai Genesis Sedan 2012,Hyundai,Genesis Sedan,2012,Hyundai Genesis Sedan,22,130,11
+137,Hyundai Sonata Sedan 2012,Hyundai,Sonata Sedan,2012,Hyundai Sonata Sedan,22,131,11
+138,Hyundai Elantra Touring Hatchback 2012,Hyundai,Elantra Touring Hatchback,2012,Hyundai Elantra Touring Hatchback,22,132,11
+139,Hyundai Azera Sedan 2012,Hyundai,Azera Sedan,2012,Hyundai Azera Sedan,22,133,11
+140,Infiniti G Coupe IPL 2012,Infiniti,G Coupe IPL,2012,Infiniti G Coupe IPL,23,134,2
+141,Infiniti QX56 SUV 2011,Infiniti,QX56 SUV,2011,Infiniti QX56 SUV,23,135,2
+142,Isuzu Ascender SUV 2008,Isuzu,Ascender SUV,2008,Isuzu Ascender SUV,24,136,1
+143,Jaguar XK XKR 2012,Jaguar,XK XKR,2012,Jaguar XK XKR,25,137,1
+144,Jeep Patriot SUV 2012,Jeep,Patriot SUV,2012,Jeep Patriot SUV,26,138,5
+145,Jeep Wrangler SUV 2012,Jeep,Wrangler SUV,2012,Jeep Wrangler SUV,26,139,5
+146,Jeep Liberty SUV 2012,Jeep,Liberty SUV,2012,Jeep Liberty SUV,26,140,5
+147,Jeep Grand Cherokee SUV 2012,Jeep,Grand Cherokee SUV,2012,Jeep Grand Cherokee SUV,26,141,5
+148,Jeep Compass SUV 2012,Jeep,Compass SUV,2012,Jeep Compass SUV,26,142,5
+149,Lamborghini Reventon Coupe 2008,Lamborghini,Reventon Coupe,2008,Lamborghini Reventon Coupe,27,143,4
+150,Lamborghini Aventador Coupe 2012,Lamborghini,Aventador Coupe,2012,Lamborghini Aventador Coupe,27,144,4
+151,Lamborghini Gallardo LP 570-4 Superleggera 2012,Lamborghini,Gallardo LP 570-4 Superleggera,2012,Lamborghini Gallardo LP 570-4 Superleggera,27,145,4
+152,Lamborghini Diablo Coupe 2001,Lamborghini,Diablo Coupe,2001,Lamborghini Diablo Coupe,27,146,4
+153,Land Rover Range Rover SUV 2012,Land Rover,Range Rover SUV,2012,Land Rover Range Rover SUV,28,147,2
+154,Land Rover LR2 SUV 2012,Land Rover,LR2 SUV,2012,Land Rover LR2 SUV,28,148,2
+155,Lincoln Town Car Sedan 2011,Lincoln,Town Car Sedan,2011,Lincoln Town Car Sedan,29,149,1
+156,MINI Cooper Roadster Convertible 2012,MINI,Cooper Roadster Convertible,2012,MINI Cooper Roadster Convertible,30,150,1
+157,Maybach Landaulet Convertible 2012,Maybach,Landaulet Convertible,2012,Maybach Landaulet Convertible,31,151,1
+158,Mazda Tribute SUV 2011,Mazda,Tribute SUV,2011,Mazda Tribute SUV,32,152,1
+159,McLaren MP4-12C Coupe 2012,McLaren,MP4-12C Coupe,2012,McLaren MP4-12C Coupe,33,153,1
+160,Mercedes-Benz 300-Class Convertible 1993,Mercedes-Benz,300-Class Convertible,1993,Mercedes-Benz 300-Class Convertible,34,154,6
+161,Mercedes-Benz C-Class Sedan 2012,Mercedes-Benz,C-Class Sedan,2012,Mercedes-Benz C-Class Sedan,34,155,6
+162,Mercedes-Benz SL-Class Coupe 2009,Mercedes-Benz,SL-Class Coupe,2009,Mercedes-Benz SL-Class Coupe,34,156,6
+163,Mercedes-Benz E-Class Sedan 2012,Mercedes-Benz,E-Class Sedan,2012,Mercedes-Benz E-Class Sedan,34,157,6
+164,Mercedes-Benz S-Class Sedan 2012,Mercedes-Benz,S-Class Sedan,2012,Mercedes-Benz S-Class Sedan,34,158,6
+165,Mercedes-Benz Sprinter Van 2012,Mercedes-Benz,Sprinter Van,2012,Mercedes-Benz Sprinter Van,34,159,6
+166,Mitsubishi Lancer Sedan 2012,Mitsubishi,Lancer Sedan,2012,Mitsubishi Lancer Sedan,35,160,1
+167,Nissan Leaf Hatchback 2012,Nissan,Leaf Hatchback,2012,Nissan Leaf Hatchback,36,161,4
+168,Nissan NV Passenger Van 2012,Nissan,NV Passenger Van,2012,Nissan NV Passenger Van,36,162,4
+169,Nissan Juke Hatchback 2012,Nissan,Juke Hatchback,2012,Nissan Juke Hatchback,36,163,4
+170,Nissan 240SX Coupe 1998,Nissan,240SX Coupe,1998,Nissan 240SX Coupe,36,164,4
+171,Plymouth Neon Coupe 1999,Plymouth,Neon Coupe,1999,Plymouth Neon Coupe,37,165,1
+172,Porsche Panamera Sedan 2012,Porsche,Panamera Sedan,2012,Porsche Panamera Sedan,38,166,1
+173,Ram C/V Cargo Van Minivan 2012,Ram,C/V Cargo Van Minivan,2012,Ram C/V Cargo Van Minivan,39,167,1
+174,Rolls-Royce Phantom Drophead Coupe Convertible 2012,Rolls-Royce,Phantom Drophead Coupe Convertible,2012,Rolls-Royce Phantom Drophead Coupe Convertible,40,168,3
+175,Rolls-Royce Ghost Sedan 2012,Rolls-Royce,Ghost Sedan,2012,Rolls-Royce Ghost Sedan,40,169,3
+176,Rolls-Royce Phantom Sedan 2012,Rolls-Royce,Phantom Sedan,2012,Rolls-Royce Phantom Sedan,40,170,3
+177,Scion xD Hatchback 2012,Scion,xD Hatchback,2012,Scion xD Hatchback,41,171,1
+178,Spyker C8 Convertible 2009,Spyker,C8 Convertible,2009,Spyker C8 Convertible,42,172,2
+179,Spyker C8 Coupe 2009,Spyker,C8 Coupe,2009,Spyker C8 Coupe,42,173,2
+180,Suzuki Aerio Sedan 2007,Suzuki,Aerio Sedan,2007,Suzuki Aerio Sedan,43,174,4
+181,Suzuki Kizashi Sedan 2012,Suzuki,Kizashi Sedan,2012,Suzuki Kizashi Sedan,43,175,4
+182,Suzuki SX4 Hatchback 2012,Suzuki,SX4 Hatchback,2012,Suzuki SX4 Hatchback,43,176,4
+183,Suzuki SX4 Sedan 2012,Suzuki,SX4 Sedan,2012,Suzuki SX4 Sedan,43,177,4
+184,Tesla Model S Sedan 2012,Tesla,Model S Sedan,2012,Tesla Model S Sedan,44,178,1
+185,Toyota Sequoia SUV 2012,Toyota,Sequoia SUV,2012,Toyota Sequoia SUV,45,179,4
+186,Toyota Camry Sedan 2012,Toyota,Camry Sedan,2012,Toyota Camry Sedan,45,180,4
+187,Toyota Corolla Sedan 2012,Toyota,Corolla Sedan,2012,Toyota Corolla Sedan,45,181,4
+188,Toyota 4Runner SUV 2012,Toyota,4Runner SUV,2012,Toyota 4Runner SUV,45,182,4
+189,Volkswagen Golf Hatchback 2012,Volkswagen,Golf Hatchback,2012,Volkswagen Golf Hatchback,46,183,3
+190,Volkswagen Golf Hatchback 1991,Volkswagen,Golf Hatchback,1991,Volkswagen Golf Hatchback,46,183,3
+191,Volkswagen Beetle Hatchback 2012,Volkswagen,Beetle Hatchback,2012,Volkswagen Beetle Hatchback,46,184,3
+192,Volvo C30 Hatchback 2012,Volvo,C30 Hatchback,2012,Volvo C30 Hatchback,47,185,3
+193,Volvo 240 Sedan 1993,Volvo,240 Sedan,1993,Volvo 240 Sedan,47,186,3
+194,Volvo XC90 SUV 2007,Volvo,XC90 SUV,2007,Volvo XC90 SUV,47,187,3
+195,smart fortwo Convertible 2012,smart,fortwo Convertible,2012,smart fortwo Convertible,48,188,1

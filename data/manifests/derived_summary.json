@@ -1,0 +1,68 @@
+{
+ "git_hash": "db1893084d7d1f4ec851e7a7404fbf71292ee109-dirty",
+ "created_utc": "2026-09-30T13:35:59+00:00",
+ "config": {
+  "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
+  "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
+  "data_root": "/nvme/h/eioannou/code/latent-subclass-generation/data",
+  "reports_root": "/nvme/h/eioannou/code/latent-subclass-generation/reports",
+  "seed": 0,
+  "val_frac": 0.1,
+  "num_workers": 16,
+  "crops": {
+   "sizes": [
+    128,
+    256
+   ],
+   "bbox15": {
+    "margin": 1.5,
+    "min_margin": 1.02,
+    "pad_color": [
+     124,
+     116,
+     104
+    ]
+   },
+   "pad_gate_fraction": 0.1,
+   "pad_gate_share": 0.1,
+   "determinism_check_n": 300
+  },
+  "duplicates": {
+   "phash_max_hamming": 8,
+   "sscd_url": "https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt",
+   "sscd_sha256": null,
+   "sscd_resize": 288,
+   "sscd_threshold": 0.5,
+   "torch_threads": 16
+  }
+ },
+ "config_path": "configs/data.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
+ "manifest_hash": "196ffcde8cc41d842de576a79ac2b5c021257c21cc074c37d78ba11d5431a87b",
+ "n_files": 64741,
+ "per_dir": {
+  "bbox15_128": {
+   "n_files": 16185,
+   "manifest_hash": "91ed470f8ad29ff4857080de08742f66d31b9e260ae3ea5cfc54c3f858c04443"
+  },
+  "bbox15_256": {
+   "n_files": 16185,
+   "manifest_hash": "c92e6f4209467281d01ae249318b3c2992e45ff3ebbebc55f963ddec77987844"
+  },
+  "full_cc_128": {
+   "n_files": 16185,
+   "manifest_hash": "a666746035c08b397b23abde259452954b977e63b979186127cebc4b86822c3b"
+  },
+  "full_cc_256": {
+   "n_files": 16185,
+   "manifest_hash": "5a28499aadbf5950dc5a376ed33027dc65814d5e1843ed39568d884f1f762a3e"
+  },
+  "metadata.parquet": {
+   "n_files": 1,
+   "manifest_hash": "8b443339dd9ccdab98b35c8418826556e09f5e6bf1bbe36529079f16bfa77c5e"
+  }
+ },
+ "determinism": "300 images x 4 files re-generated: 0 byte mismatches, 0 on-disk mismatches"
+}

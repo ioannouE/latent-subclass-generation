@@ -1,0 +1,50 @@
+{
+ "git_hash": "db1893084d7d1f4ec851e7a7404fbf71292ee109-dirty",
+ "created_utc": "2026-09-30T13:35:59+00:00",
+ "config": {
+  "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
+  "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
+  "data_root": "/nvme/h/eioannou/code/latent-subclass-generation/data",
+  "reports_root": "/nvme/h/eioannou/code/latent-subclass-generation/reports",
+  "seed": 0,
+  "val_frac": 0.1,
+  "num_workers": 16,
+  "crops": {
+   "sizes": [
+    128,
+    256
+   ],
+   "bbox15": {
+    "margin": 1.5,
+    "min_margin": 1.02,
+    "pad_color": [
+     124,
+     116,
+     104
+    ]
+   },
+   "pad_gate_fraction": 0.1,
+   "pad_gate_share": 0.1,
+   "determinism_check_n": 300
+  },
+  "duplicates": {
+   "phash_max_hamming": 8,
+   "sscd_url": "https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt",
+   "sscd_sha256": null,
+   "sscd_resize": 288,
+   "sscd_threshold": 0.5,
+   "torch_threads": 16
+  }
+ },
+ "config_path": "configs/data.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "n_pairs": 1279,
+ "n_flag_sscd": 1195,
+ "n_flag_phash": 146,
+ "n_exact_duplicate": 19,
+ "n_exact_duplicate_label_conflict": 18,
+ "sscd_weights": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/weights/sscd_disc_mixup.torchscript.pt",
+ "sscd_weights_sha256": "9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56",
+ "duplicates_csv_sha256": "9f3df36a29058357442b009d4d8c55fd5d4d70b2963bf9a4d42e6a7c4433203e"
+}

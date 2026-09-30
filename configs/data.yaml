@@ -1,0 +1,27 @@
+# Milestone 1: data preparation. The only place paths are defined.
+raw_root: /nvme/h/eioannou/data_p315/Stanford_Cars/kaggle          # read-only
+derived_root: /nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived  # large derived files (never in git)
+data_root: data                                                     # small frozen artefacts, committed (relative to repo)
+reports_root: reports
+
+seed: 0
+val_frac: 0.10
+num_workers: 16
+
+crops:
+  sizes: [128, 256]
+  bbox15:
+    margin: 1.5
+    min_margin: 1.02
+    pad_color: [124, 116, 104]
+  pad_gate_fraction: 0.10   # STOP if more than pad_gate_share of images have pad_fraction > this
+  pad_gate_share: 0.10
+  determinism_check_n: 300  # images re-cropped into a temp dir and compared byte-for-byte
+
+duplicates:
+  phash_max_hamming: 8
+  sscd_url: https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt
+  sscd_sha256: null          # filled in the manifest on first download
+  sscd_resize: 288           # SSCD "small_288" eval transform (short side)
+  sscd_threshold: 0.5
+  torch_threads: 16

@@ -1,4 +1,9 @@
-/data/
+/data/*
+!/data/hierarchy.csv
+!/data/make_model.csv
+!/data/duplicates.csv
+!/data/splits/
+!/data/manifests/
 /outputs/
 reports/*.png
 __pycache__/
