@@ -20,7 +20,8 @@ The statement says: *quantify how well existing methods meet the goal before inv
 | Coarse label | Make (49) | Given at training time |
 | Hidden subclass | Make-model-year (196); secondary level make-model (years merged) | Natural, uneven K_c (1 to 20+), rare subclasses exist without engineering |
 | Makes with K_c = 1 | Kept | Tests over-fragmentation: a good method should *not* split them |
-| Image | Bounding-box crop, square, ~10% margin, 128 px (256 px stored too) | FineGAN/C3-GAN convention on Cars; feasible on 1 GPU |
+| Image (main) | `bbox15`: square crop of side 1.5 × the bbox's longer side (FineGAN/StackGAN convention), shifted to stay inside the image, never stretched; 128 px (256 px stored too). Full spec in A2b | Car fills the frame at full detail; matches the most common convention on Cars; feasible on 1 GPU |
+| Image (ablation) | `full_cc`: whole image, short side → 128/256, centre crop (ADM / C3-GAN convention) | No bounding boxes needed, which matters for the medical transfer later |
 | `train` | Official train minus val (≈90%) | All method training, coarse labels only |
 | `val` | ≈10% of official train, stratified by fine label | Tuning. Fine labels used *only* to build the split (documented) |
 | `test` | Official test (8,041) | Held-out real reference. Never used for tuning |
@@ -28,6 +29,34 @@ The statement says: *quantify how well existing methods meet the goal before inv
 | Episodes (use case B) | Frozen JSON files built from `test` before any method runs | Support sets are unseen images, targets are the *rest* of that subclass |
 
 Fine labels are allowed in exactly one place: the evaluation package. Training datasets must not return them.
+
+### A2b. Image preprocessing
+
+**What the closest methods do on Stanford Cars** (read from their released code; OneGAN from its paper)
+
+| Method | Bbox? | Pipeline | Effect on a wide car |
+|---|---|---|---|
+| FineGAN | Yes | Square of side 1.5·max(w,h) centred on the bbox, **clamped** at image borders (so often not square) → short side to 152 → random 128 crop | No stretching; ends can be cut |
+| OneGAN | Yes | Bbox-based, 128 px; bboxes also cut background patches | — |
+| C3-GAN | No | Short side → 128 → random crop (train) / centre crop (test) | Ends cut |
+| MaskCon | No | Train: RandomResizedCrop 224; test: `Resize([224,224])` | Test images stretched |
+
+**Our main variant, `bbox15`** — FineGAN's crop size and centre, with two fixes: the window is *shifted* instead of clamped, and it is never resized to a non-square shape.
+
+1. Load with PIL and convert to RGB (Stanford Cars contains some greyscale images). Do **not** apply EXIF rotation: the bboxes refer to the stored pixels.
+2. Devkit bboxes are MATLAB 1-indexed and inclusive: `x1 -= 1; y1 -= 1`, keep `x2, y2`, clip to the image. `bw = x2 - x1`, `bh = y2 - y1`, `m = max(bw, bh)`, centre `(cx, cy)`.
+3. Target side `s = 1.5 · m` (FineGAN/StackGAN). If `s > min(W, H)`, reduce it to `s = max(min(W, H), 1.02 · m)`: the context margin shrinks before any padding is added, and the car always stays fully inside.
+4. Place the square at the bbox centre, then **shift** it (don't shrink it) until it lies inside the image on every axis where it fits.
+5. Only if `s` still exceeds an image dimension (a car wider than the photo is tall), keep that whole dimension and split the padding equally on both sides, filled with a constant ImageNet-mean colour `(124, 116, 104)`. No edge replication, no reflection.
+6. Resize the square crop straight to 256 and to 128 with PIL `LANCZOS` (antialiased). Don't make the 128 from the 256.
+7. Save as lossless PNG (uint8), named `{official_split}_{fname_stem}.png`. Record per image: the crop box in original coordinates, the scale, the pad on each side, `pad_fraction`, and the margin actually used (`s / m`).
+8. Training augmentation is applied at load time on top of the stored PNGs: horizontal flip only by default. An optional `finegan_jitter` (resize to 152, random 128 crop) is labelled wherever it is used. No augmentation when evaluating.
+
+**Ablation variant, `full_cc`**: the whole image with the ADM `center_crop_arr` recipe: repeated BOX halving while the short side is ≥ 2× the target, then BICUBIC resize of the short side to 128/256, then a centre crop. This is the standard for class-conditional generation and matches C3-GAN at evaluation time.
+
+**Native pipelines are used only for reproduction.** Each external baseline is first run with its own preprocessing, to check we can reach its published numbers. Every number in a comparison table comes from our stored `bbox15` PNGs, evaluated through our pipeline.
+
+**Evaluator input.** Real and generated images go through exactly the same path: 128 px PNG → each evaluator's standard resize (clean-fid for Inception, the model's own processor for CLIP/DINOv2/SSCD). Generated images are saved as PNG, never JPEG.
 
 ### A3. Evaluators (circularity rule)
 
@@ -187,9 +216,33 @@ Makefile       prepare, features, controls, report, test
   with an explicit, reviewed list (e.g. "AM General", "Aston Martin", "Land Rover", and check
   all others by hand). Write data/hierarchy.csv. Assert 49 makes. Print K_c per make, and list
   makes with K_c = 1. Also produce the make-model level.
-- crops.py: square crop around the bbox with 10% margin, clamped to the image and edge-padded
-  when needed, resized (Lanczos) to 128 and 256. Also keep an uncropped 256 version. Save
-  PNGs + a metadata parquet (id, path, official_split, make_id, fine_id, model_id, bbox).
+- crops.py: implement exactly the two variants in Part A2b of docs/PLAN.md, as pure functions
+  `crop_bbox15(img, bbox) -> (square_img, meta)` and `crop_full_cc(img, size)`:
+  * bbox15: convert to RGB, no EXIF transpose; convert the 1-indexed inclusive devkit bbox
+    (x1-=1, y1-=1); m = max(bw, bh); s = 1.5*m; if s > min(W, H) then
+    s = max(min(W, H), 1.02*m); centre on the bbox, SHIFT the window inside the image (never
+    shrink or clamp it into a non-square); on an axis where s > image size keep the whole axis and split the padding equally, constant
+    (124, 116, 104); resize the square directly to 256 and to 128 with PIL LANCZOS.
+    NEVER resize a non-square region to a square.
+  * full_cc: ADM center_crop_arr (BOX halving while short side >= 2*size, BICUBIC short
+    side -> size, centre crop), at 128 and 256.
+  Write derived/{bbox15,full_cc}_{128,256}/{official_split}_{stem}.png plus a metadata
+  parquet (id, path, official_split, make_id, fine_id, model_id, bbox, crop_box, scale,
+  pad_l/t/r/b, pad_fraction, margin_used = s/m, was_grayscale, orig_W, orig_H) and a manifest
+  with SHA256 of every output file. Deterministic: two runs must give byte-identical files.
+- Preprocessing checks (write reports/preprocessing.md):
+  * Unit tests: the car's aspect ratio (bbox w/h) is preserved within 1%; the transformed
+    bbox lies fully inside the crop; the 1-indexed conversion is correct on a synthetic image.
+  * Statistics: % of images needing any padding; histogram of pad_fraction; histogram of
+    margin_used (how often we fall below 1.5); number of greyscale images; original size
+    distribution.
+  * Grids: 64 random crops, the 32 most-padded crops, the 32 smallest margin_used, and 16
+    bbox15 vs full_cc pairs.
+  * If more than 10% of images have pad_fraction > 0.10, STOP and report before moving on.
+- Native-preprocessing adapters (used only in Step 3 for reproducing published numbers):
+  `native_finegan` (1.5x bbox clamped, short side 152, random 128 crop) and `native_c3gan`
+  (short side 128, centre crop). Keep them in lsgen/data/native.py and never use them for
+  comparison tables.
 - Near-duplicate audit: pHash + SSCD between train and test; write the list of near-duplicate
   pairs to data/duplicates.csv and report the count. Do not delete them; mark them.
 - splits.py: val = 10% of official train, stratified by fine_id (seed 0); train = the rest;
@@ -314,6 +367,9 @@ Stop and report which objectives each method satisfies per make, versus frozen D
 ```text
 Add generative baselines under lsgen/methods/gen/, all writing outputs in the Step 1 format
 and evaluated only through lsgen/eval.
+Preprocessing: reproduce each published number with the method's NATIVE pipeline
+(lsgen/data/native.py), then retrain and evaluate on our bbox15 PNGs for all comparison
+tables. Report both, clearly labelled.
 Tier 2 (as published, labelled "no coarse labels"): C3-GAN (github.com/naver-ai/c3-gan):
 first evaluate the official Stanford Cars checkpoint and compare ACC/NMI/FID with the paper,
 then retrain on our train split. FineGAN (github.com/kkanshul/finegan; port to current
