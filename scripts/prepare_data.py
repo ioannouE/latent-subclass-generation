@@ -49,7 +49,7 @@ class Paths:
         self.hierarchy = self.data / "hierarchy.csv"
         self.duplicates = self.data / "duplicates.csv"
         self.duplicates_within_test = self.data / "duplicates_within_test.csv"
-        self.eval_exclude = self.splits / "eval_exclude.txt"
+        self.exclude = self.splits / "exclude.txt"
 
 
 def dataset_hash(P):
@@ -230,8 +230,8 @@ def stage_finalize(cfg, P):
     cm = pd.read_parquet(P.crops_meta)
     meta = idx.merge(h, on="fine_id", validate="many_to_one").merge(cm, on="id", validate="one_to_one")
     meta = meta.rename(columns={"orig_mode": "raw_mode", "sha256": "raw_sha256"})
-    split = {i: s for s in ("train", "val", "test") for i in load_split(P.splits, s)}
-    half = {i: s[-1] for s in ("test_A", "test_B") for i in load_split(P.splits, s)}
+    split = {i: s for s in ("train", "val", "test") for i in load_split(P.splits, s, exclude=False)}
+    half = {i: s[-1] for s in ("test_A", "test_B") for i in load_split(P.splits, s, exclude=False)}
     meta["split"] = meta.id.map(split)
     meta["test_half"] = meta.id.map(half)
     if meta.split.isna().any():
@@ -242,19 +242,19 @@ def stage_finalize(cfg, P):
     meta["near_duplicate"] = meta.n_near_duplicates > 0
     wt = pd.read_csv(P.duplicates_within_test)
     meta["n_near_duplicates_within_test"] = meta.id.map(pd.concat([wt.id_a, wt.id_b]).value_counts()).fillna(0).astype(int)
-    # label noise: byte-identical files (any splits) carrying different official fine labels.
-    # Decision 30 Sep 2026: kept in the data, excluded from test-side evaluation references and episodes.
-    n_labels = meta.groupby("raw_sha256").fine_id.transform("nunique")
-    meta["label_conflict"] = n_labels > 1
-    meta["eval_exclude"] = meta.label_conflict & (meta.split == "test")
-    P.eval_exclude.write_text("".join(f"{i}\n" for i in sorted(meta.id[meta.eval_exclude])))
-    log.info("label-conflict images: %d (%s); excluded from test-side evaluation/episodes: %d",
-             meta.label_conflict.sum(), meta[meta.label_conflict].split.value_counts().to_dict(), meta.eval_exclude.sum())
+    # Conflicting data (decision 1 Oct 2026): the same image under different official fine labels, i.e. byte-identical
+    # files or flagged near-duplicate pairs (train-test, within test) whose labels differ. Left out of ALL experiments.
+    in_conflict_pair = set(dups.loc[dups.label_conflict, ["test_id", "train_id"]].to_numpy().ravel()) | \
+        set(wt.loc[wt.label_conflict, ["id_a", "id_b"]].to_numpy().ravel())
+    meta["exclude"] = (meta.groupby("raw_sha256").fine_id.transform("nunique") > 1) | meta.id.isin(in_conflict_pair)
+    P.exclude.write_text("".join(f"{i}\n" for i in sorted(meta.id[meta.exclude])))
+    log.info("conflicting images excluded from all experiments: %d (%s)",
+             meta.exclude.sum(), meta[meta.exclude].split.value_counts().to_dict())
     meta["path"] = "bbox15_128/" + meta.id + ".png"
     cols = ["id", "path", "rel_path", "official_split", "split", "test_half", "make_id", "fine_id", "model_id",
             *BBOX_COLS, "bbox_clipped", "crop_x0", "crop_y0", "crop_x1", "crop_y1", "side",
             *[c for c in meta.columns if c.startswith("scale_")], "pad_l", "pad_t", "pad_r", "pad_b", "pad_fraction",
-            "margin_used", "was_grayscale", "raw_mode", "orig_W", "orig_H", "raw_sha256", "near_duplicate", "n_near_duplicates", "n_near_duplicates_within_test", "label_conflict", "eval_exclude"]
+            "margin_used", "was_grayscale", "raw_mode", "orig_W", "orig_H", "raw_sha256", "near_duplicate", "n_near_duplicates", "n_near_duplicates_within_test", "exclude"]
     meta = meta[cols].sort_values("id", ignore_index=True)
     meta.to_parquet(P.metadata, index=False)
 

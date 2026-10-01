@@ -186,7 +186,7 @@ evaluation library, control "generators", and a representation table for frozen 
 # Repository layout (Python >= 3.10, PyTorch, uv or conda, pinned lockfile)
 lsgen/
   data/        stanford_cars.py, hierarchy.py, crops.py, splits.py, episodes.py
-  features/    registry.py, extract.py        (cache to .npy + JSON manifest)
+  features/    encoders.py, extract.py        (cache to CSV: filename, z1..zD; + JSON manifest)
   eval/        representation.py, synthesis.py (use case A), support.py (use case B),
                memorization.py, evaluators.py, stats.py (bootstrap, CIs), report.py
   controls/    controls.py
@@ -257,12 +257,17 @@ Makefile       prepare, features, controls, report, test
   Save as JSON with seeds. Report how many classes are eligible per k.
 
 # Milestone 3: features and evaluators
-- features/registry.py: a uniform interface (preprocess, embed, dim, family) for: DINOv2
-  ViT-B/14 and ViT-L/14; DINOv3 ViT-B/16 and ViT-L/16 (Hugging Face, gated: document how to
-  get access); CLIP ViT-L/14; SigLIP2; torchvision ResNet-50 (supervised ImageNet);
+- features/encoders.py: a uniform interface (preprocess, embed, dim, family) for: DINOv2
+  ViT-B/14 and ViT-L/14; DINOv3 ViT-B/16 and ViT-L/16 (loaded through timm, e.g.
+  `vit_base_patch16_dinov3.lvd1689m`, as in med-img-gen/zero_shot/encoders.py; the weights are in the HF cache);
+  CLIP ViT-L/14; SigLIP2; torchvision ResNet-50 (supervised ImageNet);
   Inception-v3 pool3 (use clean-fid's implementation); SSCD (disc_mixup or disc_large).
-  Cache embeddings for train/val/test at 128 and 256 px (native model resolution, same
-  resize path for real and generated images).
+  Embedding = CLS/pooled output, as in zero_shot/extract_embeddings.py. Cache embeddings for train/val/test at 128
+  and 256 px (native model resolution, same resize path for real and generated images).
+- Embedding file format (all encoders, real and generated): CSV, first column `filename`, then one column per latent
+  dimension `z1, z2, ..., zD`; one row per image; a JSON manifest next to it (encoder, input size, split, n, dim, git hash).
+- Conflicting images (docs/DATA.md, `data/splits/exclude.txt`) are left out of every experiment, from feature
+  extraction onwards, and every report states it.
 - train_eval_classifier.py: evaluator-only classifiers trained on `train` at 128 px:
   (a) fine (196), (b) make (49). ConvNeXt-T, ImageNet init, standard augmentation, model
   selection on val, temperature scaling on val. Report test top-1 and ECE. These are

@@ -1,0 +1,11 @@
+# Milestone 3: evaluator classifiers (evaluation only), trained on train, selected and calibrated on val.
+data_config: configs/data.yaml
+labels: [fine, make]            # 196 official classes / 49 makes
+crop: bbox15_128
+arch: convnext_tiny.fb_in1k     # ImageNet init
+epochs: 30
+batch_size: 128
+lr: 2.0e-4
+weight_decay: 0.05
+num_workers: 8                  # = --cpus-per-task in slurm/train_eval_classifier.sh
+seed: 0

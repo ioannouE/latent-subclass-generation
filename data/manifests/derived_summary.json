@@ -1,6 +1,6 @@
 {
- "git_hash": "db1893084d7d1f4ec851e7a7404fbf71292ee109-dirty",
- "created_utc": "2026-09-30T13:35:59+00:00",
+ "git_hash": "bfe27bf3d79f09faafcdea75e9d30541618911b0-dirty",
+ "created_utc": "2026-10-01T14:58:11+00:00",
  "config": {
   "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
   "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
@@ -8,7 +8,7 @@
   "reports_root": "/nvme/h/eioannou/code/latent-subclass-generation/reports",
   "seed": 0,
   "val_frac": 0.1,
-  "num_workers": 16,
+  "num_workers": 8,
   "crops": {
    "sizes": [
     128,
@@ -25,22 +25,24 @@
    },
    "pad_gate_fraction": 0.1,
    "pad_gate_share": 0.1,
+   "pad_gate_action": "warn",
    "determinism_check_n": 300
   },
   "duplicates": {
-   "phash_max_hamming": 8,
+   "phash_max_hamming": 4,
    "sscd_url": "https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt",
-   "sscd_sha256": null,
+   "sscd_sha256": "9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56",
    "sscd_resize": 288,
-   "sscd_threshold": 0.5,
-   "torch_threads": 16
+   "sscd_threshold": 0.75,
+   "device": "cuda",
+   "torch_threads": 8
   }
  },
  "config_path": "configs/data.yaml",
  "seed": 0,
  "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
  "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
- "manifest_hash": "196ffcde8cc41d842de576a79ac2b5c021257c21cc074c37d78ba11d5431a87b",
+ "manifest_hash": "711873119f4bcee9492d1e3311e9732f637996cd59c6687cc355459ff9697e03",
  "n_files": 64741,
  "per_dir": {
   "bbox15_128": {
@@ -61,7 +63,7 @@
   },
   "metadata.parquet": {
    "n_files": 1,
-   "manifest_hash": "8b443339dd9ccdab98b35c8418826556e09f5e6bf1bbe36529079f16bfa77c5e"
+   "manifest_hash": "0bb3bdfcf70370363ccd8cf963a63198a6be98c396b6b46359d6b58fa4378a9b"
   }
  },
  "determinism": "300 images x 4 files re-generated: 0 byte mismatches, 0 on-disk mismatches"

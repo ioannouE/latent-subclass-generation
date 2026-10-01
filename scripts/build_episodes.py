@@ -1,7 +1,7 @@
 """Milestone 2: build and freeze use-case-B episodes from the Milestone 1 outputs.
 
 CPU only, a few seconds (no GPU, no images read). Needs prepare_data.py stages up to `finalize`
-(metadata.parquet with eval_exclude/label_conflict, duplicates.csv, duplicates_within_test.csv).
+(metadata.parquet with `exclude`, duplicates.csv, duplicates_within_test.csv).
     python scripts/build_episodes.py --config configs/episodes.yaml
 Refuses to overwrite existing episode files unless --overwrite (episodes are frozen).
 """
@@ -25,8 +25,8 @@ def write_episodes(path, header, episodes):
     path.write_text(json.dumps(header, indent=1, default=str)[:-2] + ',\n "episodes": [\n' + body + "\n]}\n")
 
 
-def pools(meta, split, drop_col):
-    m = meta[(meta.split == split) & ~meta[drop_col]]
+def pools(meta, split):
+    m = meta[(meta.split == split) & ~meta.exclude]
     return {int(g): sorted(ids) for g, ids in m.groupby("fine_id").id}
 
 
@@ -45,23 +45,21 @@ def main():
 
     data = Path(dcfg["data_root"])
     meta = pd.read_parquet(Path(dcfg["derived_root"]) / "metadata.parquet",
-                           columns=["id", "split", "fine_id", "make_id", "label_conflict", "eval_exclude"])
+                           columns=["id", "split", "fine_id", "make_id", "exclude"])
     dataset_hash = json.loads((data / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
     cross = pd.read_csv(data / "duplicates.csv")
     within = pd.read_csv(data / "duplicates_within_test.csv")
     near_dup = near_dup_index(list(zip(cross.test_id, cross.train_id)) + list(zip(within.id_a, within.id_b)))
     make_of = meta.groupby("fine_id").make_id.first().astype(int).to_dict()
-    test_pools = pools(meta, "test", "eval_exclude")
-    train_pools = pools(meta, "train", "label_conflict")
-    log.info("pools: %d test images in %d classes (excluded %d label-conflict), %d train images",
-             sum(map(len, test_pools.values())), len(test_pools), int(meta.eval_exclude.sum()),
-             sum(map(len, train_pools.values())))
+    test_pools, train_pools = pools(meta, "test"), pools(meta, "train")
+    log.info("pools: %d test images in %d classes, %d train images (%d conflicting images excluded)",
+             sum(map(len, test_pools.values())), len(test_pools), sum(map(len, train_pools.values())), int(meta.exclude.sum()))
 
     seed, s, mx = cfg["seed"], cfg["single"], cfg["mixed"]
     prov = provenance(cfg, seed, dataset_hash)
     prov["inputs_sha256"] = {"duplicates.csv": sha256_file(data / "duplicates.csv"),
                              "duplicates_within_test.csv": sha256_file(data / "duplicates_within_test.csv"),
-                             "eval_exclude.txt": sha256_file(data / "splits" / "eval_exclude.txt")}
+                             "exclude.txt": sha256_file(data / "splits" / "exclude.txt")}
     summary, files = {}, {}
     for src in s["support_sources"]:
         family = f"single_{src}"

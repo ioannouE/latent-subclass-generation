@@ -5,6 +5,9 @@ Spec: docs/PLAN.md (Part A = design, Part B = Step 1 prompt). Read it before any
 - Fine labels only inside lsgen/eval/ and split/episode construction; training datasets never return them.
 - `test` split is never used for tuning or model selection.
 - Raw data at /nvme/h/eioannou/data_p315/Stanford_Cars/kaggle/ is read-only; never commit data, features, checkpoints or images.
+- Conflicting images (`data/splits/exclude.txt`, see docs/DATA.md) are left out of EVERY experiment: always load
+  splits with `load_split` (drops them by default) and note the exclusion in every report.
+- Embeddings are CSV: first column `filename`, then `z1..zD`; one row per image, plus a JSON manifest.
 - Evaluators must be disjoint from any encoder a method uses.
 - Work one milestone at a time; stop and report after each. Don't tune a metric to make a control pass.
 - Work directly on `main` (no feature branches); commit and push at the end of each milestone. Keep `main` passing `make test`.

@@ -25,5 +25,5 @@ BUILD_EPISODES=1                      # 0 to skip; episodes are frozen (rebuild 
 python scripts/prepare_data.py --config configs/data.yaml --stages ${STAGES} ${EXTRA_ARGS}
 
 if [ "${BUILD_EPISODES}" = "1" ]; then
-  python scripts/build_episodes.py --config configs/episodes.yaml
+  python scripts/build_episodes.py --config configs/episodes.yaml --overwrite   # drop --overwrite once frozen for good
 fi

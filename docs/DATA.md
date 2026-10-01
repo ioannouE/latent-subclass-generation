@@ -74,12 +74,12 @@ Thresholds revised on 30 Sep 2026 after the first audit (initially pHash <= 8 / 
 different photos of the same design). Raw scores are always kept in the CSVs.
 The per-test-image nearest-train SSCD similarity (`duplicates/sscd_nn_test_to_train.parquet`) is the null distribution for G7.
 
-## Label noise (decision 30 Sep 2026)
-Byte-identical files carrying different official fine labels (first audit: 18 train/test pairs and 19 within-split groups)
-are marked `label_conflict`. They stay in the data, but the test ones are excluded from every test-side evaluation
-reference and from episodes: `data/splits/eval_exclude.txt`, `metadata.eval_exclude`, `load_split(..., exclude_eval=True)`.
-Label-conflict train images are never used as episode supports. Their use for training the evaluator classifier is
-decided in Milestone 3.
+## Conflicting data (decision 1 Oct 2026)
+An image is "conflicting" if the same image appears under different official fine labels: byte-identical files, or a
+flagged near-duplicate pair (train-test or within test) whose labels differ. All of them, in every split, are left out of
+ALL experiments (training, evaluation, episodes, features): `data/splits/exclude.txt`, `metadata.exclude`;
+`load_split` drops them by default. The raw files stay on disk and in `metadata.parquet`.
+Every report and paper table must state this exclusion and the number of images removed per split.
 
 ## Episodes (use case B, Milestone 2)
 `scripts/build_episodes.py --config configs/episodes.yaml` -> `data/episodes/*.json` (frozen; refuses to overwrite

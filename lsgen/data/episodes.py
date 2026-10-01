@@ -8,7 +8,7 @@ Fine labels are used here to construct episodes (allowed: episode construction);
 receive the support images, never the episode's fine ids.
 
 Rules (all enforced below and tested in tests/test_episodes.py):
-- label-conflict test images (eval_exclude) never appear in S or T; label-conflict train images never in S;
+- conflicting images (metadata `exclude`) never appear in S or T;
 - no known near-duplicate pair between S and T (S is redrawn, up to `max_redraws`, then the episode is
   kept and its remaining pairs recorded as `n_near_dup_S_T`);
 - every episode has its own integer seed derived from (base seed, family, k, class ids, repetition).

@@ -35,4 +35,6 @@ def test_splits_partition_stratified_deterministic(tmp_path):
     assert make_splits(meta, 0.10, 0) == s
     assert make_splits(meta, 0.10, 1)["val"] != s["val"]
     save_splits(s, tmp_path)
-    assert all(load_split(tmp_path, k) == v for k, v in s.items())
+    assert all(load_split(tmp_path, k, exclude=False) == v for k, v in s.items())
+    (tmp_path / "exclude.txt").write_text(f"{s['val'][0]}\n{s['test'][0]}\n")
+    assert load_split(tmp_path, "val") == s["val"][1:] and load_split(tmp_path, "test") == s["test"][1:]

@@ -1,6 +1,6 @@
 {
- "git_hash": "588de5ccbd0196cf3b4c872271a0ddb78dc84da3-dirty",
- "created_utc": "2026-09-30T16:15:52+00:00",
+ "git_hash": "bfe27bf3d79f09faafcdea75e9d30541618911b0-dirty",
+ "created_utc": "2026-10-01T14:55:57+00:00",
  "config": {
   "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
   "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",

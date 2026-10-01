@@ -1,6 +1,6 @@
 {
- "git_hash": "db1893084d7d1f4ec851e7a7404fbf71292ee109-dirty",
- "created_utc": "2026-09-30T13:35:59+00:00",
+ "git_hash": "bfe27bf3d79f09faafcdea75e9d30541618911b0-dirty",
+ "created_utc": "2026-10-01T14:58:11+00:00",
  "config": {
   "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
   "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
@@ -8,7 +8,7 @@
   "reports_root": "/nvme/h/eioannou/code/latent-subclass-generation/reports",
   "seed": 0,
   "val_frac": 0.1,
-  "num_workers": 16,
+  "num_workers": 8,
   "crops": {
    "sizes": [
     128,
@@ -25,26 +25,31 @@
    },
    "pad_gate_fraction": 0.1,
    "pad_gate_share": 0.1,
+   "pad_gate_action": "warn",
    "determinism_check_n": 300
   },
   "duplicates": {
-   "phash_max_hamming": 8,
+   "phash_max_hamming": 4,
    "sscd_url": "https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt",
-   "sscd_sha256": null,
+   "sscd_sha256": "9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56",
    "sscd_resize": 288,
-   "sscd_threshold": 0.5,
-   "torch_threads": 16
+   "sscd_threshold": 0.75,
+   "device": "cuda",
+   "torch_threads": 8
   }
  },
  "config_path": "configs/data.yaml",
  "seed": 0,
  "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
- "n_pairs": 1279,
- "n_flag_sscd": 1195,
- "n_flag_phash": 146,
+ "n_pairs": 128,
+ "n_flag_sscd": 121,
+ "n_flag_phash": 32,
  "n_exact_duplicate": 19,
  "n_exact_duplicate_label_conflict": 18,
+ "n_pairs_within_test": 67,
  "sscd_weights": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/weights/sscd_disc_mixup.torchscript.pt",
  "sscd_weights_sha256": "9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56",
- "duplicates_csv_sha256": "9f3df36a29058357442b009d4d8c55fd5d4d70b2963bf9a4d42e6a7c4433203e"
+ "sscd_embedding_device": "cuda",
+ "duplicates_csv_sha256": "d5bdeab95f7aea85461b3ec6e7bba4e5212bd3c4f392eaf4b451cdbcfc70fe63",
+ "duplicates_within_test_csv_sha256": "2928275b87cfd986130a0260ea2207a0a2f1a5b35900f2bafbc6f6e047c09c24"
 }

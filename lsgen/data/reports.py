@@ -177,9 +177,9 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
     within = sha_groups[(sha_groups.n > 1) & ~sha_groups.splits.str.contains(r"\+")]
     lines.append(f"- Byte-identical groups within one official split: {len(within)} "
                  f"({int((within.n_fine > 1).sum())} with conflicting fine labels)")
-    if "label_conflict" in meta:
-        lines.append(f"- Label-conflict images (byte-identical, different fine labels): {int(meta.label_conflict.sum())}; "
-                     f"excluded from test-side evaluation and episodes (`data/splits/eval_exclude.txt`): {int(meta.eval_exclude.sum())}")
+    lines.append(f"- Conflicting images (same image under different fine labels: byte-identical or flagged near-duplicate), "
+                 f"left out of all experiments (`data/splits/exclude.txt`): {int(meta.exclude.sum())} "
+                 f"{json.dumps(meta[meta.exclude].split.value_counts().to_dict())}")
     if "n_near_duplicates_within_test" in meta:
         lines.append(f"- Test images with a near-duplicate inside test: {int((meta.n_near_duplicates_within_test > 0).sum())} "
                      f"(`data/duplicates_within_test.csv`; episodes avoid such pairs across S and T)")
