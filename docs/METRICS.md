@@ -25,12 +25,11 @@ cases with known answers). Entry points: `scripts/eval_representation.py` (R1-R5
 |---|---|---|
 | Fine / make classifier | ConvNeXt-T (ImageNet init) trained on `train` at 128 px, temperature-scaled on `val` | G2-G5, B1, B5 |
 | Inception pool3 (clean-fid, 2048-d) | `inception` | G1 FID, KID, precision/recall, density/coverage |
-| DINOv2 ViT-L/14 CLS | `dinov2_large` | G1 FD_DINOv2 (secondary; "same family" for DINOv3 methods) |
 | CLIP ViT-L/14 | `clip_l` | G4, G5, G6 (KID, coverage), B2, B4 |
 | SSCD disc_mixup | `sscd` | G7, B3 |
 
 A method declares the encoders it used in `method.json` (`"uses"`). `eval_generation.py` refuses to score it if one of
-them is an evaluator, and records a warning for same-family pairs (DINOv2/DINOv3, ConvNeXt classifier/ConvNeXt).
+them is an evaluator, and records a warning for same-family pairs (e.g. a ConvNeXt-based method vs the ConvNeXt classifier).
 
 ## Representation metrics (use `test` embeddings, `train` as the fitted / reference set)
 | ID | Definition |
@@ -46,7 +45,7 @@ them is an evaluator, and records a warning for same-family pairs (DINOv2/DINOv3
 ## Use case A (generated images, `samples.csv`: filename, make_id [, group]; all vs `test`)
 | ID | Definition |
 |---|---|
-| **G1** | FID (Frechet distance of Inception features), KID (unbiased MMD^2, kernel (x.y/d + 1)^3; sets up to 1000 compared whole, larger ones averaged over 100 random subsets of 1000), FD_DINOv2 (Frechet distance in DINOv2-L space), precision/recall (k = 5 nearest-neighbour balls, Kynkaanniemi 2019), density/coverage (Naeem 2020), all at matched n. |
+| **G1** | FID (Frechet distance of Inception features), KID (unbiased MMD^2, kernel (x.y/d + 1)^3; sets up to 1000 compared whole, larger ones averaged over 100 random subsets of 1000), precision/recall (k = 5 nearest-neighbour balls, Kynkaanniemi 2019), density/coverage (Naeem 2020), all at matched n. |
 | **G2** | Make accuracy: the make classifier predicts the requested make (per make, macro). Make-prevalence TV: 0.5 * sum \|p_samples(make) - p_test(make)\| with the make classifier's predicted makes. |
 | **G3** | Per requested make, over that make's fine classes: TV and add-one-smoothed KL(q_test \|\| p_samples) between the fine classifier's argmax histogram of the make's samples and the fine histogram of `test`. Restricting to the make's classes isolates O2 from O1. |
 | **G4** | Rare = bottom quartile of fine classes by `train` count (count <= 25% quantile). tau = smallest confidence at which the calibrated fine classifier has >= 90% accuracy on `val`. A sample is assigned to class g if the classifier predicts g with confidence >= tau and g belongs to the requested make; g is *covered* if >= 5 samples are assigned. Reported: % covered overall, rare, common (per make, macro). |

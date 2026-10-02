@@ -6,7 +6,7 @@ from pathlib import Path
 from lsgen.features.encoders import ENCODERS
 
 EVALUATORS = {  # role -> name. Names are keys of ENCODERS, or "classifier" for the ConvNeXt-T fine/make evaluators
-    "fid_kid": "inception", "fd_dino": "dinov2_large", "semantic": "clip_l", "copy": "sscd", "classifier": "classifier"}
+    "fid_kid": "inception", "semantic": "clip_l", "copy": "sscd", "classifier": "classifier"}
 LINEAGE = {"dinov2": "dino", "dinov3": "dino", "classifier": "convnext"}  # families that count as "same family"
 
 

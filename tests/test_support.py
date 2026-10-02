@@ -43,7 +43,7 @@ def test_beyond_support_distinguishes_target_from_support_copy():
 
 
 def test_evaluator_disjointness_rule():
-    assert any("dinov2_large" in w for w in check_disjoint(["dinov3_large"]))  # same family: flagged, not refused
+    assert any("dinov2_large" in w for w in check_disjoint(["dinov3_large"], {"fd": "dinov2_large"}))  # same family: flagged, not refused
     assert check_disjoint(["supervised_resnet50"]) == []
     for name in set(EVALUATORS.values()):
         with pytest.raises(ValueError, match="circularity"):

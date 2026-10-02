@@ -66,7 +66,7 @@ def subsample(x, n, seed):
 def run_a(ctx, samples, paths):
     cfg, seed = ctx.cfg, ctx.cfg["seed"]
     req = samples.make_id.to_numpy()
-    feats = {s: ctx.embed(s, paths) for s in ("inception", "dinov2_large", "clip_l", "sscd")}
+    feats = {s: ctx.embed(s, paths) for s in ("inception", "clip_l", "sscd")}
     fine_probs, make_probs = ctx.probs("fine", paths), ctx.probs("make", paths)
     test_ids, train_ids = (ctx.reference("clip_l", s)[0] for s in ("test", "train"))
     test_fine, train_fine = ctx.labels(test_ids, "fine_id"), ctx.labels(train_ids, "fine_id")
@@ -78,10 +78,9 @@ def run_a(ctx, samples, paths):
     t = {}
 
     n = min(len(samples), len(test_ids))  # G1 at matched n
-    inc, dino = (subsample(feats[s], n, seed) for s in ("inception", "dinov2_large"))
-    inc_ref, dino_ref = (subsample(ref[s, "test"], n, seed) for s in ("inception", "dinov2_large"))
+    inc, inc_ref = subsample(feats["inception"], n, seed), subsample(ref["inception", "test"], n, seed)
     t["g1"] = pd.DataFrame([{"n": n, "fid": synthesis.frechet_distance(inc, inc_ref), "kid": synthesis.kid(inc, inc_ref, seed=seed),
-                             "fd_dinov2": synthesis.frechet_distance(dino, dino_ref), **synthesis.prdc(inc_ref, inc, cfg["prdc_k"])}])
+                             **synthesis.prdc(inc_ref, inc, cfg["prdc_k"])}])
 
     g2 = pd.DataFrame({"make_id": req, "make_acc": synthesis.make_correct(make_probs, req)})
     t["g2_make_acc"] = bootstrap_table(g2, "make_id", ["make_acc"], cfg["n_boot"], seed, cfg["n_jobs"])
