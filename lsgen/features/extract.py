@@ -28,3 +28,9 @@ def write_csv(path, filenames, emb):
     df = pd.DataFrame(emb, columns=[f"z{i + 1}" for i in range(emb.shape[1])])
     df.insert(0, "filename", filenames)
     df.to_csv(path, index=False, float_format="%.6g")
+
+
+def read_csv(path):
+    """Inverse of write_csv: (filenames, (n, D) float32 array)."""
+    df = pd.read_csv(path)
+    return df.filename.tolist(), df.iloc[:, 1:].to_numpy("float32")

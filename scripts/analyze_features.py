@@ -19,14 +19,15 @@ from sklearn.decomposition import PCA  # noqa: E402
 from sklearn.manifold import TSNE  # noqa: E402
 
 from lsgen.eval.representation import deltas_per_make, knn_accuracy, l2norm  # noqa: E402
+from lsgen.features.extract import read_csv  # noqa: E402
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging  # noqa: E402
 
 log = logging.getLogger("analyze_features")
 
 
 def load(derived, enc, split, meta):
-    df = pd.read_csv(derived / "features" / enc / f"{split}.csv")
-    return df.iloc[:, 1:].to_numpy(np.float32), meta.loc[df.filename.str[:-4]]
+    files, x = read_csv(derived / "features" / enc / f"{split}.csv")
+    return x, meta.loc[[f[:-4] for f in files]]
 
 
 def project(x, cfg):
@@ -75,10 +76,10 @@ def fig_r3(r3, path):
     r3 = r3[r3.K_c >= 2].assign(name=lambda d: d.encoder + "_" + d.crop.astype(str), r01=lambda d: d.d0 / d.d1, r12=lambda d: d.d1 / d.d2)
     names = list(dict.fromkeys(r3.name))
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
-    for ax, col, title in zip(axes, ["r01", "r12"], ["d0 / d1  (same subclass vs same make)", "d1 / d2  (same make vs other makes)"]):
+    for ax, col, title in zip(axes, ["r01", "r12"], ["d0 / d1 (same subclass vs same make)", "d1 / d2 (same make vs other makes)"]):
         ax.boxplot([r3.loc[r3.name == n, col] for n in names], tick_labels=names, showfliers=True)
         ax.axhline(1, color="r", ls="--", lw=1)
-        ax.set(title=f"{title}, per make with K_c >= 2 (<1 is the desired order)", ylabel="ratio")
+        ax.set_title(title, fontsize=10); ax.set_ylabel("ratio per make with K_c >= 2 (<1 desired)")
         ax.tick_params(axis="x", rotation=60)
     fig.tight_layout()
     fig.savefig(path, dpi=130)

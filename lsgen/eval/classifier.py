@@ -76,3 +76,18 @@ def ece(probs, labels, n_bins=15):
         if m.any():
             err += m.float().mean().item() * abs(correct[m].mean().item() - conf[m].mean().item())
     return err
+
+
+def load_classifier(path, device):
+    """Evaluator checkpoint written by scripts/train_eval_classifier.py -> (model, temperature)."""
+    ck = torch.load(path, map_location="cpu")
+    model = timm.create_model(ck["arch"], pretrained=False, num_classes=ck["n_classes"])
+    model.load_state_dict(ck["state_dict"])
+    return model.to(device).eval(), ck["temperature"]
+
+
+@torch.no_grad()
+def calibrated_probs(model, temperature, paths, transform, device, batch_size=128, num_workers=8):
+    """Temperature-scaled class probabilities (n, K) for image files, rows in the order of `paths`."""
+    dl = torch.utils.data.DataLoader(LabelledImages(paths, [0] * len(paths), transform), batch_size, num_workers=num_workers)
+    return torch.cat([(model(x.to(device)).float() / temperature).softmax(1).cpu() for x, _ in dl]).numpy()

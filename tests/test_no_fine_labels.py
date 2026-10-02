@@ -14,7 +14,8 @@ from lsgen.utils import REPO_ROOT
 FINE_TOKENS = re.compile(r"fine_id|model_id|make_model|class_name|\byear\b|fine_label")
 # Modules allowed to touch fine labels: evaluation, and data/split/episode construction.
 ALLOWED = {"lsgen/eval", "lsgen/data/stanford_cars.py", "lsgen/data/hierarchy.py", "lsgen/data/splits.py",
-           "lsgen/data/episodes.py", "lsgen/data/reports.py", "scripts/prepare_data.py", "scripts/build_episodes.py", "scripts/train_eval_classifier.py", "scripts/analyze_features.py"}
+           "lsgen/data/episodes.py", "lsgen/data/reports.py", "scripts/prepare_data.py", "scripts/build_episodes.py", "scripts/train_eval_classifier.py", "scripts/analyze_features.py",
+           "scripts/eval_representation.py", "scripts/eval_generation.py"}
 
 
 def test_dataset_returns_only_image_and_make(tmp_path):

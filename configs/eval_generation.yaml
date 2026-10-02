@@ -1,0 +1,18 @@
+# Milestone 4: score one set of generated images. samples_dir holds the PNGs (128 px), method.json and samples.csv:
+#   use case A: columns filename, make_id [, group];  use case B: columns filename, episode_id (N = 16 per episode).
+# method.json: {"name": ..., "uses": [encoders the method used for conditioning/training]}.
+data_config: configs/data.yaml
+use_case: A                  # A | B
+samples_dir: outputs/samples/example
+crop_size: 128               # reference embeddings are the cached bbox15 crops of this size
+tau_target: 0.9              # G4: tau = smallest confidence at which the calibrated fine classifier has this val accuracy
+min_samples: 5               # G4: samples needed to call a fine class covered
+copy_threshold: 0.5          # G7
+prdc_k: 5                    # G1 neighbourhood size
+coverage_k: 3                # G4/G5/B2 neighbourhood size (small sets)
+n_episodes_images: 16        # B: expected generated images per episode
+n_boot: 1000
+n_jobs: 16                   # = --cpus-per-task in slurm/eval_generation.sh
+batch_size: 128
+num_workers: 8
+seed: 0
