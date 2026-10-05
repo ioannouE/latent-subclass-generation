@@ -15,6 +15,12 @@ def test_bootstrap_macro_ci_and_determinism():
     assert r.equals(bootstrap(lambda i: {"m": v[i].mean()}, groups, 300, 0))
 
 
+def test_subsample_draws_distinct_images():
+    seen = []
+    bootstrap(lambda i: seen.append(i) or {"m": 0.0}, {"a": np.arange(100)}, 5, 0, subsample=0.6)
+    assert all(len(i) == 60 and len(set(i)) == 60 for i in seen[1:])  # first call is the point estimate
+
+
 def test_bootstrap_table_ignores_nan_and_unequal_classes():
     df = pd.DataFrame({"g": ["x"] * 4 + ["y"] * 2, "v": [1, 1, np.nan, 1, 3, 3.0]})
     r = bootstrap_table(df, "g", ["v"], 50, 0).set_index("group")

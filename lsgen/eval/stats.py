@@ -1,4 +1,6 @@
-"""Bootstrap CIs: images are resampled within each coarse class (1000 resamples), macro = mean over classes."""
+"""Bootstrap CIs: images are resampled within each coarse class (1000 resamples), macro = mean over classes.
+`subsample` replaces the resampling by draws without replacement of that fraction of the images, for metrics that break
+on duplicated images (K-hat: duplicates form tight pairs and inflate the silhouette-selected K)."""
 import warnings
 
 import numpy as np
@@ -6,13 +8,15 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 
-def _boots(metric, idx, names, n_boot, seed):
+def _boots(metric, idx, names, n_boot, seed, subsample):
     rng = np.random.default_rng(seed)
-    out = [metric(rng.choice(idx, len(idx))) for _ in range(n_boot)]
+    draw = (lambda: rng.choice(idx, len(idx))) if subsample is None else \
+        (lambda: rng.choice(idx, max(2, round(subsample * len(idx))), replace=False))
+    out = [metric(draw()) for _ in range(n_boot)]
     return np.array([[o[n] for n in names] for o in out])  # (n_boot, n_metrics)
 
 
-def bootstrap(metric, groups, n_boot=1000, seed=0, n_jobs=1):
+def bootstrap(metric, groups, n_boot=1000, seed=0, n_jobs=1, subsample=None):
     """metric(idx) -> {name: float} for image indices idx; groups: {class: index array}.
     Returns a DataFrame (group, metric, mean, lo, hi, n); the point estimate uses the original images, lo/hi are the
     2.5/97.5 percentiles over resamples, group "macro" averages the classes (NaN classes ignored) inside every resample."""
@@ -22,7 +26,7 @@ def bootstrap(metric, groups, n_boot=1000, seed=0, n_jobs=1):
     names = list(point[0])
     pt = np.array([[p[n] for n in names] for p in point], float)  # (classes, metrics)
     seeds = np.random.SeedSequence(seed).spawn(len(keys))
-    boots = np.stack(Parallel(n_jobs)(delayed(_boots)(metric, i, names, n_boot, s) for i, s in zip(idxs, seeds)), 1)
+    boots = np.stack(Parallel(n_jobs)(delayed(_boots)(metric, i, names, n_boot, s, subsample) for i, s in zip(idxs, seeds)), 1)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         lo, hi = np.nanpercentile(boots, [2.5, 97.5], axis=0)

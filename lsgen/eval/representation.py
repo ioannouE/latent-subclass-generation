@@ -88,15 +88,14 @@ def select_k(z, k_max=K_MAX, seed=0):
     return ks[int(np.argmax(sil))] if max(sil) >= SIL_MIN else gap_k(z, k_max, seed)
 
 
-def r2_metric(z, make, fine, k_of_make, seed=0):
-    """Per make (K_c >= 2): ACC / NMI / ARI of k-means with oracle K ("uses K") and with label-free K-hat."""
+def r2_metric(z, make, fine, k_of_make, seed=0, label_free=False):
+    """Per make (K_c >= 2): ACC / NMI / ARI of k-means with the oracle K = K_c ("uses K"), or with the label-free K-hat
+    (also returned as "khat"). K-hat is unreliable on bootstrap resamples: bootstrap it with `subsample`."""
     def metric(idx):
         zz, y = z[idx], fine[idx]
-        khat, out = select_k(zz, seed=seed), {}
-        for tag, k in (("oracle", k_of_make[make[idx[0]]]), ("khat", khat)):
-            c = cluster(zz, k, seed)
-            out |= {f"acc_{tag}": hungarian_acc(y, c), f"nmi_{tag}": nmi(y, c), f"ari_{tag}": ari(y, c)}
-        return out | {"khat": khat}
+        k = select_k(zz, seed=seed) if label_free else k_of_make[make[idx[0]]]
+        c = cluster(zz, k, seed)
+        return {"acc": hungarian_acc(y, c), "nmi": nmi(y, c), "ari": ari(y, c)} | ({"khat": k} if label_free else {})
     return metric
 
 

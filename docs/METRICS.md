@@ -36,11 +36,11 @@ them is an evaluator, and records a warning for same-family pairs (e.g. a ConvNe
 |---|---|
 | **R1** kNN | Make accuracy of kNN (k = 20, cosine, majority vote) with `train` as reference, per test image, averaged per make |
 | **R1** probe | Make accuracy of a multinomial logistic regression (C = 10, fixed, 500 lbfgs iterations) fit on `train` embeddings |
-| **R2** clustering | Per make with K_c >= 2: test embeddings of the make are projected on the make's own top-50 PCs and clustered with k-means (10 inits). **Oracle K** = K_c (labelled "uses K"). **K-hat**: silhouette sweep over K = 2..25 (3 inits); if the best silhouette is < 0.10 (fixed constant, not tuned) the gap statistic (Tibshirani; 10 uniform references; smallest K with gap(K) >= gap(K+1) - s(K+1); can return 1) decides. Reported: ACC (Hungarian one-to-one matching of clusters to fine classes), NMI, ARI, and K-hat, for both K choices. |
+| **R2** clustering | Per make with K_c >= 2: test embeddings of the make are projected on the make's own top-50 PCs and clustered with k-means (10 inits). **Oracle K** = K_c (labelled "uses K"). **K-hat**: silhouette sweep over K = 2..25 (3 inits); if the best silhouette is < 0.10 (fixed constant, not tuned) the gap statistic (Tibshirani; 10 uniform references; smallest K with gap(K) >= gap(K+1) - s(K+1); can return 1) decides. Reported (`r2_oracle.csv`, `r2_khat.csv`): ACC (Hungarian one-to-one matching of clusters to fine classes), NMI, ARI, and K-hat for the K-hat rule. **CIs of the K-hat table** use 1000 draws of 63.2% of the make's images *without* replacement instead of the bootstrap: resamples contain duplicate images, which form tight pairs and inflate the silhouette-selected K (measured: macro K-hat 5.4 with a bootstrap CI of [13, 16]). The point estimates always use all images. |
 | **R2** within-make | Recall@1 (MaskCon protocol): for each test image of a make, is its nearest other image of the same make (cosine) of the same fine class. Fine linear probe: logistic regression (as R1) fit on the make's `train` images, accuracy on its test images. |
 | **R3** geometry | For one make: Delta0 = mean squared distance over pairs with the same fine class, Delta1 = same make and different fine class, Delta2 = different make; self-pairs excluded (also when bootstrap resampling repeats an image). Ratios Delta0/Delta1 and Delta1/Delta2 (< 1 desired). Indicators Eq. (1): Delta0 < Delta1 and Eq. (2): Delta1 < Delta2; the macro value is the % of makes satisfying them. Delta1 and the Eq. indicators are NaN for K_c = 1 makes. |
 | **R4** variation | Per make with K_c >= 2: `var_ratio` = size-weighted mean over subclasses (>= 3 images) of the within-subclass trace covariance, divided by the trace covariance of the make's images. `pr_subclass` = mean participation ratio (sum lambda)^2 / sum lambda^2 of the subclass covariance spectrum (effective rank); subclasses whose points all coincide are ignored. |
-| **R5** stability | Per make with K_c >= 2, oracle K, on the R2 feature space: `ari_seeds` = mean ARI between the k-means runs of 3 seeds; `ari_boot` = mean ARI between the full-data clustering and 20 clusterings fitted on bootstrap resamples (then applied to all points). The macro CI of `ari_boot` is the 2.5/97.5 percentile of the make-averaged ARI of the i-th bootstrap fit. For K_c = 1 makes: `khat_error` = K-hat - 1 (> 0 means over-fragmentation). |
+| **R5** stability | Per make with K_c >= 2, oracle K, on the R2 feature space: `ari_seeds` = mean ARI between the k-means runs of 3 seeds; `ari_boot` = mean ARI between the full-data clustering and 20 clusterings fitted on bootstrap resamples (then applied to all points). The macro CI of `ari_boot` is the 2.5/97.5 percentile of the make-averaged ARI of the i-th bootstrap fit. For K_c = 1 makes: `khat_error` = K-hat - 1 (> 0 means over-fragmentation; point estimate, no CI). |
 
 ## Use case A (generated images, `samples.csv`: filename, make_id [, group]; all vs `test`)
 | ID | Definition |
@@ -65,3 +65,15 @@ Episode results are in `episodes.csv`; `by_set.csv` has per make and macro value
 | **B4** | Mean pairwise CLIP cosine distance among the samples (`div_gen`), within T (`div_T`), and their ratio (`div_ratio`; ~ 0 for prototype collapse). |
 | **B5** | Mixed episodes (subclasses a, b of one make; S holds round(r * 10) images of a): abs(share of samples with p(a) > p(b) - r), the fine classifier choosing between the two subclasses. |
 | **B6** | B1-B4 (and B5) as a function of k: the macro rows of `by_set.csv`, one set per k. |
+
+## Note on K-hat and K_c = 1 makes (checked on `train` embeddings, 2 Oct 2026)
+The silhouette/gap rule above is fixed in advance and was not tuned. Checked on `train` (never `test`) for DINOv3-L-256,
+DINOv3-B-128 and CLIP-L-128, against K_c, per make:
+- DINOv3: the best silhouette of K_c = 1 makes (median 0.24-0.27) is about as high as that of K_c >= 2 makes (median 0.28-0.29),
+  so no silhouette threshold separates them; the gap statistic alone also splits them (gap-K of 1 for only 4-7 of 19
+  single-subclass makes). A threshold that helps one encoder hurts another: for CLIP, SIL_MIN = 0.25 gives K-hat = 1 for all
+  K_c = 1 makes but underestimates K_c >= 2 makes by 1.8 on average, while for DINOv3 it changes little.
+- Hypothesis (not tested): inside one official class the DINOv3 space has real structure (viewpoint, colour, background),
+  which k-means finds. K-hat > 1 on K_c = 1 makes is then a property of the encoder space and of the label-free per-make
+  pipeline, i.e. the over-fragmentation that this benchmark is meant to expose, not a defect to tune away. It is reported
+  as measured (`khat_error`), and the rule is not changed per encoder.

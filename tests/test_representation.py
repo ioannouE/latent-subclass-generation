@@ -77,7 +77,9 @@ def test_r2_metric_on_separated_subclasses():
     make = np.zeros(len(x), int)
     z = cluster_space(x, make)
     m = r2_metric(z, make, y, {0: 3})(np.arange(len(x)))
-    assert m["acc_oracle"] == 1 and m["ari_oracle"] == 1 and m["nmi_khat"] > 0.99 and m["khat"] == 3
+    assert m["acc"] == 1 and m["ari"] == 1 and "khat" not in m
+    m = r2_metric(z, make, y, {0: 99}, label_free=True)(np.arange(len(x)))  # the oracle K is not used
+    assert m["nmi"] > 0.99 and m["khat"] == 3
 
 
 def test_r4_variation_ratio_and_effective_rank():

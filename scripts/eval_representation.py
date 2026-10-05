@@ -63,7 +63,8 @@ def repr_tables(xtr, mtr, xte, mte, cfg):
     return {
         "r1": bootstrap_table(r1, "make_id", ["knn_make", "probe_make"], nb, seed, nj),
         "r2_within_make": bootstrap_table(within, "make_id", ["recall1", "probe_fine"], nb, seed, nj),
-        "r2_clustering": bootstrap(r2_metric(z, make, fine, {c: k_of_make[c] for c in groups}, seed), multi, nb, seed, nj),
+        "r2_oracle": bootstrap(r2_metric(z, make, fine, k_of_make, seed), multi, nb, seed, nj),
+        "r2_khat": bootstrap(r2_metric(z, make, fine, k_of_make, seed, label_free=True), multi, nb, seed, nj, cfg["khat_subsample"]),
         "r3": bootstrap(r3_metric(distance_matrix(xte), make, fine), groups, nb, seed, nj),
         "r4": bootstrap(r4_metric(l2norm(xte), fine), multi, nb, seed, nj),
         "r5": r5_tables(z, groups, k_of_make)}
