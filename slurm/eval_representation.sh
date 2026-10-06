@@ -1,7 +1,8 @@
 #!/bin/bash
 # Milestone 4: representation metrics R1-R5 for the cached embeddings (CPU only). Submit from the repo root:
 #   sbatch slurm/eval_representation.sh
-# Settings are in configs/eval_representation.yaml. Run after slurm/extract_features.sh.
+# Settings are in the config below (default: the frozen encoders; CONFIG=configs/eval_repr_baselines.yaml for the
+# fine-tuned ones, after slurm/train_repr.sh). Run after slurm/extract_features.sh.
 #SBATCH --job-name=lsgen-repr
 #SBATCH --partition=cpu
 #SBATCH --nodes=1
@@ -17,4 +18,6 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-python scripts/eval_representation.py --config configs/eval_representation.yaml
+CONFIG=${CONFIG:-configs/eval_representation.yaml}
+
+python scripts/eval_representation.py --config $CONFIG

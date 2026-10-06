@@ -1,0 +1,23 @@
+# Step 2 (controlled regime): contrastive fine-tuning of the last blocks of one frozen-recipe backbone, coarse (make)
+# labels only. Every method gets the identical recipe; they differ only in the loss weights. One seed per run; no tuning.
+data_config: configs/data.yaml
+backbone: dinov3_base          # key of lsgen.features.encoders.ENCODERS
+crop: bbox15_256               # stored crops; the augmentation outputs the backbone's input size
+methods:                       # name -> loss weights (SupCon on make labels, SimCLR on image identity)
+  supcon: {supcon: 1.0, simclr: 0.0}
+  simclr: {supcon: 0.0, simclr: 1.0}
+  supcon_simclr: {supcon: 1.0, simclr: 1.0}
+seeds: [0]
+trainable_blocks: 4            # last N transformer blocks (+ final norm) are fine-tuned, the rest stays frozen
+head: [2048, 128]              # projection head hidden / output dims (dropped after training)
+temperature: 0.1
+epochs: 50
+batch_size: 256                # images per step (2 views each); lower it if the GPU runs out of memory
+lr_backbone: 2.0e-5
+lr_head: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 3
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # + random resized crop and horizontal flip
+eval_every: 10                 # log val kNN@20 make accuracy (monitoring only: no model selection, last epoch is used)
+num_workers: 8                 # = --cpus-per-task in slurm/train_repr.sh
+batch_size_embed: 128

@@ -43,3 +43,17 @@ class CarsCoarseDataset(torch.utils.data.Dataset):
         if self.augment != "none" and torch.rand(()) < 0.5:
             img = TF.hflip(img)
         return TF.to_tensor(img), make_id
+
+
+class CarsTwoViews(CarsCoarseDataset):
+    """Contrastive training: two independent random augmentations (`transform`: PIL -> tensor) of each image, and its
+    make_id. Still no hidden-subclass labels."""
+
+    def __init__(self, metadata, derived_root, ids, transform, variant="bbox15", size=128):
+        super().__init__(metadata, derived_root, ids, variant, size, augment="none")
+        self.transform = transform
+
+    def __getitem__(self, idx):
+        path, make_id = self.items[idx]
+        img = Image.open(path).convert("RGB")
+        return self.transform(img), self.transform(img), make_id
