@@ -1,0 +1,41 @@
+# Milestone 5: controls x metrics. Reads <reports_root>/generation/<control>_<A|B>/ (slurm/eval_controls.sh).
+# Written before the first run and not tuned afterwards: if a control does not fail a metric listed in `expected`, report it.
+data_config: configs/data.yaml
+out: reports/metric_validation
+margin: 0.25                 # metrics without a CI (set-level) must be worse than C2 by this share of |C2| to count as moved
+b_set: single_test_k5        # use case B column of the heat-map (all sets are in the CSV)
+baseline: {A: c2_oracle_split, B: c2_oracle_real}   # real images scored against real images: the noise floor
+# id: [table, column or metric name, better]. Long tables (bootstrap) use the macro row; wide tables the single row.
+metrics:
+  A:
+    G1 FID: [g1, fid, lower]
+    G1 KID: [g1, kid, lower]
+    G1 recall: [g1, recall, higher]
+    G2 make acc: [g2_make_acc, make_acc, higher]
+    G2 prevalence TV: [g2_prevalence, tv, lower]
+    G3 TV: [g3, tv, lower]
+    G3 KL: [g3, kl, lower]
+    G4 covered: [g4_g5, frac_covered, higher]
+    G4 rare covered: [g4_g5, frac_rare_covered, higher]
+    G5 KID ratio: [g4_g5, kid_ratio, lower]
+    G5 coverage ratio: [g4_g5, coverage_ratio, higher]
+    G7 copies: [g7, frac_gt, lower]
+  B:
+    B1 hit rate: [by_set, hit, higher]
+    B2 KID vs T: [by_set, kid_T, lower]
+    B2 coverage vs T: [by_set, coverage_T, higher]
+    B3 ratio to S: [by_set, ratio_S, lower]
+    B4 diversity ratio: [by_set, div_ratio, higher]
+# Per control, the metrics it must fail (docs/PLAN.md A5). C3 is registered for G3 only: uniform sampling over the
+# subclasses of a make covers every subclass (it over-represents the rare ones), so G4 cannot fail by construction.
+expected:
+  A:
+    c1_copy_train: [G7 copies]
+    c3_coarse_only: [G3 TV, G3 KL]
+    c4_prototype_collapse: [G5 KID ratio, G5 coverage ratio, G1 recall]
+    c5_majority_only: [G3 TV, G3 KL, G4 covered, G4 rare covered]
+    c6_degraded: [G1 FID, G1 KID]
+  B:
+    c1b_copy_support: [B2 KID vs T, B3 ratio to S]
+    c1b_retrieve_nn: [B2 KID vs T, B3 ratio to S]
+    c4_prototype_collapse: [B4 diversity ratio]

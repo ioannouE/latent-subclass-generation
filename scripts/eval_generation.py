@@ -1,7 +1,8 @@
 """Score generated images (docs/METRICS.md): use case A (G1-G7) or B (B1-B6), per configs/eval_generation.yaml. GPU:
     sbatch slurm/eval_generation.sh
 Refuses to run if the method declares an encoder that is also an evaluator (lsgen/eval/evaluators.py).
-Output: <reports_root>/generation/<method name>_<use case>/*.csv + summary.json. Reference = test (and train for G4/G5/G7).
+Output: <reports_root>/generation/<method name>_<use case>/*.csv + summary.json. Reference = test (and train for G4/G5/G7);
+method.json may set "reference_split": "test_B" (control C2 scores test_A against test_B).
 """
 import argparse
 import json
@@ -40,9 +41,11 @@ class Context:
         self.dataset_hash = json.loads((self.splits_dir.parent / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
 
     def reference(self, space, split):
-        """(ids, embeddings) of a split, from the cache written by scripts/extract_features.py."""
-        files, x = read_csv(self.derived / "features" / f"{space}_{self.cfg['crop_size']}" / f"{split}.csv")
-        return [f[:-4] for f in files], x
+        """(ids, embeddings) of a split (test_A / test_B: its half of test), from the cache written by scripts/extract_features.py."""
+        files, x = read_csv(self.derived / "features" / f"{space}_{self.cfg['crop_size']}" / f"{split.split('_')[0]}.csv")
+        ids = np.array([f[:-4] for f in files])
+        keep = np.isin(ids, load_split(self.splits_dir, split))
+        return list(ids[keep]), x[keep]
 
     def labels(self, ids, col):
         return self.meta.loc[ids, col].to_numpy()
@@ -63,22 +66,22 @@ def subsample(x, n, seed):
     return x if len(x) <= n else x[np.random.default_rng(seed).choice(len(x), n, replace=False)]
 
 
-def run_a(ctx, samples, paths):
+def run_a(ctx, samples, paths, test="test"):
     cfg, seed = ctx.cfg, ctx.cfg["seed"]
     req = samples.make_id.to_numpy()
     feats = {s: ctx.embed(s, paths) for s in ("inception", "clip_l", "sscd")}
     fine_probs, make_probs = ctx.probs("fine", paths), ctx.probs("make", paths)
-    test_ids, train_ids = (ctx.reference("clip_l", s)[0] for s in ("test", "train"))
+    test_ids, train_ids = (ctx.reference("clip_l", s)[0] for s in (test, "train"))
     test_fine, train_fine = ctx.labels(test_ids, "fine_id"), ctx.labels(train_ids, "fine_id")
     test_make = ctx.labels(test_ids, "make_id")
-    ref = {(s, sp): ctx.reference(s, sp)[1] for s in feats for sp in ("test", "train")}
+    ref = {(s, sp): ctx.reference(s, sp)[1] for s in feats for sp in (test, "train")}
     groups = {c: np.flatnonzero(req == c) for c in np.unique(req)}
     for c in np.setdiff1d(np.unique(test_make), list(groups)):
         log.warning("no samples requested for make %d: skipped in G2-G6", c)
     t = {}
 
     n = min(len(samples), len(test_ids))  # G1 at matched n
-    inc, inc_ref = subsample(feats["inception"], n, seed), subsample(ref["inception", "test"], n, seed)
+    inc, inc_ref = subsample(feats["inception"], n, seed), subsample(ref["inception", test], n, seed)
     t["g1"] = pd.DataFrame([{"n": n, "fid": synthesis.frechet_distance(inc, inc_ref), "kid": synthesis.kid(inc, inc_ref, seed=seed),
                              **synthesis.prdc(inc_ref, inc, cfg["prdc_k"])}])
 
@@ -94,18 +97,18 @@ def run_a(ctx, samples, paths):
     val_probs = ctx.probs("fine", [ctx.derived / f"bbox15_{cfg['crop_size']}" / f"{i}.png" for i in val_ids])
     tau = synthesis.choose_tau(val_probs, ctx.labels(val_ids, "fine_id"), cfg["tau_target"])
     rare = synthesis.rare_classes(np.bincount(train_fine, minlength=len(ctx.make_of_fine)))
-    cf = synthesis.ClassFidelity(feats["clip_l"], fine_probs, req, ctx.make_of_fine, tau, ref["clip_l", "test"], test_fine,
+    cf = synthesis.ClassFidelity(feats["clip_l"], fine_probs, req, ctx.make_of_fine, tau, ref["clip_l", test], test_fine,
                                  ref["clip_l", "train"], train_fine, rare, cfg["min_samples"], cfg["coverage_k"], seed)
     t["g4_g5"] = bootstrap(cf, groups, cfg["n_boot"], seed, cfg["n_jobs"])
     t["g4_g5_per_class"] = pd.concat([cf.table(i) for i in groups.values()], ignore_index=True)
 
     if "group" in samples:
         group = samples.group.to_numpy()
-        t["g6"] = bootstrap(synthesis.g6_metric(feats["clip_l"], group, fine_probs, req, ctx.make_of_fine, ref["clip_l", "test"], test_fine),
+        t["g6"] = bootstrap(synthesis.g6_metric(feats["clip_l"], group, fine_probs, req, ctx.make_of_fine, ref["clip_l", test], test_fine),
                             groups, cfg["n_boot"], seed, cfg["n_jobs"])
 
     sim, nn = memorization.nearest_similarity(feats["sscd"], ref["sscd", "train"])
-    null = memorization.nearest_similarity(ref["sscd", "test"], ref["sscd", "train"])[0]
+    null = memorization.nearest_similarity(ref["sscd", test], ref["sscd", "train"])[0]
     t["g7"] = pd.DataFrame([memorization.copy_summary(sim, null, cfg["copy_threshold"]) | {"tau": tau, "n": len(sim)}])
     t["g7_samples"] = pd.DataFrame({"filename": samples.filename, "sscd_sim": sim, "nn_train_id": np.array(train_ids)[nn]})
     train_paths = [ctx.derived / f"bbox15_{cfg['crop_size']}" / f"{i}.png" for i in train_ids]
@@ -151,7 +154,11 @@ def run_b(ctx, samples, paths):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/eval_generation.yaml")
-    cfg = load_config(ap.parse_args().config)
+    ap.add_argument("--samples-dir", help="overrides samples_dir (slurm/eval_controls.sh loops over the controls)")
+    ap.add_argument("--use-case", choices=["A", "B"], help="overrides use_case")
+    args = ap.parse_args()
+    cfg = load_config(args.config)
+    cfg["samples_dir"], cfg["use_case"] = args.samples_dir or cfg["samples_dir"], args.use_case or cfg["use_case"]
     dcfg = load_config(REPO_ROOT / cfg["data_config"])
     setup_logging()
     samples_dir = Path(cfg["samples_dir"])
@@ -168,7 +175,10 @@ def main():
         if im.size != (cfg["crop_size"],) * 2:
             raise ValueError(f"generated images must be {cfg['crop_size']} px PNGs like the real ones, got {im.size}")
     log.info("%s, use case %s: %d samples", method["name"], cfg["use_case"], len(samples))
-    tables, extra_output = (run_a if cfg["use_case"] == "A" else run_b)(ctx, samples, paths)
+    if cfg["use_case"] == "A":
+        tables, extra_output = run_a(ctx, samples, paths, method.get("reference_split", "test"))
+    else:
+        tables, extra_output = run_b(ctx, samples, paths)
     out = Path(dcfg["reports_root"]) / "generation" / f"{method['name']}_{cfg['use_case']}"
     write_results(out, tables, cfg, cfg["seed"], ctx.dataset_hash, ctx.splits_dir, method=method, same_family_warnings=warnings)
     if extra_output:

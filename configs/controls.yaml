@@ -1,0 +1,9 @@
+# Milestone 5: build the control sets (CPU). Output: <derived_root>/<out_dir>/<control>_<A|B>/ with PNGs (symlinks to the
+# stored bbox15 crops where unmodified), samples.csv and method.json, in the format scripts/eval_generation.py reads.
+data_config: configs/data.yaml
+out_dir: controls
+crop_size: 128
+features: dinov3_base          # embeddings for the C4 medoids and C1b retrieve-NN (cached by scripts/extract_features.py)
+episode_sets: [single_test_k1, single_test_k5, single_test_k10, mixed_k10]   # use case B (support and target from test)
+n_episodes_images: 16          # images per episode, as in configs/eval_generation.yaml
+seed: 0

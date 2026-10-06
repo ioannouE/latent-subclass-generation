@@ -77,3 +77,27 @@ DINOv3-B-128 and CLIP-L-128, against K_c, per make:
   which k-means finds. K-hat > 1 on K_c = 1 makes is then a property of the encoder space and of the label-free per-make
   pipeline, i.e. the over-fragmentation that this benchmark is meant to expose, not a defect to tune away. It is reported
   as measured (`khat_error`), and the rule is not changed per encoder.
+
+## Controls and metric validation (Milestone 5)
+Controls are trivial "generators" with a known defect, written in the format of a real method (`scripts/make_controls.py`,
+`lsgen/eval/controls.py`) and scored by the unchanged evaluation (`slurm/eval_controls.sh`). `scripts/metric_validation.py`
+compares each control with the real-vs-real floor (C2) and writes `reports/metric_validation.{csv,md,png}`.
+Real images are symlinked from the stored bbox15 crops; the 178 conflicting images are excluded as everywhere.
+
+| Control | Use case A (N = number of test images, requested makes follow test) | Use case B (16 images per episode, test-support episodes) |
+|---|---|---|
+| C1 copy-train | random train image of a subclass drawn with train prevalence in the make | -- |
+| C1b copy-support | -- | the support images cycled to 16, each flipped / cropped (70-100%) / brightness-jittered |
+| C1b retrieve-NN | -- | the 16 train images nearest (cosine, DINOv3-B) to the mean support embedding |
+| C2 oracle | `test_A` images scored against `test_B` (`reference_split` in method.json) | 16 other real images of the subclass from `train` (mixed: round(16 r) of a, the rest of b) |
+| C3 coarse-only | subclass uniform within the make, random train image of it | -- |
+| C4 prototype collapse | subclass with train prevalence, always its medoid (DINOv3-B, train) | the medoid of the subclass (mixed: in proportion r) repeated |
+| C5 majority-only | the largest (train) subclass of the make | -- |
+| C6 degraded | C1 images after Gaussian blur (sigma 2) and JPEG q20 | -- |
+
+C4 and retrieve-NN declare `uses: [dinov3_base]` (not an evaluator). Verdict per control x metric
+(`configs/metric_validation.yaml`, fixed before the first run): a metric has *moved* if the control is worse than C2
+with non-overlapping 95% CIs, or, for set-level numbers without CI, by more than 25% of |C2|. `ok` = a listed expected
+failure that moved; `MISSED` = listed but did not move (the script exits with 1; stop and report, do not tune);
+`also` = moved though not listed (for example every control that returns train images also raises G7). C3 is listed for
+G3 only: uniform sampling covers every subclass of a make, so G4 cannot fail by construction (the plan listed G3 and G4).
