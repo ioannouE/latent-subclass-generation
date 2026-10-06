@@ -1,0 +1,43 @@
+{
+ "git_hash": "93ee89bd848fe8468310e3a31e5818092ffd8c74",
+ "created_utc": "2026-10-05T20:25:16+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "encoders": [
+   "dinov3_base",
+   "dinov3_large",
+   "clip_l",
+   "sscd"
+  ],
+  "crop_sizes": [
+   128,
+   256
+  ],
+  "knn_k": 20,
+  "n_boot": 1000,
+  "khat_subsample": 0.632,
+  "n_jobs": 16,
+  "seed": 0
+ },
+ "config_path": "configs/eval_representation.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 68,
+  "val": 9,
+  "test": 101
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "r1": 100,
+  "r2_within_make": 62,
+  "r2_oracle": 93,
+  "r2_khat": 124,
+  "r3": 350,
+  "r4": 62,
+  "r5": 50
+ },
+ "encoder": "dinov3_base_256",
+ "n_train": 7261,
+ "n_test": 7940
+}
