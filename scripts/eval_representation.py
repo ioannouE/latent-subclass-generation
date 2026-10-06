@@ -1,6 +1,7 @@
 """Representation metrics R1-R5 (docs/METRICS.md) for cached embeddings. CPU, hours at n_boot=1000:
     sbatch slurm/eval_representation.sh
 Output: <reports_root>/repr/<encoder>_<crop>/*.csv + summary.json. Fit/reference = train, scored on test.
+Only the tables listed in the config under `tables` are (re)computed; the others are left as they are.
 """
 import argparse
 import json
@@ -42,6 +43,14 @@ def r5_tables(z, groups, k_of_make):
     return pd.concat([t, pd.DataFrame([macro | {"ari_boot_lo": lo, "ari_boot_hi": hi}])], ignore_index=True)
 
 
+def r4_table(metric, groups, nb, seed, nj, subsample):
+    """var_ratio gets subsample CIs. pr_subclass (effective rank) grows with the number of points, so resampling with
+    duplicates and subsampling both bias it: it is reported as a point estimate (lo / hi are NaN)."""
+    t = bootstrap(metric, groups, nb, seed, nj, subsample)
+    t.loc[t.metric == "pr_subclass", ["lo", "hi"]] = np.nan
+    return t
+
+
 def repr_tables(xtr, mtr, xte, mte, cfg):
     make, fine = mte.make_id.to_numpy(), mte.fine_id.to_numpy()
     groups = {c: np.flatnonzero(make == c) for c in np.unique(make)}
@@ -50,24 +59,29 @@ def repr_tables(xtr, mtr, xte, mte, cfg):
     nb, nj, seed = cfg["n_boot"], cfg["n_jobs"], cfg["seed"]
     log.info("%d makes, %d with K_c >= 2, %d with K_c = 1", len(groups), len(multi), len(groups) - len(multi))
 
-    r1 = pd.DataFrame({"make_id": make, "knn_make": knn_correct(xtr, mtr.make_id, xte, make, cfg["knn_k"]),
-                       "probe_make": probe_correct(xtr, mtr.make_id, xte, make)})
-    recall1, probe_fine = np.full(len(make), np.nan), np.full(len(make), np.nan)
-    for c, idx in multi.items():
-        tr = (mtr.make_id == c).to_numpy()
-        recall1[idx] = recall1_correct(xte[idx], fine[idx])
-        probe_fine[idx] = probe_correct(xtr[tr], mtr.fine_id[tr], xte[idx], fine[idx])
-    within = pd.DataFrame({"make_id": make, "recall1": recall1, "probe_fine": probe_fine})[np.isfinite(recall1)]
+    def r1():
+        t = pd.DataFrame({"make_id": make, "knn_make": knn_correct(xtr, mtr.make_id, xte, make, cfg["knn_k"]),
+                          "probe_make": probe_correct(xtr, mtr.make_id, xte, make)})
+        return bootstrap_table(t, "make_id", ["knn_make", "probe_make"], nb, seed, nj)
+
+    def r2_within_make():
+        recall1, probe_fine = np.full(len(make), np.nan), np.full(len(make), np.nan)
+        for c, idx in multi.items():
+            tr = (mtr.make_id == c).to_numpy()
+            recall1[idx] = recall1_correct(xte[idx], fine[idx])
+            probe_fine[idx] = probe_correct(xtr[tr], mtr.fine_id[tr], xte[idx], fine[idx])
+        t = pd.DataFrame({"make_id": make, "recall1": recall1, "probe_fine": probe_fine})[np.isfinite(recall1)]
+        return bootstrap_table(t, "make_id", ["recall1", "probe_fine"], nb, seed, nj)
 
     z = cluster_space(xte, make, seed=seed)
-    return {
-        "r1": bootstrap_table(r1, "make_id", ["knn_make", "probe_make"], nb, seed, nj),
-        "r2_within_make": bootstrap_table(within, "make_id", ["recall1", "probe_fine"], nb, seed, nj),
-        "r2_oracle": bootstrap(r2_metric(z, make, fine, k_of_make, seed), multi, nb, seed, nj),
-        "r2_khat": bootstrap(r2_metric(z, make, fine, k_of_make, seed, label_free=True), multi, nb, seed, nj, cfg["khat_subsample"]),
-        "r3": bootstrap(r3_metric(distance_matrix(xte), make, fine), groups, nb, seed, nj),
-        "r4": bootstrap(r4_metric(l2norm(xte), fine), multi, nb, seed, nj),
-        "r5": r5_tables(z, groups, k_of_make)}
+    tables = {  # lazy: cfg["tables"] chooses what is computed
+        "r1": r1, "r2_within_make": r2_within_make,
+        "r2_oracle": lambda: bootstrap(r2_metric(z, make, fine, k_of_make, seed), multi, nb, seed, nj),
+        "r2_khat": lambda: bootstrap(r2_metric(z, make, fine, k_of_make, seed, label_free=True), multi, nb, seed, nj, cfg["subsample"]),
+        "r3": lambda: bootstrap(r3_metric(distance_matrix(xte), make, fine), groups, nb, seed, nj),
+        "r4": lambda: r4_table(r4_metric(l2norm(xte), fine), multi, nb, seed, nj, cfg["subsample"]),
+        "r5": lambda: r5_tables(z, groups, k_of_make)}
+    return {name: tables[name]() for name in cfg["tables"]}
 
 
 def main():

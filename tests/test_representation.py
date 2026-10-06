@@ -101,3 +101,17 @@ def test_r5_stability():
     assert len(r["ari_seeds"]) == 3 and np.allclose(r["ari_seeds"], 1) and np.allclose(r["ari_boot"], 1)
     flat = np.random.default_rng(0).normal(size=(200, 20))
     assert np.mean(r5_make(flat, 2, n_boot=5)["ari_boot"]) < 0.9  # no structure -> unstable
+
+
+def test_r4_effective_rank_depends_on_n_and_var_ratio_has_a_subsample_ci():
+    from lsgen.eval.stats import bootstrap
+    rng = np.random.default_rng(0)
+    x = np.concatenate([c + 0.3 * rng.normal(size=(40, 10)) for c in 3 * np.eye(10)[:4]])
+    fine = np.repeat(np.arange(4), 40)
+    metric, groups = r4_metric(x, fine), {0: np.arange(160)}
+    point = metric(np.arange(160))["pr_subclass"]
+    boot = bootstrap(metric, groups, 200, 0).query("metric == 'pr_subclass' and group == 0").iloc[0]
+    assert boot.hi < point  # duplicates lower the effective rank: the point estimate lies above the whole bootstrap CI
+    ratio = r4_metric(x, fine)(np.arange(160))["var_ratio"]
+    sub = bootstrap(metric, groups, 200, 0, subsample=0.632).query("metric == 'var_ratio'").iloc[0]
+    assert sub.lo <= ratio <= sub.hi
