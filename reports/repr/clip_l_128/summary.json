@@ -1,6 +1,6 @@
 {
- "git_hash": "93ee89bd848fe8468310e3a31e5818092ffd8c74",
- "created_utc": "2026-10-05T22:04:03+00:00",
+ "git_hash": "3a4acd7591ad909f76165646041fb83dfe2bcc81-dirty",
+ "created_utc": "2026-10-06T11:58:33+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "encoders": [
@@ -15,7 +15,10 @@
   ],
   "knn_k": 20,
   "n_boot": 1000,
-  "khat_subsample": 0.632,
+  "subsample": 0.632,
+  "tables": [
+   "r4"
+  ],
   "n_jobs": 16,
   "seed": 0
  },
@@ -36,6 +39,15 @@
   "r3": 350,
   "r4": 62,
   "r5": 50
+ },
+ "table_git_hash": {
+  "r1": "93ee89bd848fe8468310e3a31e5818092ffd8c74",
+  "r2_within_make": "93ee89bd848fe8468310e3a31e5818092ffd8c74",
+  "r2_oracle": "93ee89bd848fe8468310e3a31e5818092ffd8c74",
+  "r2_khat": "93ee89bd848fe8468310e3a31e5818092ffd8c74",
+  "r3": "93ee89bd848fe8468310e3a31e5818092ffd8c74",
+  "r4": "3a4acd7591ad909f76165646041fb83dfe2bcc81-dirty",
+  "r5": "93ee89bd848fe8468310e3a31e5818092ffd8c74"
  },
  "encoder": "clip_l_128",
  "n_train": 7261,
