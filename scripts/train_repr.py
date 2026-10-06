@@ -63,7 +63,7 @@ def train(cfg, weights, seed, ids, meta, derived, device, val=None):
     hidden, out = cfg["head"]
     head = torch.nn.Sequential(torch.nn.Linear(dim, hidden), torch.nn.ReLU(), torch.nn.Linear(hidden, out)).to(device)
     variant, size = cfg["crop"].split("_")
-    make = meta.set_index("id").make_id
+    make_of = meta.set_index("id").make_id
     ds = CarsTwoViews(meta, derived, ids, augmentation(model, cfg), variant, int(size))
     dl = torch.utils.data.DataLoader(ds, cfg["batch_size"], shuffle=True, drop_last=True, num_workers=cfg["num_workers"],
                                      persistent_workers=True)
@@ -87,7 +87,7 @@ def train(cfg, weights, seed, ids, meta, derived, device, val=None):
         msg = f"epoch {epoch + 1}/{cfg['epochs']} loss {np.mean(losses):.4f}"
         if val is not None and ((epoch + 1) % cfg["eval_every"] == 0 or epoch + 1 == cfg["epochs"]):
             xtr, xva = (embed_split(model, derived, cfg["crop"], i, cfg, device) for i in (ids, val[0]))
-            msg += f" | val kNN@20 make acc {knn_accuracy(xtr, make[ids], xva, val[1]):.4f}"
+            msg += f" | val kNN@20 make acc {knn_accuracy(xtr, make_of[ids], xva, val[1]):.4f}"
         log.info(msg)
     return model, float(np.mean(losses))
 
