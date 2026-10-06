@@ -1,7 +1,7 @@
 # Step 2: R1-R5 for the fine-tuned contrastive baselines (names = <method>_s<seed>, crop = the training crop size).
 # Same protocol and settings as configs/eval_representation.yaml; reference row = dinov3_base_256 there.
 data_config: configs/data.yaml
-encoders: [supcon_s0, simclr_s0, supcon_simclr_s0]
+encoders: [supcon_s0, simclr_s0, supcon_simclr_s0, maskcon_s0, falcon_s0]
 crop_sizes: [256]
 knn_k: 20
 n_boot: 1000

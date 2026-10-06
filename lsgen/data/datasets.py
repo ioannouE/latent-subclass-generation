@@ -47,13 +47,23 @@ class CarsCoarseDataset(torch.utils.data.Dataset):
 
 class CarsTwoViews(CarsCoarseDataset):
     """Contrastive training: two independent random augmentations (`transform`: PIL -> tensor) of each image, and its
-    make_id. Still no hidden-subclass labels."""
+    make_id. Still no hidden-subclass labels.
+    transform_2: a different transform for the second view (default: the same as the first).
+    neighbors: (N, k) row indices into `ids` of each image's neighbours (FALCON); then (view 1, view 2, `n_neighbors` randomly
+    drawn neighbours as (n_neighbors, 3, H, W) under transform_2, make_id) is returned."""
 
-    def __init__(self, metadata, derived_root, ids, transform, variant="bbox15", size=128):
+    def __init__(self, metadata, derived_root, ids, transform, variant="bbox15", size=128, transform_2=None, neighbors=None,
+                 n_neighbors=5):
         super().__init__(metadata, derived_root, ids, variant, size, augment="none")
-        self.transform = transform
+        self.transform, self.transform_2 = transform, transform_2 or transform
+        self.neighbors, self.n_neighbors = neighbors, n_neighbors
 
     def __getitem__(self, idx):
         path, make_id = self.items[idx]
         img = Image.open(path).convert("RGB")
-        return self.transform(img), self.transform(img), make_id
+        views = (self.transform(img), self.transform_2(img))
+        if self.neighbors is None:
+            return *views, make_id
+        chosen = self.neighbors[idx][torch.randperm(self.neighbors.shape[1])[:self.n_neighbors]]
+        near = torch.stack([self.transform_2(Image.open(self.items[j][0]).convert("RGB")) for j in chosen])
+        return *views, near, make_id

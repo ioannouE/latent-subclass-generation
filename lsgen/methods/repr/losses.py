@@ -2,6 +2,8 @@
 import torch
 import torch.nn.functional as F
 
+from lsgen.methods.repr.common import forward_fp16
+
 
 def supcon_loss(z, labels, temperature=0.1):
     """Supervised contrastive loss (Khosla et al. 2020): the positives of an anchor are all other rows with its label.
@@ -24,3 +26,20 @@ def contrastive_loss(z, make, w_supcon, w_simclr, temperature=0.1):
     if w_simclr:
         loss = loss + w_simclr * supcon_loss(z, instance.repeat(2), temperature)
     return loss
+
+
+class Contrastive:
+    """SupCon / SimCLR / SupCon+SimCLR objective. Needs batches (view 1, view 2, make)."""
+
+    def __init__(self, net, supcon, simclr, temperature):
+        self.net, self.weights, self.temperature = net, (supcon, simclr), temperature
+
+    def loss(self, batch):
+        v1, v2, make = batch
+        return contrastive_loss(forward_fp16(self.net, torch.cat([v1, v2])), make, *self.weights, self.temperature)
+
+    def start_epoch(self, epoch):
+        pass
+
+    def end_step(self, i):
+        pass
