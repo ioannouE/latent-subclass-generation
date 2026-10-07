@@ -23,5 +23,6 @@ __pycache__/
 *.jpeg
 *.out
 *.err
+*.pdf
 .claude/
 .devin/

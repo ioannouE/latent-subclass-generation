@@ -1,0 +1,58 @@
+{
+ "git_hash": "f3146004bf560129d5ae005067006c80c99a03e9",
+ "created_utc": "2026-10-07T10:17:35+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "use_case": "A",
+  "samples_dir": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/controls/c5_majority_only_A",
+  "crop_size": 128,
+  "tau_target": 0.9,
+  "min_samples": 5,
+  "copy_threshold": 0.5,
+  "prdc_k": 5,
+  "coverage_k": 3,
+  "n_episodes_images": 16,
+  "subsample": 0.632,
+  "n_boot": 1000,
+  "n_jobs": 16,
+  "batch_size": 128,
+  "num_workers": 8,
+  "seed": 0
+ },
+ "config_path": "configs/eval_generation.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 68,
+  "val": 9,
+  "test": 101
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "g1": 1,
+  "g2_make_acc": 50,
+  "g2_prevalence": 1,
+  "g3": 100,
+  "g4_g5": 400,
+  "g4_g5_per_class": 196,
+  "g7": 1,
+  "g7_samples": 7940
+ },
+ "table_git_hash": {
+  "g1": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "g2_make_acc": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "g2_prevalence": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "g3": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "g4_g5": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "g4_g5_per_class": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "g7": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "g7_samples": "f3146004bf560129d5ae005067006c80c99a03e9"
+ },
+ "method": {
+  "name": "c5_majority_only",
+  "uses": [],
+  "git_hash": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "seed": 0
+ },
+ "same_family_warnings": []
+}
