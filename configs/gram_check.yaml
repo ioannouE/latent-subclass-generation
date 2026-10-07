@@ -1,0 +1,8 @@
+# Side experiment: Gram statistics vs the CLS embedding (within-make fine-class probe, colour / background probe).
+data_config: configs/data.yaml
+cls: dinov3_base                       # CLS embedding to compare against
+gram: [gram_vgg16, gram_dinov3_base]   # cached by slurm/extract_features.sh
+crop: 128                              # stored bbox15 crop size
+n_boot: 1000
+n_jobs: 8                              # = --cpus-per-task in slurm/gram_check.sh
+seed: 0

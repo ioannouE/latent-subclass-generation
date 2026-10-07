@@ -13,6 +13,7 @@ import torch
 from lsgen.data.splits import load_split
 from lsgen.features.encoders import Embedder
 from lsgen.features.extract import embed_images, write_csv
+from lsgen.features.gram import GRAM, GramEmbedder
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging, sha256_file, write_json
 
 log = logging.getLogger("extract_features")
@@ -51,7 +52,7 @@ def main():
         if not todo:
             log.info("%s: all embeddings already cached, skipped", name)
             continue
-        model = Embedder(name, weights.get(name)).to(device)
+        model = (GramEmbedder if name in GRAM else Embedder)(name, weights.get(name)).to(device)
         for size in sizes:
             out = derived / "features" / f"{name}_{size}"
             out.mkdir(parents=True, exist_ok=True)
