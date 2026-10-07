@@ -1,0 +1,11 @@
+# Milestone 6: R1-R5 for the supervised oracle reference row (penultimate features of the fine evaluator classifier,
+# trained with the fine labels: "supervised oracle features (not a baseline)"). Same protocol as configs/eval_representation.yaml.
+data_config: configs/data.yaml
+encoders: [fine_classifier]
+crop_sizes: [128]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16
+seed: 0

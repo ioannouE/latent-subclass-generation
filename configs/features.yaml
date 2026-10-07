@@ -1,7 +1,8 @@
 # Milestone 3: embedding extraction for the stored bbox15 crops.
 data_config: configs/data.yaml   # raw/derived/data roots, SSCD weights
-encoders: [dinov3_base, dinov3_large, clip_l, sscd, inception]  # inception: G1 evaluator (FID/KID)
+encoders: [dinov3_base, dinov3_large, clip_l, sscd, inception, fine_classifier]  # inception: G1 evaluator (FID/KID); fine_classifier: supervised oracle features
 crop_sizes: [128, 256]           # stored bbox15 crops fed to every encoder (resized to its own input size)
+only_crop: {fine_classifier: 128}   # the classifier was trained on 128 px crops: not fed other sizes
 splits: [train, val, test]       # conflicting images (data/splits/exclude.txt) are dropped
 batch_size: 128
 num_workers: 8                   # = --cpus-per-task in slurm/extract_features.sh

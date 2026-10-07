@@ -1,0 +1,10 @@
+# Milestone 6: the single report (reports/report.md) and the tables it is built from. CPU, seconds. Needs the results of
+# slurm/eval_representation.sh (frozen encoders + oracle row), slurm/eval_controls.sh and scripts/metric_validation.py.
+data_config: configs/data.yaml
+repr_config: configs/eval_representation.yaml    # its encoders x crop_sizes are the rows of the frozen-encoder table
+oracle: fine_classifier_128                      # reference row, labelled "supervised oracle features (not a baseline)"
+primary: dinov3_large_256                        # encoder of the per-make breakdown
+worst_n: 10                                      # worst makes listed on R2 (lowest oracle-K ACC) and R3 (highest d0/d1)
+validation: reports/metric_validation            # .csv / .md / .png from scripts/metric_validation.py
+out: reports/report.md
+tables: {frozen: reports/repr_frozen.csv, per_make: reports/repr_per_make.csv}

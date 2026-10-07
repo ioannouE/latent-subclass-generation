@@ -2,7 +2,8 @@
 
 DINOv2, DINOv3 and CLIP are loaded through timm (weights from the HF cache); SSCD is the TorchScript model used in
 the duplicate audit; Inception pool3 is clean-fid's TorchScript network with its own resizer. Real and generated images
-must go through the same Embedder.transform.
+must go through the same Embedder.transform. `fine_classifier` is the penultimate layer of the fine evaluator classifier: the
+"supervised oracle features" reference row of the representation table (it saw the fine labels; not a baseline).
 """
 import numpy as np
 import timm
@@ -19,18 +20,25 @@ ENCODERS = {  # name: (family, timm model, input size)
     "clip_l": ("clip", "vit_large_patch14_clip_224.openai", 224),
     "sscd": ("sscd", None, 288),
     "inception": ("inception", None, 299),
+    "fine_classifier": ("classifier", "convnext_tiny.fb_in1k", 128),  # trained on 128 px crops: feed those only
 }
 
 
 class Embedder(torch.nn.Module):
-    def __init__(self, name, sscd_weights=None):
+    def __init__(self, name, weights=None):
+        """weights: path of the SSCD TorchScript model, or of the fine classifier checkpoint (train_eval_classifier.py)."""
         super().__init__()
         self.name = name
         self.family, self.timm_name, self.input_size = ENCODERS[name]
         if self.family == "inception":
             self.model = InceptionV3W("/tmp", download=True, resize_inside=False)
         elif self.family == "sscd":
-            self.model, (mean, std) = torch.jit.load(str(sscd_weights), map_location="cpu"), IMAGENET
+            self.model, (mean, std) = torch.jit.load(str(weights), map_location="cpu"), IMAGENET
+        elif self.family == "classifier":
+            ck = torch.load(weights, map_location="cpu")
+            self.model = timm.create_model(ck["arch"], pretrained=False, num_classes=ck["n_classes"])
+            self.model.load_state_dict(ck["state_dict"])
+            mean, std = IMAGENET
         else:
             self.model = timm.create_model(self.timm_name, pretrained=True, num_classes=0, img_size=self.input_size)
             mean, std = self.model.pretrained_cfg["mean"], self.model.pretrained_cfg["std"]
@@ -43,6 +51,8 @@ class Embedder(torch.nn.Module):
                                     T.ToTensor(), T.Normalize(mean, std)])
 
     def forward(self, x):
+        if self.family == "classifier":
+            return self.model.forward_head(self.model.forward_features(x), pre_logits=True)
         if self.family == "dinov3":  # timm's default DINOv3 output is the patch average; we use the CLS token
             return self.model.forward_features(x)[:, 0]
         return self.model(x)
