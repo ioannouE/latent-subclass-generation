@@ -104,7 +104,9 @@ class ClassFidelity:
     """G4 + G5 for one generated set. Samples requested for a make are assigned to the fine class the evaluator
     predicts with confidence >= tau (and that belongs to the requested make). A class is covered if it gets >= min_n
     samples; covered classes get KID and coverage against test_g, plus the real ceiling (train_g subsample of the same
-    size against test_g). Call with the sample indices of one requested make (stats.bootstrap metric)."""
+    size against test_g). `kid_excess` = KID - ceiling KID is the well-conditioned comparison with the real ceiling: the
+    ceiling of an unbiased KID is centred on 0, so `kid_ratio` explodes near a good generator (kept, descriptive only).
+    Call with the sample indices of one requested make (stats.bootstrap metric)."""
 
     def __init__(self, gen, probs, requested_make, make_of_fine, tau, test, test_fine, train, train_fine, rare,
                  min_n=5, k=3, seed=0):
@@ -135,8 +137,17 @@ class ClassFidelity:
         cv = t[t.covered]
         return {"frac_covered": t.covered.mean(), "frac_rare_covered": t.covered[t.rare].mean(),
                 "frac_common_covered": t.covered[~t.rare].mean(), "kid": cv.kid.mean(),
+                "kid_excess": cv.kid.mean() - cv.kid_ceiling.mean(),
                 "kid_ratio": cv.kid.mean() / cv.kid_ceiling.mean(), "coverage": cv.coverage.mean(),
                 "coverage_ratio": cv.coverage.mean() / cv.coverage_ceiling.mean()}
+
+
+def evaluator_agreement(probs, requested_fine, tau):
+    """E1, for methods conditioned on the fine class (the oracle upper bound): how well the fine evaluator recognises the class
+    that was requested. The same numbers on real images tell how much of G4 / G5 is the evaluator's domain gap on generated images."""
+    pred, conf = probs.argmax(1), probs.max(1)
+    return {"n": len(pred), "acc": (pred == requested_fine).mean(), "mean_conf": conf.mean(), "frac_confident": (conf >= tau).mean(),
+            "frac_confident_correct": ((conf >= tau) & (pred == requested_fine)).mean()}
 
 
 # ---- G6: alignment of generated groups with real subclasses (methods that output a group id)

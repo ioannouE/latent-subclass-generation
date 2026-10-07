@@ -1,5 +1,5 @@
 # Milestone 4: score one set of generated images. samples_dir holds the PNGs (128 px), method.json and samples.csv:
-#   use case A: columns filename, make_id [, group];  use case B: columns filename, episode_id (N = 16 per episode).
+#   use case A: columns filename, make_id [, group] [, fine_id = requested subclass: only for methods conditioned on the fine class, adds E1];  use case B: columns filename, episode_id (N = 16 per episode).
 # method.json: {"name": ..., "uses": [encoders the method used for conditioning/training]}.
 data_config: configs/data.yaml
 use_case: A                  # A | B
@@ -11,6 +11,7 @@ copy_threshold: 0.5          # G7
 prdc_k: 5                    # G1 neighbourhood size
 coverage_k: 3                # G4/G5/B2 neighbourhood size (small sets)
 n_episodes_images: 16        # B: expected generated images per episode
+subsample: 0.632              # G4/G5 CIs of KID: draws without replacement of this fraction of a make (resampling duplicates biases it)
 n_boot: 1000
 n_jobs: 16                   # = --cpus-per-task in slurm/eval_generation.sh
 batch_size: 128

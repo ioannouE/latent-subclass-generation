@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from lsgen.eval.stats import bootstrap, bootstrap_table
+from lsgen.eval.stats import bootstrap, bootstrap_table, point_table, without_ci
 
 
 def test_bootstrap_macro_ci_and_determinism():
@@ -26,3 +26,13 @@ def test_bootstrap_table_ignores_nan_and_unequal_classes():
     r = bootstrap_table(df, "g", ["v"], 50, 0).set_index("group")
     assert r.loc["x", "mean"] == 1 and r.loc["y", "mean"] == 3 and r.loc["macro", "mean"] == 2
     assert (r.loc["y", ["lo", "hi"]] == 3).all()
+
+
+def test_point_table_matches_bootstrap_point_estimates_and_has_no_ci():
+    v = np.arange(10.0)
+    groups = {"a": np.arange(5), "b": np.arange(5, 10)}
+    metric = lambda i: {"m": v[i].mean(), "n": float(len(i))}  # noqa: E731
+    p, b = point_table(metric, groups), bootstrap(metric, groups, 20, 0)
+    assert np.allclose(p["mean"], b["mean"]) and p.lo.isna().all() and p.hi.isna().all() and list(p.columns) == list(b.columns)
+    cut = without_ci(b, ["m"])
+    assert cut[cut.metric == "m"].lo.isna().all() and cut[cut.metric == "n"].lo.notna().all() and b[b.metric == "m"].lo.notna().all()

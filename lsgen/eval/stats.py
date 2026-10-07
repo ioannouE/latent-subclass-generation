@@ -47,3 +47,21 @@ def bootstrap_table(df, by, cols, n_boot=1000, seed=0, n_jobs=1):
             return dict(zip(cols, np.nanmean(v[idx], 0)))
 
     return bootstrap(metric, {g: np.flatnonzero(df[by] == g) for g in df[by].unique()}, n_boot, seed, n_jobs)
+
+
+def point_table(metric, groups):
+    """The table of `bootstrap` without CIs (lo / hi NaN), for metrics that no resampling scheme gives valid CIs for."""
+    points = {g: metric(np.asarray(i)) for g, i in groups.items()}
+    names = list(next(iter(points.values())))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        macro = [dict(group="macro", metric=n, mean=np.nanmean([p[n] for p in points.values()]), lo=np.nan, hi=np.nan, n=len(groups)) for n in names]
+    rows = [dict(group=g, metric=n, mean=p[n], lo=np.nan, hi=np.nan, n=len(groups[g])) for g, p in points.items() for n in names]
+    return pd.DataFrame(rows + macro)
+
+
+def without_ci(table, metrics):
+    """Copy of a bootstrap table with the CIs of `metrics` removed."""
+    table = table.copy()
+    table.loc[table.metric.isin(metrics), ["lo", "hi"]] = np.nan
+    return table

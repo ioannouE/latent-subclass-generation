@@ -1,6 +1,6 @@
 import numpy as np
 
-from lsgen.eval.synthesis import (ClassFidelity, choose_tau, frechet_distance, g3_metric, g6_make, kid, make_correct,
+from lsgen.eval.synthesis import (ClassFidelity, choose_tau, evaluator_agreement, frechet_distance, g3_metric, g6_make, kid, make_correct,
                                   prdc, prevalence_tv, rare_classes, smoothed_kl, tv_distance)
 
 rng = np.random.default_rng(0)
@@ -112,3 +112,24 @@ def test_g6_matching_purity_and_unmatched():
     assert one["n_unmatched_real"] == 1 and one["n_groups"] == 1
     mixed = g6_make(gen, np.tile([0, 1], 20), probs, real)  # groups mix both subclasses
     assert mixed["purity"] == 0.5 and np.isclose(mixed["entropy"], np.log(2))
+
+
+def test_excess_kid_is_defined_where_the_ratio_is_not():
+    cf, idx = make_fidelity(30)
+    m = cf(idx)
+    t = cf.table(idx)
+    cv = t[t.covered]
+    assert np.isclose(m["kid_excess"], cv.kid.mean() - cv.kid_ceiling.mean())
+    t.loc[:, "kid_ceiling"] = 0.0  # a ceiling that is exactly 0 (unbiased KID of identical distributions): the ratio is undefined
+    assert not np.isfinite(t.kid.mean() / t.kid_ceiling.mean()) and np.isfinite(t.kid.mean() - t.kid_ceiling.mean())
+    far = ClassFidelity(cf.gen + 5, np.eye(4)[np.repeat([0, 1], [20, 30])], np.zeros(50, int), np.array([0, 0, 1, 1]), 0.9,
+                        np.concatenate([gauss(m, 40) for m in np.eye(8)[:4] * 2]), np.repeat(np.arange(4), 40),
+                        np.concatenate([gauss(m, 40) for m in np.eye(8)[:4] * 2]), np.repeat(np.arange(4), 40), np.array([False, True, False, False]))
+    assert far(np.arange(50))["kid_excess"] > m["kid_excess"] + 1  # a shifted generator is far above its real ceiling
+
+
+def test_evaluator_agreement():
+    probs = np.array([[.9, .1], [.6, .4], [.2, .8], [.55, .45]])
+    e = evaluator_agreement(probs, np.array([0, 1, 1, 0]), tau=0.7)
+    assert e["n"] == 4 and e["acc"] == 0.75 and np.isclose(e["mean_conf"], .7125)
+    assert e["frac_confident"] == 0.5 and e["frac_confident_correct"] == 0.5  # rows 0 and 2 are confident and right

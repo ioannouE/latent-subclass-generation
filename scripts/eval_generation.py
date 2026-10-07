@@ -20,12 +20,15 @@ from lsgen.eval import memorization, support, synthesis
 from lsgen.eval.classifier import calibrated_probs, load_classifier
 from lsgen.eval.evaluators import check_disjoint, read_method
 from lsgen.eval.report import write_results
-from lsgen.eval.stats import bootstrap, bootstrap_table
+from lsgen.eval.stats import bootstrap, bootstrap_table, point_table, without_ci
 from lsgen.features.encoders import Embedder
 from lsgen.features.extract import embed_images, read_csv
 from lsgen.utils import REPO_ROOT, load_config, setup_logging
 
 log = logging.getLogger("eval_generation")
+# Metrics of the G4 / G5 table that depend on the number of samples (counts, nearest-neighbour coverage) or are ill-conditioned (ratio):
+# resampling biases them (duplicates), so they are point estimates. KID and excess KID are unbiased at any n and keep subsample CIs.
+NO_CI_G4_G5 = ["frac_covered", "frac_rare_covered", "frac_common_covered", "coverage", "coverage_ratio", "kid_ratio"]
 CLASSIFIER_TF = T.Compose([T.ToTensor(), T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])  # as in training
 
 
@@ -91,7 +94,7 @@ def run_a(ctx, samples, paths, test="test"):
     t["g2_prevalence"] = pd.DataFrame([{"tv": synthesis.prevalence_tv(make_probs.argmax(1), test_make_counts)}])
 
     test_fine_counts = np.bincount(test_fine, minlength=len(ctx.make_of_fine))
-    t["g3"] = bootstrap(synthesis.g3_metric(fine_probs, req, ctx.make_of_fine, test_fine_counts), groups, cfg["n_boot"], seed, cfg["n_jobs"])
+    t["g3"] = point_table(synthesis.g3_metric(fine_probs, req, ctx.make_of_fine, test_fine_counts), groups)  # histogram distances: no valid CI
 
     val_ids = load_split(ctx.splits_dir, "val")
     val_probs = ctx.probs("fine", [ctx.derived / f"bbox15_{cfg['crop_size']}" / f"{i}.png" for i in val_ids])
@@ -99,8 +102,17 @@ def run_a(ctx, samples, paths, test="test"):
     rare = synthesis.rare_classes(np.bincount(train_fine, minlength=len(ctx.make_of_fine)))
     cf = synthesis.ClassFidelity(feats["clip_l"], fine_probs, req, ctx.make_of_fine, tau, ref["clip_l", test], test_fine,
                                  ref["clip_l", "train"], train_fine, rare, cfg["min_samples"], cfg["coverage_k"], seed)
-    t["g4_g5"] = bootstrap(cf, groups, cfg["n_boot"], seed, cfg["n_jobs"])
+    t["g4_g5"] = without_ci(bootstrap(cf, groups, cfg["n_boot"], seed, cfg["n_jobs"], cfg["subsample"]), NO_CI_G4_G5)
     t["g4_g5_per_class"] = pd.concat([cf.table(i) for i in groups.values()], ignore_index=True)
+
+    if "fine_id" in samples:  # E1: methods conditioned on the fine class, the evaluator-domain check
+        want = samples.fine_id.to_numpy()
+        val_fine = ctx.labels(val_ids, "fine_id")
+        t["e1_evaluator"] = pd.DataFrame([{"set": "generated", **synthesis.evaluator_agreement(fine_probs, want, tau)},
+                                          {"set": "real val", **synthesis.evaluator_agreement(val_probs, val_fine, tau)}])
+        cf_requested = synthesis.ClassFidelity(feats["clip_l"], np.eye(len(ctx.make_of_fine))[want], req, ctx.make_of_fine, tau, ref["clip_l", test],
+                                               test_fine, ref["clip_l", "train"], train_fine, rare, cfg["min_samples"], cfg["coverage_k"], seed)
+        t["g4_g5_requested"] = point_table(cf_requested, groups)  # G4 / G5 with the requested class as assignment: a perfect evaluator
 
     if "group" in samples:
         group = samples.group.to_numpy()
