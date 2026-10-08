@@ -1,6 +1,6 @@
 {
- "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
- "created_utc": "2026-10-07T21:39:11+00:00",
+ "git_hash": "e499877cef39dc306c31e2399bef16c78daa418a-dirty",
+ "created_utc": "2026-10-08T13:24:16+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "encoders": [
@@ -47,13 +47,13 @@
   "r5": 50
  },
  "table_git_hash": {
-  "r1": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
-  "r2_within_make": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
-  "r2_oracle": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
-  "r2_khat": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
-  "r3": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
-  "r4": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
-  "r5": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty"
+  "r1": "e499877cef39dc306c31e2399bef16c78daa418a-dirty",
+  "r2_within_make": "e499877cef39dc306c31e2399bef16c78daa418a-dirty",
+  "r2_oracle": "e499877cef39dc306c31e2399bef16c78daa418a-dirty",
+  "r2_khat": "e499877cef39dc306c31e2399bef16c78daa418a-dirty",
+  "r3": "e499877cef39dc306c31e2399bef16c78daa418a-dirty",
+  "r4": "e499877cef39dc306c31e2399bef16c78daa418a-dirty",
+  "r5": "e499877cef39dc306c31e2399bef16c78daa418a-dirty"
  },
  "encoder": "sscd_256",
  "n_train": 7270,
