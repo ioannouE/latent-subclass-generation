@@ -1,6 +1,6 @@
 # Metric validation (controls x metrics)
 
-Provenance: git `e499877cef39dc306c31e2399bef16c78daa418a-dirty`, seed 0, config `configs/metric_validation.yaml`. conflicting images (same photo under different fine labels) are left out of every split: {'train': 59, 'val': 8, 'test': 87} (train / val / test).
+Provenance: git `83549f84d9bde1571b6ef1dd5573c95a260b735f-dirty`, seed 0, config `configs/metric_validation.yaml`. conflicting images (same photo under different fine labels) are left out of every split: {'train': 59, 'val': 8, 'test': 87} (train / val / test).
 
 Floor = c2_oracle_split (A), c2_oracle_real (B, set single_test_k5). Verdicts: ok = expected and clearly worse than the floor; MISSED = expected, not worse; also = worse though not expected; same = unchanged.
 
