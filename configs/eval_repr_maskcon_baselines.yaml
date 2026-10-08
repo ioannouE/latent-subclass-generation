@@ -1,0 +1,13 @@
+# MaskCon label scheme (8 body types / 196 classes);  R1-R5 for the fine-tuned contrastive baselines (names = <method>_s<seed>, crop = the training crop size).
+# Same protocol and settings as configs/eval_representation.yaml; reference row = dinov3_base_256 there.
+data_config: configs/data.yaml
+labels: maskcon
+report_dir: repr_maskcon
+encoders: [supcon_bodytype_s0, simclr_bodytype_s0, supcon_simclr_bodytype_s0, maskcon_bodytype_s0, falcon_bodytype_s0]
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632          # K-hat and R4 CIs, see configs/eval_representation.yaml
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]   # what to (re)compute; the others are kept
+n_jobs: 16
+seed: 0

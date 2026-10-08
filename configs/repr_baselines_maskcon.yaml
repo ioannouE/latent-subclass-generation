@@ -1,0 +1,38 @@
+# Step 2 on the MaskCon label scheme (coarse = 8 body types, data/maskcon_coarse.csv), otherwise identical to configs/repr_baselines.yaml.
+# Step 2 (controlled regime): fine-tuning of the last blocks of one frozen-recipe backbone, coarse (make) labels only.
+# Every method gets the identical recipe (below); they differ only in the objective and its published settings. One seed per run; no tuning.
+data_config: configs/data.yaml
+labels: maskcon                # lsgen/data/labels.py
+tag: _bodytype                 # run names <method>_bodytype_s<seed>: the make-trained features are not overwritten
+backbone: dinov3_base          # key of lsgen.features.encoders.ENCODERS
+crop: bbox15_256               # stored crops; the augmentation outputs the backbone's input size
+methods:
+  supcon: {kind: contrastive, supcon: 1.0, simclr: 0.0}       # weights of SupCon on make labels and SimCLR on image identity
+  simclr: {kind: contrastive, supcon: 0.0, simclr: 1.0}
+  supcon_simclr: {kind: contrastive, supcon: 1.0, simclr: 1.0}
+  maskcon: {kind: maskcon, queue: 4096, momentum: 0.99, t: 0.1, t0: 0.1, w: 1.0}   # published Cars196 settings; queue 8192 -> 4096 (train set: 7329 images)
+  falcon:                       # uses K: num_fine = number of hidden subclasses (the 196 official classes), the one thing FALCON needs besides the make labels
+    kind: falcon
+    num_fine: 196
+    neighbor_pool: 20           # same-make nearest neighbours in the frozen backbone features, 5 of them drawn per step (n_neighbors)
+    n_neighbors: 5
+    lambdas: [0.5, 0.5, 2.0]    # coarse CE, fine CE + consistency, entropy regulariser
+    temperature: 0.9
+    beta_reg: 0.1               # size penalty of the fine -> coarse assignment M (first half of training only)
+    solve_every: 20             # steps between re-estimates of M
+    soft_epochs: 25             # soft pseudo-labels (tau 1 -> 0) for this many epochs, then hard
+    ema_decay: 0.99
+seeds: [0]
+trainable_blocks: 4            # last N transformer blocks (+ final norm) are fine-tuned, the rest stays frozen
+head: [2048, 128]              # projection head hidden / output dims (dropped after training)
+temperature: 0.1
+epochs: 50
+batch_size: 256                # images per step (2 views each); lower it if the GPU runs out of memory
+lr_backbone: 2.0e-5
+lr_head: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 3
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # + random resized crop and horizontal flip
+eval_every: 10                 # log val kNN@20 make accuracy (monitoring only: no model selection, last epoch is used)
+num_workers: 8                 # = --cpus-per-task in slurm/train_repr.sh
+batch_size_embed: 128

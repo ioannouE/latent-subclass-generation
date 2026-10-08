@@ -7,9 +7,9 @@ cases with known answers). Entry points: `scripts/eval_representation.py` (R1-R5
 ## Conventions
 - **Data.** Reference = `test` (8,041 images minus excluded ones); `train` is used for fitting probes, kNN references,
   the real ceilings of G5 and the nearest-train search of G7; `val` only for the evaluator calibration and for choosing
-  tau (G4). `test` is never used for tuning. The 178 conflicting images (`data/splits/exclude.txt`, docs/DATA.md) are
+  tau (G4). `test` is never used for tuning. The conflicting images (`data/splits/exclude.txt`, docs/DATA.md) are
   dropped by `load_split` everywhere; every `summary.json` records how many were removed per split.
-- **Fine labels** are used only inside `lsgen/eval/` and the scripts that call it (`tests/test_no_fine_labels.py`).
+- **Fine label** = the hidden subclass = make-model (`fine_id`, 189 classes). Fine labels are used only inside `lsgen/eval/` and the scripts that call it (`tests/test_no_fine_labels.py`).
 - **Embeddings** are the cached bbox15 crops (`scripts/extract_features.py`). R-metrics L2-normalise first. "Squared
   distance" is on L2-normalised vectors, so it equals `2 - 2 cos`.
 - **Per make and macro.** Every R and G metric except G1/G7 and the set-level G2 prevalence is computed per make

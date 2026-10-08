@@ -1,0 +1,19 @@
+# UMAP / t-SNE of every encoder and representation method on the test images (descriptive only, nothing is tuned from these).
+# Global projections are cached in <derived_root>/projections/ and shared by both label schemes; delete a file to recompute it.
+data_config: configs/data.yaml
+frozen: [dinov3_base_128, dinov3_base_256, dinov3_large_128, dinov3_large_256, clip_l_128, clip_l_256, sscd_128, sscd_256,
+         inception_128, inception_256, fine_classifier_128, gram_vgg16_128, gram_dinov3_base_128]
+umap_neighbors: 15
+tsne_perplexity: 30
+n_jobs: 16                       # = --cpus-per-task in slurm/visualize_embeddings.sh
+seed: 0
+schemes:                         # label scheme (lsgen/data/labels.py) -> methods, coloured coarse classes, coarse classes shown at subclass level
+  make:
+    methods: [supcon_s0_256, simclr_s0_256, supcon_simclr_s0_256, maskcon_s0_256, falcon_s0_256]
+    top_coarse: 8                # largest makes coloured in the global panels, the others grey
+    within: [Chevrolet, Audi, Hyundai]
+  maskcon:
+    methods: [supcon_bodytype_s0_256, simclr_bodytype_s0_256, supcon_simclr_bodytype_s0_256, maskcon_bodytype_s0_256,
+              falcon_bodytype_s0_256, maskcon_repro_224]     # the last one: slurm/reproduce_maskcon.sh (native pipeline)
+    top_coarse: 8
+    within: [Hatchback, Wagon, Van]

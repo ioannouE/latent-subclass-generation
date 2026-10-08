@@ -1,6 +1,6 @@
 {
- "git_hash": "bfe27bf3d79f09faafcdea75e9d30541618911b0-dirty",
- "created_utc": "2026-10-01T14:58:14+00:00",
+ "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+ "created_utc": "2026-10-07T13:19:15+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "seed": 0,
@@ -35,93 +35,93 @@
  "seed": 0,
  "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
  "inputs_sha256": {
-  "duplicates.csv": "d5bdeab95f7aea85461b3ec6e7bba4e5212bd3c4f392eaf4b451cdbcfc70fe63",
-  "duplicates_within_test.csv": "2928275b87cfd986130a0260ea2207a0a2f1a5b35900f2bafbc6f6e047c09c24",
-  "exclude.txt": "49c93f51d68b507c19964bd79bdd723e9ab1c89a73a0264c0d5c28191df67ba5"
+  "duplicates.csv": "fcae1f324c2f32fa5ab2e2e882e9da44941936a78b10f11532b610c0a58e8597",
+  "duplicates_within_test.csv": "3a66b8ca922cbf9e4a8a53a0d0454489e67418a5159ddc4e07ddcbd01335d025",
+  "exclude.txt": "054e881f8efc11154552050af4a391f48a5c65a214cdb811131e79d91b133003"
  },
  "files": {
-  "single_test_k1.json": "eeaeebe10bd747d40f0c8d033459c8c941cd289516fd96f81a8e18841427508e",
-  "single_test_k5.json": "8a160a2eacae88a8462e75e0a4f45644db13c6799257e7c201403a86ee244469",
-  "single_test_k10.json": "21a622f0ce32d10371811dc12137545fd755e02729688c9c13e0bc6c504ce217",
-  "single_train_k1.json": "fa92304c3791770972ba232ce2413cf9ec3c01d62408a6a13673c5418c6025fb",
-  "single_train_k5.json": "80f60d513d02eac0a02dd55dd6a542d23fb231834fa9927e2141d06c6d78e591",
-  "single_train_k10.json": "cb4f7cf4136bc1b6a88a32df2752945ad3ecdfcfc2f48b82b44794fdb1f46e51",
-  "mixed_k10.json": "8ff914b492845ad67e403e511b68a201c73dafdbe7450967180d52b9b5465305"
+  "single_test_k1.json": "16656e5519a954b85f21f6e2d4d2c95a136a30745f4918c0fa8c680ed3e49ca9",
+  "single_test_k5.json": "0f2cfe0df363c65782d3d72c9b1d96c7fe4bc9ced8d7dc76816798efc9a159c5",
+  "single_test_k10.json": "cc29940484f88582ef9400d3d1fc49c9021337b7cca0caea6af37076fe3e07ff",
+  "single_train_k1.json": "b890c40d55059b030d1c9e6339346e70b09936b53a5c2f812611064bd4f2a0d7",
+  "single_train_k5.json": "10d95f52b142cdc1f2b008ea3c123e05ecb65625bfccd725d8bb2e7dcacafb5f",
+  "single_train_k10.json": "53d4dea2bc18c1fb10fc39bdf79ccae8adba8af05d49e1e08217e6d9207d02fa",
+  "mixed_k10.json": "e32971a9ae8599d660cf088be7f72e63651beeb6e7aaadb8b9d487feddb012ff"
  },
  "summary": {
   "single_test_k1.json": {
-   "episodes": 980,
-   "eligible_classes": 196,
+   "episodes": 945,
+   "eligible_classes": 189,
    "skipped_classes": 0,
    "with_near_dup_S_T": 0,
-   "redrawn": 13,
+   "redrawn": 12,
    "target_size_min_median": [
     23,
     40
    ]
   },
   "single_test_k5.json": {
-   "episodes": 980,
-   "eligible_classes": 196,
+   "episodes": 945,
+   "eligible_classes": 189,
    "skipped_classes": 0,
    "with_near_dup_S_T": 0,
-   "redrawn": 46,
+   "redrawn": 42,
    "target_size_min_median": [
     19,
     36
    ]
   },
   "single_test_k10.json": {
-   "episodes": 980,
-   "eligible_classes": 196,
+   "episodes": 945,
+   "eligible_classes": 189,
    "skipped_classes": 0,
    "with_near_dup_S_T": 0,
-   "redrawn": 70,
+   "redrawn": 53,
    "target_size_min_median": [
     14,
     31
    ]
   },
   "single_train_k1.json": {
-   "episodes": 980,
-   "eligible_classes": 196,
+   "episodes": 945,
+   "eligible_classes": 189,
    "skipped_classes": 0,
    "with_near_dup_S_T": 0,
-   "redrawn": 12,
+   "redrawn": 7,
    "target_size_min_median": [
     24,
     41
    ]
   },
   "single_train_k5.json": {
-   "episodes": 980,
-   "eligible_classes": 196,
+   "episodes": 945,
+   "eligible_classes": 189,
    "skipped_classes": 0,
    "with_near_dup_S_T": 0,
-   "redrawn": 41,
+   "redrawn": 58,
    "target_size_min_median": [
     24,
     41
    ]
   },
   "single_train_k10.json": {
-   "episodes": 980,
-   "eligible_classes": 196,
+   "episodes": 945,
+   "eligible_classes": 189,
    "skipped_classes": 0,
    "with_near_dup_S_T": 0,
-   "redrawn": 85,
+   "redrawn": 78,
    "target_size_min_median": [
     24,
     41
    ]
   },
   "mixed_k10.json": {
-   "episodes": 2790,
+   "episodes": 2715,
    "makes": 30,
-   "pairs": 186,
+   "pairs": 181,
    "skipped_pair_ratios": 0,
    "with_near_dup_S_T": 0,
-   "redrawn": 205,
+   "redrawn": 236,
    "target_size_min_median": [
     50,
     72

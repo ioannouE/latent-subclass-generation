@@ -2,7 +2,7 @@ import numpy as np
 
 from lsgen.eval.representation import (cluster_space, deltas_per_make, distance_matrix, hungarian_acc, khat_error,
                                        knn_accuracy, knn_correct, l2norm, participation_ratio, probe_correct, r2_metric,
-                                       r3_metric, r4_metric, r5_make, recall1_correct, select_k, trace_cov)
+                                       r3_metric, r4_metric, r5_make, recall1_correct, recall_at_k, select_k, trace_cov)
 
 
 def hierarchy(seed=0, d=32, n=40):
@@ -115,3 +115,10 @@ def test_r4_effective_rank_depends_on_n_and_var_ratio_has_a_subsample_ci():
     ratio = r4_metric(x, fine)(np.arange(160))["var_ratio"]
     sub = bootstrap(metric, groups, 200, 0, subsample=0.632).query("metric == 'var_ratio'").iloc[0]
     assert sub.lo <= ratio <= sub.hi
+
+
+def test_recall_at_k_known_values():
+    # labels a a b b; image 2's neighbours in order: image 1 (a), image 0 (a), image 3 (b); all others find their partner first
+    x = np.array([[1, 0], [0.9, 0.1], [0.8, 0.3], [0, 1]], dtype=np.float32)
+    r = recall_at_k(x, np.array([0, 0, 1, 1]), ks=(1, 2, 3), chunk=3)  # chunk < n: offsets must not leak self-matches
+    assert r == {1: 0.75, 2: 0.75, 3: 1.0}

@@ -1,6 +1,6 @@
 """Raw Stanford Cars (Kaggle mirror + labelled test annotations): loading and verification.
 
-This module is data construction: it reads the official fine labels (fine_id) so that the
+This module is data construction: it reads the official class labels (class_id, make-model-year) so that the
 hierarchy, splits, episodes and evaluation can be built. Training datasets live in
 lsgen/data/datasets.py and never expose fine labels.
 """
@@ -37,17 +37,17 @@ def _load_mat_annos(path):
     df = pd.DataFrame({c: [int(x) for x in a[c]] for c in BBOX_COLS})
     df["fname"] = [str(x) for x in a["fname"]]
     if "class" in a.dtype.names:
-        df["fine_id"] = [int(x) - 1 for x in a["class"]]  # devkit classes are 1-indexed
+        df["class_id"] = [int(x) - 1 for x in a["class"]]  # devkit classes are 1-indexed
     return df
 
 
 def load_annotations(raw_root):
-    """One row per image: id, official_split, fname, rel_path, devkit bbox (1-indexed, inclusive), fine_id."""
+    """One row per image: id, official_split, fname, rel_path, devkit bbox (1-indexed, inclusive), class_id."""
     raw_root = Path(raw_root)
     parts = []
     for split in ("train", "test"):
         df = _load_mat_annos(raw_root / ANNOS[split])
-        if "fine_id" not in df:
+        if "class_id" not in df:
             raise ValueError(f"{ANNOS[split]} has no class labels; refusing to build an unlabelled {split} split")
         df.insert(0, "official_split", split)
         df.insert(0, "id", [f"{split}_{Path(f).stem}" for f in df["fname"]])
@@ -85,9 +85,9 @@ def verify_raw(df, raw_root, num_workers=8):
     if len(df) != sum(EXPECTED_COUNTS.values()):
         errors.append(f"total {len(df)} != 16185")
     for split in ("train", "test"):
-        n_cls = df.loc[df.official_split == split, "fine_id"].nunique()
-        if n_cls != N_CLASSES or df.fine_id.min() != 0 or df.fine_id.max() != N_CLASSES - 1:
-            errors.append(f"{split}: {n_cls} classes, fine_id range [{df.fine_id.min()}, {df.fine_id.max()}]")
+        n_cls = df.loc[df.official_split == split, "class_id"].nunique()
+        if n_cls != N_CLASSES or df.class_id.min() != 0 or df.class_id.max() != N_CLASSES - 1:
+            errors.append(f"{split}: {n_cls} classes, class_id range [{df.class_id.min()}, {df.class_id.max()}]")
     if df.id.duplicated().any():
         errors.append(f"{df.id.duplicated().sum()} duplicate image ids (i.e. >1 annotation per image)")
     for split, d in IMAGE_DIRS.items():

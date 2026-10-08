@@ -1,6 +1,7 @@
-"""Frozen splits. Fine labels are used here ONLY to stratify (documented in docs/DATA.md).
+"""Frozen splits. Official classes (make-model-year, finer than the hidden make-model subclass) are used here ONLY to stratify
+(documented in docs/DATA.md).
 
-train  = official train minus val        val    = 10% of official train, stratified by fine_id
+train  = official train minus val        val    = 10% of official train, stratified by class_id
 test   = official test (never for tuning) test_A / test_B = stratified halves of test
 """
 from pathlib import Path
@@ -16,11 +17,11 @@ def _stratified(ids, labels, test_size, seed):
 
 
 def make_splits(meta, val_frac=0.10, seed=0):
-    """meta: DataFrame with id, official_split, fine_id. Returns {split: sorted list of ids}."""
+    """meta: DataFrame with id, official_split, class_id. Returns {split: sorted list of ids}."""
     tr = meta[meta.official_split == "train"].sort_values("id")
     te = meta[meta.official_split == "test"].sort_values("id")
-    train, val = _stratified(tr.id.tolist(), tr.fine_id.to_numpy(), val_frac, seed)
-    test_A, test_B = _stratified(te.id.tolist(), te.fine_id.to_numpy(), 0.5, seed)
+    train, val = _stratified(tr.id.tolist(), tr.class_id.to_numpy(), val_frac, seed)
+    test_A, test_B = _stratified(te.id.tolist(), te.class_id.to_numpy(), 0.5, seed)
     return {"train": train, "val": val, "test": sorted(te.id), "test_A": test_A, "test_B": test_B}
 
 

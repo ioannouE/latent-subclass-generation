@@ -1,4 +1,4 @@
-model_id,make_model,make,make_id,model,n_years,years,fine_ids
+fine_id,make_model,make,make_id,model,n_years,years,class_ids
 0,AM General Hummer SUV,AM General,0,Hummer SUV,1,2000,0
 1,Acura RL Sedan,Acura,1,RL Sedan,1,2012,1
 2,Acura TL Sedan,Acura,1,TL Sedan,1,2012,2

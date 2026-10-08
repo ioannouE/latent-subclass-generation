@@ -56,9 +56,9 @@ def data_summary(dcfg, hierarchy):
     ev = {l: json.loads((Path(dcfg["reports_root"]) / f"evaluator_{l}.json").read_text()) for l in ("fine", "make")}
     return f"""\
 - Images after excluding conflicting ones: {n} (removed: {removed['excluded_conflicting_images']}, {sum(removed['excluded_conflicting_images'].values())} in total). {removed['note'].capitalize()}.
-- 49 makes, 196 fine classes. **K_c histogram** (subclasses per make: number of makes): {dict(zip(hist.index.tolist(), hist.tolist()))}; {int((k == 1).sum())} makes have K_c = 1.
-- **Near-duplicates (official train vs test):** {dup['n_pairs']} candidate pairs ({dup['n_exact_duplicate']} byte-identical, {dup['n_exact_duplicate_label_conflict']} of them with different fine labels), marked in the metadata, never removed; {dup['n_pairs_within_test']} pairs inside test.
-- **Evaluator classifiers** (ConvNeXt-T, 128 px, temperature-scaled on val; evaluation only): fine (196) test top-1 {ev['fine']['test_top1']:.3f}, ECE {ev['fine']['test_ece_calibrated']:.3f}; make (49) test top-1 {ev['make']['test_top1']:.3f}, ECE {ev['make']['test_ece_calibrated']:.3f}.
+- 49 makes, {ev['fine']['n_classes']} hidden subclasses (make-model). **K_c histogram** (subclasses per make: number of makes): {dict(zip(hist.index.tolist(), hist.tolist()))}; {int((k == 1).sum())} makes have K_c = 1.
+- **Near-duplicates (official train vs test):** {dup['n_pairs']} candidate pairs ({dup['n_exact_duplicate']} byte-identical, {dup['n_exact_duplicate_label_conflict']} of them with different subclasses), marked in the metadata, never removed; {dup['n_pairs_within_test']} pairs inside test.
+- **Evaluator classifiers** (ConvNeXt-T, 128 px, temperature-scaled on val; evaluation only): subclass ({ev['fine']['n_classes']}) test top-1 {ev['fine']['test_top1']:.3f}, ECE {ev['fine']['test_ece_calibrated']:.3f}; make (49) test top-1 {ev['make']['test_top1']:.3f}, ECE {ev['make']['test_ece_calibrated']:.3f}.
 
 ![data summary](data_summary.png)
 

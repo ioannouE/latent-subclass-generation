@@ -14,11 +14,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
-import umap  # noqa: E402
-from sklearn.decomposition import PCA  # noqa: E402
-from sklearn.manifold import TSNE  # noqa: E402
 
-from lsgen.eval.representation import deltas_per_make, knn_accuracy, l2norm  # noqa: E402
+from lsgen.eval.projection import project  # noqa: E402
+from lsgen.eval.representation import deltas_per_make, knn_accuracy  # noqa: E402
 from lsgen.features.extract import read_csv  # noqa: E402
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging  # noqa: E402
 
@@ -28,14 +26,6 @@ log = logging.getLogger("analyze_features")
 def load(derived, enc, split, meta):
     files, x = read_csv(derived / "features" / enc / f"{split}.csv")
     return x, meta.loc[[f[:-4] for f in files]]
-
-
-def project(x, cfg):
-    x = l2norm(x)
-    z_umap = umap.UMAP(n_neighbors=cfg["umap_neighbors"], metric="cosine", random_state=cfg["seed"]).fit_transform(x)
-    xp = PCA(min(50, x.shape[1]), random_state=cfg["seed"]).fit_transform(x)
-    z_tsne = TSNE(perplexity=cfg["tsne_perplexity"], init="pca", random_state=cfg["seed"], n_jobs=cfg["n_jobs"]).fit_transform(xp)
-    return {"UMAP": z_umap, "t-SNE": z_tsne}
 
 
 def metrics(cfg, derived, meta):
@@ -60,7 +50,7 @@ def metrics(cfg, derived, meta):
 
 def fig_knn(m, path):
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
-    for ax, col, title in zip(axes, ["knn_make", "knn_fine"], ["make (49)", "fine class (196)"]):
+    for ax, col, title in zip(axes, ["knn_make", "knn_fine"], ["make (49)", "subclass, make-model (189)"]):
         p = m.pivot(index="encoder", columns="crop", values=col).loc[m.encoder.unique()]
         p.plot.bar(ax=ax, rot=20, width=0.8)
         for c in ax.containers:
@@ -166,10 +156,10 @@ def main():
     derived, reports = Path(dcfg["derived_root"]), Path(dcfg["reports_root"])
     out = reports / "features"
     out.mkdir(parents=True, exist_ok=True)
-    h = pd.read_csv(Path(dcfg["data_root"]) / "hierarchy.csv").set_index("fine_id")
+    h = pd.read_csv(Path(dcfg["data_root"]) / "make_model.csv").set_index("fine_id")
     meta = pd.read_parquet(derived / "metadata.parquet", columns=["id", "make_id", "fine_id"]).set_index("id")
     meta["make"] = h.loc[meta.fine_id, "make"].to_numpy()
-    meta["label"] = (h.loc[meta.fine_id, "model"] + " " + h.loc[meta.fine_id, "year"].astype(str)).to_numpy()
+    meta["label"] = h.loc[meta.fine_id, "model"].to_numpy()
 
     m, r3 = metrics(cfg, derived, meta)
     m.to_csv(out / "metrics.csv", index=False, float_format="%.4f")

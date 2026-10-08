@@ -11,16 +11,17 @@ import lsgen.data.datasets as datasets_mod
 from lsgen.data.datasets import CarsCoarseDataset
 from lsgen.utils import REPO_ROOT
 
-FINE_TOKENS = re.compile(r"fine_id|model_id|make_model|class_name|\byear\b|fine_label")
+FINE_TOKENS = re.compile(r"fine_id|class_id|model_id|make_model|class_name|\byear\b|fine_label")
 # Modules allowed to touch fine labels: evaluation, and data/split/episode construction.
 ALLOWED = {"lsgen/eval", "lsgen/data/stanford_cars.py", "lsgen/data/hierarchy.py", "lsgen/data/splits.py",
            "lsgen/data/episodes.py", "lsgen/data/reports.py", "scripts/prepare_data.py", "scripts/build_episodes.py", "scripts/train_eval_classifier.py", "scripts/analyze_features.py",
-           "scripts/eval_representation.py", "scripts/eval_generation.py", "scripts/make_controls.py", "scripts/gram_check.py"}
+           "scripts/eval_representation.py", "scripts/eval_generation.py", "scripts/make_controls.py", "scripts/gram_check.py",
+           "lsgen/data/labels.py", "scripts/reproduce_maskcon.py", "scripts/visualize_embeddings.py"}
 
 
 def test_dataset_returns_only_image_and_make(tmp_path):
     meta = pd.DataFrame({"id": ["train_00001", "train_00002"], "make_id": [3, 7], "fine_id": [11, 42],
-                         "model_id": [5, 9], "class_name": ["a", "b"]})
+                         "class_id": [5, 9], "class_name": ["a", "b"]})
     d = tmp_path / "bbox15_128"
     d.mkdir()
     for i in meta.id:

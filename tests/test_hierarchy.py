@@ -29,5 +29,5 @@ def test_real_hierarchy(raw_root):
     h = build_hierarchy(load_class_names(raw_root))
     assert len(h) == 196 and h.make.nunique() == 49
     assert set(h.loc[h.make.str.contains(" "), "make"]) == {"AM General", "Aston Martin", "Land Rover"}
-    assert h.groupby("make").K_c.first().sum() == 196
-    assert h.model_id.nunique() <= 196 and (h.groupby("make_model").make.nunique() == 1).all()
+    assert h.fine_id.nunique() == 189 and h.groupby("make").K_c.first().sum() == 189
+    assert (h.groupby("make_model").make.nunique() == 1).all() and (h.groupby("fine_id").make_model.nunique() == 1).all()

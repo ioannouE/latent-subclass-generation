@@ -1,6 +1,6 @@
 {
- "git_hash": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c",
- "created_utc": "2026-10-07T07:45:25+00:00",
+ "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+ "created_utc": "2026-10-07T14:42:40+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "encoders": [
@@ -28,9 +28,9 @@
  "seed": 0,
  "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
  "excluded_conflicting_images": {
-  "train": 68,
-  "val": 9,
-  "test": 101
+  "train": 59,
+  "val": 8,
+  "test": 87
  },
  "note": "conflicting images (same photo under different fine labels) are left out of every split",
  "tables": {
@@ -43,15 +43,15 @@
   "r5": 50
  },
  "table_git_hash": {
-  "r1": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c",
-  "r2_within_make": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c",
-  "r2_oracle": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c",
-  "r2_khat": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c",
-  "r3": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c",
-  "r4": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c",
-  "r5": "a7d38f4be5697096ecfa76eae1b6c965b8a4df4c"
+  "r1": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "r2_within_make": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "r2_oracle": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "r2_khat": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "r3": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "r4": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "r5": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty"
  },
  "encoder": "fine_classifier_128",
- "n_train": 7261,
- "n_test": 7940
+ "n_train": 7270,
+ "n_test": 7954
 }

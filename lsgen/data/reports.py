@@ -113,19 +113,19 @@ def preprocessing_report(meta, derived_root, out_dir, prov, gate_frac, gate_shar
 
 def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, dup_cfg=None):
     out_dir = Path(out_dir)
-    kc = hierarchy.groupby(["make_id", "make"]).fine_id.count().rename("K_c")
-    per_make = hierarchy.groupby("make_id").agg(make=("make", "first"), K_c=("fine_id", "count")).join(
+    kc = hierarchy.groupby(["make_id", "make"]).fine_id.nunique().rename("K_c")
+    per_make = hierarchy.groupby("make_id").agg(make=("make", "first"), K_c=("fine_id", "nunique")).join(
         meta.pivot_table(index="make_id", columns="split", values="id", aggfunc="count").fillna(0).astype(int))
     per_make = per_make[["make", "K_c", "train", "val", "test"]].sort_values(["K_c", "make"], ascending=[False, True])
     per_fine = meta.pivot_table(index="fine_id", columns="split", values="id", aggfunc="count").fillna(0).astype(int)
-    per_fine = hierarchy.set_index("fine_id")[["class_name", "make", "model", "year"]].join(per_fine)
+    per_fine = hierarchy.groupby("fine_id")[["make_model", "make"]].first().join(per_fine)
     per_make.to_csv(out_dir / "images_per_make.csv")
     per_fine.to_csv(out_dir / "images_per_fine_class.csv")
 
     kc_vals = kc.to_numpy()
     fig, axes = plt.subplots(1, 3, figsize=(17, 4.5))
     axes[0].hist(kc_vals, bins=np.arange(0.5, kc_vals.max() + 1.5), color="#4472c4", edgecolor="w")
-    axes[0].set(title="K_c: fine classes per make (49 makes)", xlabel="K_c", ylabel="makes")
+    axes[0].set(title="K_c: subclasses (make-model) per make (49 makes)", xlabel="K_c", ylabel="makes")
     pm = per_make.sort_values("train", ascending=False)
     axes[1].bar(range(len(pm)), pm.train + pm.val, label="train+val")
     axes[1].bar(range(len(pm)), pm.test, bottom=pm.train + pm.val, label="test")
@@ -133,7 +133,7 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
     axes[1].set(title="images per make", ylabel="images")
     axes[1].legend()
     axes[2].hist([per_fine.train + per_fine.val, per_fine.test], bins=20, label=["official train", "test"])
-    axes[2].set(title="images per fine class", xlabel="images", ylabel="classes")
+    axes[2].set(title="images per subclass (make-model)", xlabel="images", ylabel="classes")
     axes[2].legend()
     fig.tight_layout()
     fig.savefig(out_dir / "data_summary.png", dpi=120)
@@ -141,16 +141,16 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
 
     split_counts = meta.split.value_counts().to_dict()
     half = meta.test_half.value_counts().to_dict()
-    mm = hierarchy.groupby("make_model").fine_id.count()
+    n_years = hierarchy.groupby("fine_id").size()
     dup_ids = set(dups.test_id) | set(dups.train_id) if len(dups) else set()
     lines = [
         "# Data summary (Milestone 1)", "", _header(prov), "",
         f"- Images: {len(meta)}; splits: {json.dumps(split_counts)}; test halves: {json.dumps(half)}",
-        f"- Makes: {hierarchy.make.nunique()}; fine classes (make-model-year): {len(hierarchy)}; "
-        f"make-model classes (years merged): {len(mm)} ({(mm > 1).sum()} merge >1 year)",
+        f"- Makes: {hierarchy.make.nunique()}; hidden subclasses (make-model, `fine_id`): {len(n_years)}, merged from "
+        f"{len(hierarchy)} official make-model-year classes ({(n_years > 1).sum()} merge >1 year)",
         f"- K_c: min {kc_vals.min()}, median {np.median(kc_vals):g}, max {kc_vals.max()}; "
         f"makes with K_c = 1 ({(kc_vals == 1).sum()}): {', '.join(kc[kc == 1].index.get_level_values(1))}",
-        f"- Fine class size (official train): {int((per_fine.train + per_fine.val).min())}-{int((per_fine.train + per_fine.val).max())}; "
+        f"- Subclass size (official train): {int((per_fine.train + per_fine.val).min())}-{int((per_fine.train + per_fine.val).max())}; "
         f"test: {per_fine.test.min()}-{per_fine.test.max()}; val per class: {per_fine.val.min()}-{per_fine.val.max()}",
         "", "![](data_summary.png)", "",
         "## Near-duplicate audit (official train vs test, raw images)", "",
@@ -168,7 +168,7 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
         ex = dups.exact_duplicate
         lines += [
             f"- SSCD tiers (pairs with sim >= t): {tiers}",
-            f"- Byte-identical train/test files: {int(ex.sum())}, of which with DIFFERENT official fine labels: "
+            f"- Byte-identical train/test files: {int(ex.sum())}, of which with DIFFERENT hidden subclasses: "
             f"{int((ex & dups.label_conflict).sum())} (label noise in the official annotations)",
             f"- Label conflicts among all candidate pairs: {int(dups.label_conflict.sum())}",
         ]
@@ -176,8 +176,8 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
                                                 n_fine=("fine_id", "nunique"))
     within = sha_groups[(sha_groups.n > 1) & ~sha_groups.splits.str.contains(r"\+")]
     lines.append(f"- Byte-identical groups within one official split: {len(within)} "
-                 f"({int((within.n_fine > 1).sum())} with conflicting fine labels)")
-    lines.append(f"- Conflicting images (same image under different fine labels: byte-identical or flagged near-duplicate), "
+                 f"({int((within.n_fine > 1).sum())} with conflicting subclasses)")
+    lines.append(f"- Conflicting images (same image under different hidden subclasses (make-model): byte-identical or flagged near-duplicate), "
                  f"left out of all experiments (`data/splits/exclude.txt`): {int(meta.exclude.sum())} "
                  f"{json.dumps(meta[meta.exclude].split.value_counts().to_dict())}")
     if "n_near_duplicates_within_test" in meta:
@@ -190,5 +190,5 @@ def data_summary_report(meta, hierarchy, dups, out_dir, prov, nn_summary=None, d
     if len(dups):
         lines += ["", dups.head(30).to_markdown(index=False)]
     lines += ["", "## Per make", "", per_make.to_markdown(), "",
-              "Per fine class: `reports/images_per_fine_class.csv`.", ""]
+              "Per subclass: `reports/images_per_fine_class.csv`.", ""]
     (out_dir / "data_summary.md").write_text("\n".join(lines))

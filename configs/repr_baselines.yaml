@@ -8,9 +8,9 @@ methods:
   simclr: {kind: contrastive, supcon: 0.0, simclr: 1.0}
   supcon_simclr: {kind: contrastive, supcon: 1.0, simclr: 1.0}
   maskcon: {kind: maskcon, queue: 4096, momentum: 0.99, t: 0.1, t0: 0.1, w: 1.0}   # published Cars196 settings; queue 8192 -> 4096 (train set: 7329 images)
-  falcon:                       # uses K: num_fine = number of fine classes (196), the one thing FALCON needs besides the make labels
+  falcon:                       # uses K: num_fine = number of hidden subclasses (make-model, 189), the one thing FALCON needs besides the make labels
     kind: falcon
-    num_fine: 196
+    num_fine: 189
     neighbor_pool: 20           # same-make nearest neighbours in the frozen backbone features, 5 of them drawn per step (n_neighbors)
     n_neighbors: 5
     lambdas: [0.5, 0.5, 2.0]    # coarse CE, fine CE + consistency, entropy regulariser

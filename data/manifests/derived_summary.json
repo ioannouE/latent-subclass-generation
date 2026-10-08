@@ -1,6 +1,6 @@
 {
- "git_hash": "bfe27bf3d79f09faafcdea75e9d30541618911b0-dirty",
- "created_utc": "2026-10-01T14:58:11+00:00",
+ "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+ "created_utc": "2026-10-07T13:19:12+00:00",
  "config": {
   "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
   "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
@@ -42,7 +42,7 @@
  "seed": 0,
  "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
  "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
- "manifest_hash": "711873119f4bcee9492d1e3311e9732f637996cd59c6687cc355459ff9697e03",
+ "manifest_hash": "b3923469ae00173ab439beee629aa9a09b91cf6cc95ad0b37c4380220ebeeb60",
  "n_files": 64741,
  "per_dir": {
   "bbox15_128": {
@@ -63,7 +63,7 @@
   },
   "metadata.parquet": {
    "n_files": 1,
-   "manifest_hash": "0bb3bdfcf70370363ccd8cf963a63198a6be98c396b6b46359d6b58fa4378a9b"
+   "manifest_hash": "660a6d747475212157beecb43a12964b6e440e0075e2a1cd929293d9475c5069"
   }
  },
  "determinism": "300 images x 4 files re-generated: 0 byte mismatches, 0 on-disk mismatches"

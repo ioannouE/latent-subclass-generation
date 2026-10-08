@@ -46,6 +46,20 @@ def recall1_correct(x, fine):
     return fine[s.argmax(1)] == fine
 
 
+def recall_at_k(x, labels, ks=(1, 2, 5, 10), chunk=1000):
+    """Global Recall@K as in the MaskCon paper: fraction of images with at least one same-label image among their K nearest
+    other images (cosine). {k: recall}."""
+    x, labels, hits = l2norm(x), np.asarray(labels), {k: 0 for k in ks}
+    for a in range(0, len(x), chunk):
+        s = x[a:a + chunk] @ x.T
+        s[np.arange(len(s)), np.arange(a, a + len(s))] = -np.inf
+        top = np.argsort(-s, axis=1)[:, :max(ks)]
+        same = labels[top] == labels[a:a + chunk, None]
+        for k in ks:
+            hits[k] += same[:, :k].any(1).sum()
+    return {k: hits[k] / len(x) for k in ks}
+
+
 # ---- R2 / R5: clustering
 def cluster_space(x, make, n=50, seed=0):
     """Rows of each make projected on that make's own top-n PCs (L2-normalised input); clustering runs here."""

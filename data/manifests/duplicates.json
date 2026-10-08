@@ -1,6 +1,6 @@
 {
- "git_hash": "bfe27bf3d79f09faafcdea75e9d30541618911b0-dirty",
- "created_utc": "2026-10-01T14:58:11+00:00",
+ "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+ "created_utc": "2026-10-07T13:19:12+00:00",
  "config": {
   "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
   "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
@@ -45,11 +45,11 @@
  "n_flag_sscd": 121,
  "n_flag_phash": 32,
  "n_exact_duplicate": 19,
- "n_exact_duplicate_label_conflict": 18,
+ "n_exact_duplicate_label_conflict": 13,
  "n_pairs_within_test": 67,
  "sscd_weights": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/weights/sscd_disc_mixup.torchscript.pt",
  "sscd_weights_sha256": "9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56",
  "sscd_embedding_device": "cuda",
- "duplicates_csv_sha256": "d5bdeab95f7aea85461b3ec6e7bba4e5212bd3c4f392eaf4b451cdbcfc70fe63",
- "duplicates_within_test_csv_sha256": "2928275b87cfd986130a0260ea2207a0a2f1a5b35900f2bafbc6f6e047c09c24"
+ "duplicates_csv_sha256": "fcae1f324c2f32fa5ab2e2e882e9da44941936a78b10f11532b610c0a58e8597",
+ "duplicates_within_test_csv_sha256": "3a66b8ca922cbf9e4a8a53a0d0454489e67418a5159ddc4e07ddcbd01335d025"
 }

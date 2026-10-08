@@ -1,6 +1,6 @@
 """Representation metrics R1-R5 (docs/METRICS.md) for cached embeddings. CPU, hours at n_boot=1000:
     sbatch slurm/eval_representation.sh
-Output: <reports_root>/repr/<encoder>_<crop>/*.csv + summary.json. Fit/reference = train, scored on test.
+Output: <reports_root>/<report_dir>/<encoder>_<crop>/*.csv (default repr/; `labels: maskcon` switches to the MaskCon label scheme) + summary.json. Fit/reference = train, scored on test.
 Only the tables listed in the config under `tables` are (re)computed; the others are left as they are.
 """
 import argparse
@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from lsgen.data.labels import load_labels
 from lsgen.eval.report import write_results
 from lsgen.eval.representation import (cluster_space, distance_matrix, khat_error, knn_correct, l2norm, probe_correct,
                                        r2_metric, r3_metric, r4_metric, r5_make, recall1_correct)
@@ -92,13 +93,13 @@ def main():
     setup_logging()
     derived, splits_dir = Path(dcfg["derived_root"]), Path(dcfg["data_root"]) / "splits"
     dataset_hash = json.loads((splits_dir.parent / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
-    meta = pd.read_parquet(derived / "metadata.parquet", columns=["id", "make_id", "fine_id"]).set_index("id")
+    meta = load_labels(derived, dcfg["data_root"], cfg.get("labels", "make"))[["make_id", "fine_id"]]
     for enc in cfg["encoders"]:
         for size in cfg["crop_sizes"]:
             name = f"{enc}_{size}"
             (xtr, mtr), (xte, mte) = load(derived, name, "train", meta), load(derived, name, "test", meta)
             log.info("%s: train %d, test %d", name, len(xtr), len(xte))
-            write_results(Path(dcfg["reports_root"]) / "repr" / name, repr_tables(xtr, mtr, xte, mte, cfg), cfg, cfg["seed"],
+            write_results(Path(dcfg["reports_root"]) / cfg.get("report_dir", "repr") / name, repr_tables(xtr, mtr, xte, mte, cfg), cfg, cfg["seed"],
                           dataset_hash, splits_dir, encoder=name, n_train=len(xtr), n_test=len(xte))
 
 

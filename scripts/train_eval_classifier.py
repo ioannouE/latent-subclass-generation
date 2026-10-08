@@ -1,4 +1,4 @@
-"""Milestone 3: train the evaluator classifiers (fine 196 / make 49). Needs a GPU:
+"""Milestone 3: train the evaluator classifiers (subclass make-model 189 / make 49). Needs a GPU:
     sbatch slurm/train_eval_classifier.sh
 Model selection and temperature scaling use val only; test is scored once at the end. Conflicting images
 (data/splits/exclude.txt) are left out of train, val and test.

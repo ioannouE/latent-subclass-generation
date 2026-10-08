@@ -1,5 +1,5 @@
 #!/bin/bash
-# Milestone 3: train the evaluator classifiers (fine 196, make 49; evaluation only). Submit from the repo root:
+# Milestone 3: train the evaluator classifiers (subclass make-model 189, make 49; evaluation only). Submit from the repo root:
 #   sbatch slurm/train_eval_classifier.sh
 # Settings are in configs/classifier.yaml. Run after slurm/prepare_data.sh.
 #SBATCH --job-name=lsgen-classifier

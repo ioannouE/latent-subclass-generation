@@ -19,6 +19,7 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
+CONFIG=${CONFIG:-configs/repr_baselines.yaml}   # configs/repr_baselines_maskcon.yaml for the MaskCon label scheme
 METHODS=""                         # subset of the methods in the config, e.g. "maskcon falcon"; empty = all
 
-python scripts/train_repr.py --config configs/repr_baselines.yaml --methods $METHODS
+python scripts/train_repr.py --config $CONFIG --methods $METHODS

@@ -1,6 +1,6 @@
 # latent-subclass-generation
 
-Benchmark for subclass-preserving image generation on Stanford Cars (coarse label = make, hidden subclass = make-model-year).
+Benchmark for subclass-preserving image generation on Stanford Cars (coarse label = make, hidden subclass = make-model, 189).
 Step 1 builds the data, a validated evaluation library and the frozen-encoder reference; no generative model is trained here.
 Plan: [docs/PLAN.md](docs/PLAN.md). Data protocol: [docs/DATA.md](docs/DATA.md). Every metric: [docs/METRICS.md](docs/METRICS.md).
 Results: [reports/report.md](reports/report.md).
@@ -40,6 +40,12 @@ To score a method's generated images: put them (128 px PNG), `samples.csv` and `
 `sbatch slurm/train_repr.sh` fine-tunes SupCon, SimCLR, SupCon+SimCLR, MaskCon and FALCON on a DINOv3-B backbone with make labels only
 (~10-15 min per method); score them with `CONFIG=configs/eval_repr_baselines.yaml sbatch slurm/eval_representation.sh` (~1 h).
 Results: [reports/repr/summary.md](reports/repr/summary.md).
+
+## MaskCon label scheme, reproduction, visualisations
+- `labels: maskcon` in a config (see `configs/*_maskcon*.yaml`) switches to coarse = 8 body types, subclass = 196 official classes
+  ([data/maskcon_coarse.csv](data/maskcon_coarse.csv)); the default scheme (make / make-model) is unchanged.
+- `sbatch slurm/reproduce_maskcon.sh` (GPU) reproduces MaskCon's Cars196 Recall@K (paper: 45.53 / 58.56 / 74.36 / 84.36) -> `reports/maskcon_repro/results.json`.
+- `sbatch slurm/visualize_embeddings.sh` (CPU) writes UMAP / t-SNE figures of every encoder to `reports/visualisations/<scheme>/`.
 
 ## Layout
 `lsgen/data` splits, crops, episodes - `lsgen/features` encoders and the embedding cache - `lsgen/eval` metrics, evaluators, controls,

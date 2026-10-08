@@ -1,0 +1,13 @@
+# MaskCon label scheme (8 body types / 196 classes) for the frozen encoders. Milestone 4: representation metrics R1-R5 on cached embeddings (fit/reference = train, scored on test).
+data_config: configs/data.yaml
+labels: maskcon
+report_dir: repr_maskcon
+encoders: [dinov3_base, dinov3_large, clip_l, sscd]
+crop_sizes: [128, 256]
+knn_k: 20
+n_boot: 1000          # bootstrap resamples of images within each make
+subsample: 0.632      # K-hat (r2_khat) and R4 CIs: draws without replacement of this fraction of a make (resamples with
+                      # duplicate images bias them); the other tables use the standard bootstrap
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]   # what to (re)compute; the others are kept
+n_jobs: 16            # = --cpus-per-task in slurm/eval_representation.sh
+seed: 0

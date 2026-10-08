@@ -1,27 +1,26 @@
 make_id,make,K_c,train,val,test
 9,Chevrolet,22,812,93,894
-12,Dodge,15,569,61,623
-3,Audi,14,531,58,580
+3,Audi,13,531,58,580
 4,BMW,13,479,52,524
-17,Ford,12,468,53,514
+12,Dodge,13,569,61,623
+17,Ford,11,468,53,514
 22,Hyundai,11,396,42,433
 1,Acura,6,218,24,240
-5,Bentley,6,212,26,234
 10,Chrysler,6,234,26,256
 34,Mercedes-Benz,6,233,28,257
+5,Bentley,5,212,26,234
 18,GMC,5,214,24,235
 26,Jeep,5,198,22,218
 2,Aston Martin,4,141,16,157
 7,Buick,4,142,16,156
 15,Ferrari,4,148,16,162
-21,Honda,4,145,16,160
 27,Lamborghini,4,144,17,158
 36,Nissan,4,154,17,170
 43,Suzuki,4,150,17,166
 45,Toyota,4,152,16,164
 8,Cadillac,3,116,13,128
+21,Honda,3,145,16,160
 40,Rolls-Royce,3,103,11,112
-46,Volkswagen,3,119,13,131
 47,Volvo,3,118,13,129
 6,Bugatti,2,70,7,75
 14,FIAT,2,56,6,60
@@ -29,6 +28,7 @@ make_id,make,K_c,train,val,test
 23,Infiniti,2,61,6,66
 28,Land Rover,2,78,8,84
 42,Spyker,2,79,9,87
+46,Volkswagen,2,119,13,131
 0,AM General,1,40,5,44
 11,Daewoo,1,40,5,45
 13,Eagle,1,41,5,46

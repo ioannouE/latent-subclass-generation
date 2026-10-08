@@ -4,7 +4,7 @@ test_03331,test_07491,1.0000,0,True,True,True,True
 test_01723,test_02854,1.0000,0,True,True,True,True
 test_03745,test_06765,1.0000,0,True,True,True,True
 test_04340,test_06530,1.0000,0,True,True,True,True
-test_01389,test_05063,1.0000,0,True,True,True,True
+test_01389,test_05063,1.0000,0,True,True,True,False
 test_00288,test_06136,1.0000,0,True,True,True,True
 test_01236,test_05844,1.0000,0,True,True,True,True
 test_03268,test_05851,0.9267,10,True,False,False,True
@@ -15,7 +15,7 @@ test_00070,test_07943,0.8952,6,True,False,False,True
 test_04283,test_07088,0.8837,12,True,False,False,False
 test_00106,test_01849,0.8821,30,True,False,False,False
 test_01809,test_05906,0.8810,32,True,False,False,True
-test_01747,test_04136,0.8783,16,True,False,False,True
+test_01747,test_04136,0.8783,16,True,False,False,False
 test_02025,test_05475,0.8757,20,True,False,False,True
 test_00906,test_07305,0.8742,16,True,False,False,False
 test_05027,test_05709,0.8738,28,True,False,False,False
@@ -29,7 +29,7 @@ test_02330,test_04372,0.8428,22,True,False,False,False
 test_03268,test_06172,0.8352,16,True,False,False,False
 test_01526,test_06180,0.8290,6,True,False,False,True
 test_01166,test_06619,0.8280,18,True,False,False,False
-test_00994,test_01835,0.8105,30,True,False,False,True
+test_00994,test_01835,0.8105,30,True,False,False,False
 test_00614,test_03127,0.8056,14,True,False,False,False
 test_02901,test_05982,0.8030,36,True,False,False,False
 test_00109,test_00686,0.8018,24,True,False,False,False
@@ -45,7 +45,7 @@ test_00601,test_01237,0.7841,14,True,False,False,False
 test_00816,test_03872,0.7831,32,True,False,False,False
 test_00021,test_05375,0.7817,18,True,False,False,False
 test_02173,test_04315,0.7809,34,True,False,False,False
-test_05654,test_06202,0.7801,26,True,False,False,True
+test_05654,test_06202,0.7801,26,True,False,False,False
 test_00875,test_06174,0.7788,12,True,False,False,False
 test_01234,test_06682,0.7730,26,True,False,False,False
 test_02018,test_02951,0.7714,32,True,False,False,False

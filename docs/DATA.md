@@ -21,23 +21,25 @@ annotation points to a readable image, all bboxes within `[1, W] x [1, H]`; 34 g
 file: `data/manifests/raw_manifest.json` (its `manifest_hash` is the "dataset manifest hash" recorded in outputs).
 
 ## Labels
-- Coarse = make (49), hidden subclass = official class (make-model-year, 196), secondary = make-model.
+- Coarse = make (49), hidden subclass = **make-model** (189, `fine_id`; decision 7 Oct 2026, earlier results used the 196 official
+  make-model-year classes). The official class survives only as `class_id` (split stratification, audit).
 - Parsing: `lsgen/data/hierarchy.py`. Makes are the first token except the reviewed multi-word makes
   AM General, Aston Martin, Land Rover. "AM General" and "HUMMER" are distinct official makes; "Ram" is distinct from "Dodge".
 - Make-model = exact model string with the year removed (body type kept), e.g. "Audi S4 Sedan" merges 2007 + 2012.
-  This merges only 7 pairs, giving 189 make-model classes.
-- `data/hierarchy.csv` (fine_id = devkit class - 1, make_id, model_id, year, K_c), `data/make_model.csv`.
-- Ids (`make_id`, `model_id`) are assigned in order of first appearance in `cars_meta.mat`.
+  This merges only 7 pairs (Audi, Bentley, Dodge x2, Ford, Honda, Volkswagen), giving 189 subclasses; K_c (subclasses per make) drops
+  in those 6 makes; the 19 makes with K_c = 1 are unchanged.
+- `data/hierarchy.csv` (class_id = devkit class - 1, make_id, fine_id = make-model id, year, K_c), `data/make_model.csv` (one row per subclass).
+- Ids (`make_id`, `fine_id`) are assigned in order of first appearance in `cars_meta.mat`.
 
 ## Splits (`data/splits/*.txt`, one image id per line; ids are `{official_split}_{fname stem}`)
 | Split | Definition | n |
 |---|---|---|
 | train | official train minus val | 7,329 |
-| val | 10% of official train, `StratifiedShuffleSplit` by fine_id, seed 0 | 815 |
+| val | 10% of official train, `StratifiedShuffleSplit` by class_id, seed 0 | 815 |
 | test | official test; never used for tuning or model selection | 8,041 |
-| test_A / test_B | stratified (fine_id) halves of test, seed 0 | 4,020 / 4,021 |
+| test_A / test_B | stratified (class_id) halves of test, seed 0 | 4,020 / 4,021 |
 
-Fine labels are used here **only** to stratify. Training datasets (`lsgen/data/datasets.py`) return `(image, make_id)` only.
+Official classes (`class_id`) are used here **only** to stratify, which also stratifies the coarser make-model subclasses (the splits are unchanged by the 7 Oct switch to make-model). Training datasets (`lsgen/data/datasets.py`) return `(image, make_id)` only.
 
 ## Preprocessing (docs/PLAN.md A2b)
 Derived files live outside git in `derived_root = /nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/`:
@@ -52,7 +54,7 @@ Derived files live outside git in `derived_root = /nvme/h/eioannou/data_p315/Sta
 | `weights/` | SSCD `disc_mixup` TorchScript |
 
 `metadata.parquet` columns: id, path (bbox15_128 file), rel_path (raw), official_split, split, test_half, make_id, fine_id,
-model_id, bbox_x1..y2 (devkit, 1-indexed inclusive), bbox_clipped, crop_x0..y1 (square window in 0-indexed original pixel
+class_id, bbox_x1..y2 (devkit, 1-indexed inclusive), bbox_clipped, crop_x0..y1 (square window in 0-indexed original pixel
 coords; extends outside the image where padded), side (window side in original px), scale_128/scale_256, pad_l/t/r/b
 (original px), pad_fraction (padded area / window area), margin_used (= side / max(bbox w, h)), was_grayscale, raw_mode,
 orig_W, orig_H, raw_sha256, near_duplicate, n_near_duplicates.
@@ -75,7 +77,7 @@ different photos of the same design). Raw scores are always kept in the CSVs.
 The per-test-image nearest-train SSCD similarity (`duplicates/sscd_nn_test_to_train.parquet`) is the null distribution for G7.
 
 ## Conflicting data (decision 1 Oct 2026)
-An image is "conflicting" if the same image appears under different official fine labels: byte-identical files, or a
+An image is "conflicting" if the same image appears under different hidden subclasses (make-model): byte-identical files, or a
 flagged near-duplicate pair (train-test or within test) whose labels differ. All of them, in every split, are left out of
 ALL experiments (training, evaluation, episodes, features): `data/splits/exclude.txt`, `metadata.exclude`;
 `load_split` drops them by default. The raw files stay on disk and in `metadata.parquet`.
@@ -84,7 +86,7 @@ Every report and paper table must state this exclusion and the number of images 
 ## Episodes (use case B, Milestone 2)
 `scripts/build_episodes.py --config configs/episodes.yaml` -> `data/episodes/*.json` (frozen; refuses to overwrite
 without `--overwrite`), `data/episodes/manifest.json`, `reports/episodes.md`.
-- `single_test_k{1,5,10}`: for every fine class with >= k + 10 test images (after exclusions), 5 episodes: S = k test
+- `single_test_k{1,5,10}`: for every subclass (make-model) with >= k + 10 test images (after exclusions), 5 episodes: S = k test
   images, T = the remaining test images of that class.
 - `single_train_k{1,5,10}`: S = k images from the `train` split (not val), T = all test images of the class.
 - `mixed_k10`: two subclasses a, b of the same make, S = round(r*10) images of a + the rest of b, r in {0.2, 0.5, 0.8},

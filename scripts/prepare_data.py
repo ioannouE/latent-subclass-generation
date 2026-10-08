@@ -76,7 +76,7 @@ def stage_hierarchy(cfg, P):
     kc = kc_per_make(h).sort_values(["K_c", "make"], ascending=[False, True])
     log.info("49 makes. K_c per make:\n%s", kc.to_string(index=False))
     log.info("makes with K_c = 1 (%d): %s", (kc.K_c == 1).sum(), ", ".join(kc.make[kc.K_c == 1]))
-    log.info("make-model classes: %d", h.model_id.nunique())
+    log.info("hidden subclasses (make-model): %d of %d official classes", h.fine_id.nunique(), len(h))
 
 
 def _crop_one(args):
@@ -158,7 +158,7 @@ def _preprocessing_report(cfg, P):
 
 
 def stage_splits(cfg, P):
-    idx = pd.read_parquet(P.raw_index, columns=["id", "official_split", "fine_id"])
+    idx = pd.read_parquet(P.raw_index, columns=["id", "official_split", "class_id"])
     s = make_splits(idx, cfg["val_frac"], cfg["seed"])
     save_splits(s, P.splits)
     write_json(P.manifests / "splits.json", {**provenance(cfg, cfg["seed"], dataset_hash(P)),
@@ -169,7 +169,7 @@ def stage_splits(cfg, P):
 
 def stage_duplicates(cfg, P):
     d = cfg["duplicates"]
-    idx = pd.read_parquet(P.raw_index, columns=["id", "official_split", "rel_path", "sha256", "fine_id"])
+    idx = pd.read_parquet(P.raw_index, columns=["id", "official_split", "rel_path", "sha256", "class_id"])
     P.dup_dir.mkdir(parents=True, exist_ok=True)
     paths = [str(P.raw / p) for p in idx.rel_path]
     ids = idx.id.tolist()
@@ -200,8 +200,9 @@ def stage_duplicates(cfg, P):
     te, tr = (idx.official_split == "test").to_numpy(), (idx.official_split == "train").to_numpy()
     table, nn = dup.duplicate_table(list(np.array(ids)[te]), list(np.array(ids)[tr]), ph[te], ph[tr], emb[te], emb[tr],
                                     d["phash_max_hamming"], d["sscd_threshold"])
-    # byte-identical files across splits, and pairs whose official fine labels disagree (label noise)
+    # byte-identical files across splits, and pairs whose hidden subclass (make-model) disagrees (label noise)
     by_id = idx.set_index("id")
+    by_id["fine_id"] = by_id.class_id.map(pd.read_csv(P.hierarchy).set_index("class_id").fine_id)
     table["exact_duplicate"] = by_id.loc[table.test_id, "sha256"].to_numpy() == by_id.loc[table.train_id, "sha256"].to_numpy()
     table["label_conflict"] = by_id.loc[table.test_id, "fine_id"].to_numpy() != by_id.loc[table.train_id, "fine_id"].to_numpy()
     table.to_csv(P.duplicates, index=False, float_format="%.4f")
@@ -226,9 +227,9 @@ def stage_duplicates(cfg, P):
 
 def stage_finalize(cfg, P):
     idx = pd.read_parquet(P.raw_index)
-    h = pd.read_csv(P.hierarchy)[["fine_id", "make_id", "model_id"]]
+    h = pd.read_csv(P.hierarchy)[["class_id", "make_id", "fine_id"]]
     cm = pd.read_parquet(P.crops_meta)
-    meta = idx.merge(h, on="fine_id", validate="many_to_one").merge(cm, on="id", validate="one_to_one")
+    meta = idx.merge(h, on="class_id", validate="many_to_one").merge(cm, on="id", validate="one_to_one")
     meta = meta.rename(columns={"orig_mode": "raw_mode", "sha256": "raw_sha256"})
     split = {i: s for s in ("train", "val", "test") for i in load_split(P.splits, s, exclude=False)}
     half = {i: s[-1] for s in ("test_A", "test_B") for i in load_split(P.splits, s, exclude=False)}
@@ -242,7 +243,7 @@ def stage_finalize(cfg, P):
     meta["near_duplicate"] = meta.n_near_duplicates > 0
     wt = pd.read_csv(P.duplicates_within_test)
     meta["n_near_duplicates_within_test"] = meta.id.map(pd.concat([wt.id_a, wt.id_b]).value_counts()).fillna(0).astype(int)
-    # Conflicting data (decision 1 Oct 2026): the same image under different official fine labels, i.e. byte-identical
+    # Conflicting data (decision 1 Oct 2026): the same image under different hidden subclasses (make-model), i.e. byte-identical
     # files or flagged near-duplicate pairs (train-test, within test) whose labels differ. Left out of ALL experiments.
     in_conflict_pair = set(dups.loc[dups.label_conflict, ["test_id", "train_id"]].to_numpy().ravel()) | \
         set(wt.loc[wt.label_conflict, ["id_a", "id_b"]].to_numpy().ravel())
@@ -251,7 +252,7 @@ def stage_finalize(cfg, P):
     log.info("conflicting images excluded from all experiments: %d (%s)",
              meta.exclude.sum(), meta[meta.exclude].split.value_counts().to_dict())
     meta["path"] = "bbox15_128/" + meta.id + ".png"
-    cols = ["id", "path", "rel_path", "official_split", "split", "test_half", "make_id", "fine_id", "model_id",
+    cols = ["id", "path", "rel_path", "official_split", "split", "test_half", "make_id", "fine_id", "class_id",
             *BBOX_COLS, "bbox_clipped", "crop_x0", "crop_y0", "crop_x1", "crop_y1", "side",
             *[c for c in meta.columns if c.startswith("scale_")], "pad_l", "pad_t", "pad_r", "pad_b", "pad_fraction",
             "margin_used", "was_grayscale", "raw_mode", "orig_W", "orig_H", "raw_sha256", "near_duplicate", "n_near_duplicates", "n_near_duplicates_within_test", "exclude"]

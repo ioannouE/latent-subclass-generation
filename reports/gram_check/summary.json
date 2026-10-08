@@ -1,0 +1,35 @@
+{
+ "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+ "created_utc": "2026-10-07T14:30:52+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "cls": "dinov3_base",
+  "gram": [
+   "gram_vgg16",
+   "gram_dinov3_base"
+  ],
+  "crop": 128,
+  "n_boot": 1000,
+  "n_jobs": 8,
+  "seed": 0
+ },
+ "config_path": "configs/gram_check.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 59,
+  "val": 8,
+  "test": 87
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "probe_fine": 279,
+  "colour_r2": 3
+ },
+ "table_git_hash": {
+  "probe_fine": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "colour_r2": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty"
+ },
+ "n_train": 7270,
+ "n_test": 7954
+}

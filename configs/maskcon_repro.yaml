@@ -1,0 +1,24 @@
+# Reproduction of MaskCon on Stanford Cars196 (Feng & Patras, CVPR 2023, Table 6; github.com/MrChenFeng/MaskCon_CVPR2023: main.py,
+# models/model.py, datasets/cars196.py, utils/utils.py). Native pipeline: whole raw images, 8 body-type coarse labels, ResNet-18
+# (ImageNet-initialised), no bounding boxes. Only for checking the port: never enters a comparison table.
+data_config: configs/data.yaml
+arch: resnet18
+size: 224
+queue: 8192
+dim: 128                  # paper appendix A.1 (the released main.py defaults to 256)
+hidden: 512
+momentum: 0.99
+temperature: 0.1          # contrastive temperature (paper tau_0, `--t0`)
+soft_temperature: 0.1     # soft-label temperature (paper tau, `--t`)
+w: 1.0                    # weight of the masked soft labels (w = 0: SelfCon). Published Cars196 setting
+lr: 0.02
+epochs: 200
+warmup_epochs: 5
+batch_size: 128
+weight_decay: 5.0e-4
+seed: 1228
+recall_ks: [1, 2, 5, 10, 50, 100]
+eval_every: 10            # test Recall@K is logged only; the reported numbers are those of the last epoch (no selection)
+num_workers: 8            # = --cpus-per-task in slurm/reproduce_maskcon.sh
+paper:                    # Table 6 / Table 14 of the paper, MaskCon with w = 1, tau = 0.1 (Recall@K in %)
+  recall: {1: 45.53, 2: 58.56, 5: 74.36, 10: 84.36}

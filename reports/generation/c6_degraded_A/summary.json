@@ -1,6 +1,6 @@
 {
- "git_hash": "f3146004bf560129d5ae005067006c80c99a03e9",
- "created_utc": "2026-10-07T10:18:43+00:00",
+ "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+ "created_utc": "2026-10-07T14:42:06+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "use_case": "A",
@@ -23,9 +23,9 @@
  "seed": 0,
  "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
  "excluded_conflicting_images": {
-  "train": 68,
-  "val": 9,
-  "test": 101
+  "train": 59,
+  "val": 8,
+  "test": 87
  },
  "note": "conflicting images (same photo under different fine labels) are left out of every split",
  "tables": {
@@ -34,24 +34,24 @@
   "g2_prevalence": 1,
   "g3": 100,
   "g4_g5": 400,
-  "g4_g5_per_class": 196,
+  "g4_g5_per_class": 189,
   "g7": 1,
-  "g7_samples": 7940
+  "g7_samples": 7954
  },
  "table_git_hash": {
-  "g1": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "g2_make_acc": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "g2_prevalence": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "g3": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "g4_g5": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "g4_g5_per_class": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "g7": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "g7_samples": "f3146004bf560129d5ae005067006c80c99a03e9"
+  "g1": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "g2_make_acc": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "g2_prevalence": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "g3": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "g4_g5": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "g4_g5_per_class": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "g7": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "g7_samples": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty"
  },
  "method": {
   "name": "c6_degraded",
   "uses": [],
-  "git_hash": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
   "seed": 0
  },
  "same_family_warnings": []

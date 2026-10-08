@@ -16,6 +16,7 @@ import torch
 from torchvision import transforms as T
 
 from lsgen.data.datasets import CarsTwoViews
+from lsgen.data.labels import load_labels
 from lsgen.data.splits import load_split
 from lsgen.eval.representation import knn_accuracy
 from lsgen.features.encoders import Embedder
@@ -130,7 +131,7 @@ def main():
     device = torch.device("cuda")
     derived, splits_dir = Path(dcfg["derived_root"]), Path(dcfg["data_root"]) / "splits"
     dataset_hash = json.loads((splits_dir.parent / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
-    meta = pd.read_parquet(derived / "metadata.parquet", columns=["id", "make_id"])
+    meta = load_labels(derived, dcfg["data_root"], cfg.get("labels", "make"))[["make_id"]].reset_index()  # coarse labels only
     make_of = meta.set_index("id").make_id
     ids = {s: load_split(splits_dir, s) for s in ("train", "val", "test")}
     log.info("images per split after excluding conflicting ones: %s", {s: len(v) for s, v in ids.items()})
@@ -140,7 +141,7 @@ def main():
         if args.methods and name not in args.methods:
             continue
         for seed in cfg["seeds"]:
-            run = f"{name}_s{seed}"
+            run = f"{name}{cfg.get('tag', '')}_s{seed}"
             log.info("%s: %s, seed %d", run, params, seed)
             model, final_loss = train(cfg, params["kind"], params, seed, ids["train"], meta, derived, device,
                                       val=(ids["val"], make_of[ids["val"]].to_numpy()))
@@ -154,7 +155,7 @@ def main():
                 write_json(out / f"{split}.json", {
                     **provenance(cfg, seed, dataset_hash), "encoder": run, "family": model.family, "backbone": cfg["backbone"],
                     "method": params, "final_train_loss": final_loss, "crop": cfg["crop"], "split": split,
-                    "n": len(split_ids), "dim": emb.shape[1], "labels": "coarse (make) only",
+                    "n": len(split_ids), "dim": emb.shape[1], "labels": f"coarse only ({cfg.get('labels', 'make')} scheme)",
                     "exclude_sha256": sha256_file(splits_dir / "exclude.txt")})
                 log.info("%s %s: %s", run, split, emb.shape)
 

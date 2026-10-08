@@ -1,6 +1,6 @@
 {
- "git_hash": "f3146004bf560129d5ae005067006c80c99a03e9",
- "created_utc": "2026-10-07T10:25:05+00:00",
+ "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+ "created_utc": "2026-10-07T14:48:12+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "use_case": "B",
@@ -23,23 +23,23 @@
  "seed": 0,
  "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
  "excluded_conflicting_images": {
-  "train": 68,
-  "val": 9,
-  "test": 101
+  "train": 59,
+  "val": 8,
+  "test": 87
  },
  "note": "conflicting images (same photo under different fine labels) are left out of every split",
  "tables": {
-  "episodes": 5730,
+  "episodes": 5550,
   "by_set": 2353
  },
  "table_git_hash": {
-  "episodes": "f3146004bf560129d5ae005067006c80c99a03e9",
-  "by_set": "f3146004bf560129d5ae005067006c80c99a03e9"
+  "episodes": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
+  "by_set": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty"
  },
  "method": {
   "name": "c1b_copy_support",
   "uses": [],
-  "git_hash": "f3146004bf560129d5ae005067006c80c99a03e9",
+  "git_hash": "f9f4e60b16d2e9a412c28856208e8f822bb431eb-dirty",
   "seed": 0
  },
  "same_family_warnings": []

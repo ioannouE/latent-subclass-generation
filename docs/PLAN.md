@@ -2,7 +2,7 @@
 
 Version 1 · 29 Sep 2026 · for the problem statement "Learning Latent Subclasses for Distribution-Preserving Image Generation" (v0.5)
 
-Decisions fixed for this plan: Stanford Cars, **coarse = make (49), hidden subclass = make-model-year (196)**; single GPU (24–48 GB); **128 px bounding-box crops** as the main resolution; fresh repository.
+Decisions fixed for this plan: Stanford Cars, **coarse = make (49), hidden subclass = make-model-year (196)** (superseded 7 Oct 2026: hidden subclass = **make-model, 189**, see docs/DATA.md); single GPU (24–48 GB); **128 px bounding-box crops** as the main resolution; fresh repository.
 
 ---
 

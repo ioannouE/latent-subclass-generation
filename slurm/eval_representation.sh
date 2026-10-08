@@ -4,11 +4,12 @@
 # Settings are in the config below (default: the frozen encoders; CONFIG=configs/eval_repr_baselines.yaml for the
 # fine-tuned ones, after slurm/train_repr.sh). Run after slurm/extract_features.sh.
 #SBATCH --job-name=lsgen-repr
-#SBATCH --partition=cpu
+#SBATCH --partition=rtx
 #SBATCH --nodes=1
+#SBATCH --gres=gpu:1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16        # = n_jobs in configs/eval_representation.yaml
-#SBATCH --mem=48G
+#SBATCH --cpus-per-task=12        # = n_jobs in configs/eval_representation.yaml
+#SBATCH --mem=24G
 #SBATCH --time=24:00:00
 #SBATCH --output=%x.%j.out
 #SBATCH --error=%x.%j.err
