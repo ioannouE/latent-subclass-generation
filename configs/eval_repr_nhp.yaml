@@ -1,6 +1,6 @@
 # R1-R5 for NHP (names = <method>_s<seed>[_cat], crop = the training crop size). Same protocol and settings as configs/eval_representation.yaml.
 data_config: configs/data.yaml
-encoders: [nhp_s0, nhp_s0_cat]
+encoders: [nhp_s0, nhp_s0_cat, nhp_no_invariance_s0, nhp_no_hierarchy_s0, nhp_no_sparsity_s0, nhp_no_nuis_s0]   # ablations: z_sub only (the _cat variant is for the full method)
 crop_sizes: [256]
 knn_k: 20
 n_boot: 1000
