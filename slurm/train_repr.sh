@@ -1,7 +1,8 @@
 #!/bin/bash
-# Step 2: fine-tune the representation baselines (SupCon, SimCLR, SupCon+SimCLR, MaskCon, FALCON) on a GPU. Submit from the repo root:
+# Step 2: fine-tune the representation baselines (SupCon, SimCLR, SupCon+SimCLR, MaskCon, FALCON) and NHP on a GPU. Submit from the repo root:
 #   sbatch slurm/train_repr.sh
-# Settings are in configs/repr_baselines.yaml. Run after slurm/prepare_data.sh (needs only the stored crops; FALCON also the frozen
+#   CONFIG=configs/repr_nhp.yaml METHODS="nhp" sbatch slurm/train_repr.sh      (NHP; the variables are passed to the job)
+# Settings are in configs/repr_baselines.yaml / configs/repr_nhp.yaml. Run after slurm/prepare_data.sh (needs only the stored crops; FALCON also the frozen
 # features of the backbone, slurm/extract_features.sh).
 #SBATCH --job-name=lsgen-repr-train
 #SBATCH --partition=rtx
@@ -19,7 +20,7 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-CONFIG=${CONFIG:-configs/repr_baselines.yaml}   # configs/repr_baselines_maskcon.yaml for the MaskCon label scheme
-METHODS=""                         # subset of the methods in the config, e.g. "maskcon falcon"; empty = all
+CONFIG=${CONFIG:-configs/repr_baselines.yaml}   # configs/repr_baselines_maskcon.yaml for the MaskCon label scheme, configs/repr_nhp.yaml for NHP
+METHODS=${METHODS:-}               # subset of the methods in the config, e.g. "maskcon falcon"; empty = all
 
 python scripts/train_repr.py --config $CONFIG --methods $METHODS

@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 
-from lsgen.data.datasets import CarsTwoViews
+from lsgen.data.datasets import CarsNuisanceViews, CarsTwoViews, replace_background
 from lsgen.methods.repr.falcon import Falcon, assign_fine_to_coarse, coarse_log_prob, coarse_neighbors
 from lsgen.methods.repr.losses import contrastive_loss, supcon_loss
 from lsgen.methods.repr.maskcon import MaskCon, maskcon_loss
@@ -124,3 +124,25 @@ def test_maskcon_and_falcon_step():
     assert torch.isfinite(loss) and all(p.grad is not None and torch.isfinite(p.grad).all() for p in net.parameters())
     fc.end_step(0), fc.end_step(1)  # step 1 re-solves M from the collected predictions
     assert (fc.m.sum(1) == 1).all() and (fc.m.sum(0) >= 1).all()
+
+
+def test_replace_background_keeps_the_box_and_replaces_the_rest():
+    img, scenery = Image.new("RGB", (8, 8), (200, 0, 0)), Image.new("RGB", (8, 8), (0, 0, 200))
+    out = np.array(replace_background(img, (2, 2, 6, 5), scenery))
+    assert (out[2:5, 2:6] == (200, 0, 0)).all() and (out.sum(2)[~np.pad(np.ones((3, 4), bool), ((2, 3), (2, 2)))] == 200).all()
+
+
+def test_nuisance_views_return_views_parameters_and_make_only(tmp_path):
+    import pandas as pd
+    meta = pd.DataFrame({"id": ["train_00001", "train_00002"], "make_id": [5, 6], "fine_id": [3, 4]})
+    (tmp_path / "bbox15_16").mkdir()
+    for i in meta.id:
+        Image.fromarray(np.random.default_rng(0).integers(0, 255, (16, 16, 3), dtype=np.uint8)).save(tmp_path / "bbox15_16" / f"{i}.png")
+    boxes, post = np.array([[2.0, 4.0, 14.0, 12.0]] * 2), T.Compose([T.ToTensor()])
+    for invariance in (True, False):
+        ds = CarsNuisanceViews(meta, tmp_path, list(meta.id), T.RandomResizedCrop(16, scale=(0.5, 1.0)), post, boxes, size=16,
+                               invariance=invariance, swap_p=0.5, mask_p=0.5)
+        v1, v2, params, make = ds[1]
+        assert v1.shape == v2.shape == (3, 16, 16) and params.shape == (2, 2) and make == 6
+        assert set(params[:, 0].tolist()) <= set(range(6)) and set(params[:, 1].tolist()) <= {0, 1}
+        assert invariance or (params[:, 0] == 0).all()  # no colour permutation without invariance
