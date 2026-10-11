@@ -4,12 +4,13 @@ that this module never mentions those columns."""
 import itertools
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import torch
 from PIL import Image
 from torchvision.transforms import functional as TF
 
-from lsgen.data.crops import PAD_COLOR
+from lsgen.data.crops import PAD_COLOR, bbox_in_crop, devkit_bbox_to_px
 
 ALLOWED_COLUMNS = ("id", "make_id")
 AUGMENTATIONS = ("none", "hflip", "finegan_jitter")
@@ -70,6 +71,16 @@ class CarsTwoViews(CarsCoarseDataset):
         chosen = self.neighbors[idx][torch.randperm(self.neighbors.shape[1])[:self.n_neighbors]]
         near = torch.stack([self.transform_2(Image.open(self.items[j][0]).convert("RGB")) for j in chosen])
         return *views, near, make_id
+
+
+
+def car_boxes(derived, ids, size):
+    """(N, 4) the car's bbox in the pixels of the stored `size` crops, rows in the order of ids."""
+    cols = ["bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2", "orig_W", "orig_H", "crop_x0", "crop_y0", "side"]
+    m = pd.read_parquet(derived / "metadata.parquet", columns=["id", *cols]).set_index("id").loc[ids]
+    return np.array([bbox_in_crop({"crop_box": (r.crop_x0, r.crop_y0), "side": r.side,
+                                   "bbox_px": devkit_bbox_to_px((r.bbox_x1, r.bbox_y1, r.bbox_x2, r.bbox_y2), r.orig_W, r.orig_H)}, size)
+                     for r in m.itertuples()])
 
 
 PERMUTATIONS = list(itertools.permutations(range(3)))  # colour-channel permutations

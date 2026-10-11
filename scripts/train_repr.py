@@ -17,8 +17,7 @@ import pandas as pd
 import torch
 from torchvision import transforms as T
 
-from lsgen.data.crops import bbox_in_crop, devkit_bbox_to_px
-from lsgen.data.datasets import CarsNuisanceViews, CarsTwoViews
+from lsgen.data.datasets import CarsNuisanceViews, CarsTwoViews, car_boxes
 from lsgen.data.labels import load_labels
 from lsgen.data.splits import load_split
 from lsgen.eval.representation import knn_accuracy
@@ -61,15 +60,6 @@ def nhp_transforms(model, a):
     jitter = T.ColorJitter(a["color_jitter"], a["color_jitter"], a["color_jitter"], a["hue"])
     return crop, T.Compose([T.RandomApply([jitter], a["jitter_p"]), T.RandomGrayscale(a["grayscale_p"]), T.ToTensor(),
                             T.Normalize(cfg_m["mean"], cfg_m["std"])])
-
-
-def car_boxes(derived, ids, size):
-    """(N, 4) the car's bbox in the pixels of the stored `size` crops, rows in the order of ids."""
-    cols = ["bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2", "orig_W", "orig_H", "crop_x0", "crop_y0", "side"]
-    m = pd.read_parquet(derived / "metadata.parquet", columns=["id", *cols]).set_index("id").loc[ids]
-    return np.array([bbox_in_crop({"crop_box": (r.crop_x0, r.crop_y0), "side": r.side,
-                                   "bbox_px": devkit_bbox_to_px((r.bbox_x1, r.bbox_y1, r.bbox_x2, r.bbox_y2), r.orig_W, r.orig_H)}, size)
-                     for r in m.itertuples()])
 
 
 def lr_factor(step, warmup, total):

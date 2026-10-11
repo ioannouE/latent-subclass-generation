@@ -1,0 +1,15 @@
+# Gate 0 (docs/EXPERIMENT_NHP.md): do cheap nuisance proxies explain the top within-make principal components of the frozen embedding?
+# No fine labels, no test data: train split only. The decision thresholds were fixed before the first run.
+data_config: configs/data.yaml
+backbone: dinov3_base          # frozen, key of lsgen.features.encoders.ENCODERS; its cached train embeddings are read, the mirror images are embedded
+crop: bbox15_256
+split: train
+n_pcs: 5                       # top within-make principal components
+cv_folds: 5
+n_boot: 1000                   # resamples of the makes, for the macro CI
+batch_size_embed: 128
+num_workers: 8                 # = --cpus-per-task in slurm/gate0.sh
+seed: 0
+decision:                      # macro out-of-fold variance explained of the top PCs by all pixel proxies
+  weak_below: 0.15             # premise weak: NHP is not expected to help, stop
+  supported_from: 0.30         # premise supported; in between: inconclusive
