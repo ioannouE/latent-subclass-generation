@@ -2,7 +2,7 @@
 
 Provenance: seed 0, dataset manifest `053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea`. Frozen encoders: `configs/eval_representation.yaml`
 (`n_boot` 1000; git `f9f4e60`-dirty, `sscd_256`: `e499877`-dirty), oracle row: `configs/eval_repr_oracle.yaml`, fine-tuned baselines: `configs/eval_repr_baselines.yaml`
-(git `83549f8`-dirty). All rerun on 8 Oct 2026.
+(git `83549f8`-dirty), GEORGE: `configs/eval_repr_george.yaml` (16 Oct). All rerun on 8 Oct 2026.
 Fit/reference = `train`, scored on `test` (7,954 images; train 7,270; 49 makes, 30 with K_c >= 2, 19 with K_c = 1).
 **Hidden subclass = make-model (189 classes, years merged)** since 7 Oct 2026; earlier results (6 Oct) used the 196 official make-model-year classes and
 are superseded. Conflicting images are excluded everywhere: {'train': 59, 'val': 8, 'test': 87} (train / val / test, 154 in total; docs/DATA.md). Metric definitions:
@@ -107,6 +107,91 @@ Last 4 blocks of DINOv3-B fine-tuned with one fixed recipe (`configs/repr_baseli
 - **No variant improves subclass discovery (R2, Δ0/Δ1, R5)**, and all over-fragment single-subclass makes (K̂ error 1.3-3.7 vs 1.16 frozen). This is the gap the benchmark is meant to expose.
 - One seed only: differences of a few hundredths in R2 between frozen, SupCon, MaskCon and FALCON are within the CIs and should not be read as ranking.
 - CI flaw: the only point estimates outside their CI are the oracle row's oracle-K ACC (0.928 vs [0.902, 0.926], bootstrap bias at high ACC) and `sscd_128` `ari_khat`. Subsampling is slightly biased when the clustering is very strong or very weak. No conclusion depends on it.
+
+## GEORGE (Step 2, seed 0, DINOv3-B, 256 px crops, 16 Oct 2026)
+GEORGE (Sohoni et al. 2020; official code in `third_party/hidden-stratification`, driver `scripts/train_george.py`, `configs/repr_george.yaml`) with the same recipe as the baselines above (last 4 blocks, 50 epochs per stage, untuned), make labels only. Stage 1: ERM on the make (`george_erm`). Stage 2: per make, UMAP (2-d) then a GMM with K chosen by silhouette over 2..24. Stage 3: a fresh backbone trained on the make with group DRO over the (make, cluster) groups (`george`, the primary row). Evaluated on the 768-d CLS embedding with the same R1-R5 protocol; point estimates are macro means over makes (CIs in `george_*_256/*.csv`; one seed). GEORGE's own output is the cluster assignment, which R1-R5 cannot score, so the embedding of the group-DRO model stands in for it. Evaluator git `7a20388`-dirty.
+
+| encoder                     | R1 kNN make | Recall@1 | fine probe | ACC oracle | NMI oracle | ACC Khat | NMI Khat |   d0/d1 |   d1/d2 | var ratio | ARI boot | Khat err K=1 | mean Khat |
+|:----------------------------|------------:|---------:|-----------:|-----------:|-----------:|---------:|---------:|--------:|--------:|----------:|---------:|-------------:|----------:|
+| frozen DINOv3-B (reference) |       0.949 |    0.947 |      0.969 |      0.717 |      0.613 |    0.619 |    0.554 |   0.630 |   0.744 |     0.690 |    0.837 |         1.16 |       6.5 |
+| SupCon (make labels)        |       0.968 |    0.946 |      0.969 |      0.718 |      0.604 |    0.634 |    0.579 |   0.644 |   0.719 |     0.703 |    0.830 |         1.26 |       6.3 |
+| FALCON                      |       0.967 |    0.941 |      0.967 |      0.698 |      0.589 |    0.613 |    0.561 |   0.700 |   0.710 |     0.754 |    0.812 |         1.47 |       6.5 |
+| GEORGE stage 1 (ERM, make CE) |     0.978 |    0.940 |      0.966 |      0.743 |      0.652 |    0.640 |    0.595 |   0.682 |   0.644 |     0.739 |    0.834 |         1.42 |       5.3 |
+| **GEORGE (group DRO)**      |   **0.977** |    0.938 |      0.968 |  **0.746** |  **0.652** |    0.638 |    0.610 |   0.678 |   0.653 |     0.734 |    0.829 |         1.42 |       6.5 |
+
+GEORGE's own clustering (stage 2, on train activations) chose K = 2 for 18 makes and K = 3-7 for most others (mean 4.3, max 17 over the 49 makes; true mean K_c is 5.7 over makes with K_c >= 2). Its search starts at K = 2, so the 19 single-subclass makes are always split.
+
+- **GEORGE is the best fine-tuned baseline on the coarse level and a little above frozen on subclass clustering:** make kNN 0.977 (frozen 0.949, SupCon 0.968), oracle-K ACC 0.746 / NMI 0.652 against 0.717 / 0.613 frozen and 0.718 / 0.604 SupCon. The gain in oracle-K ACC (+0.03) is about the width of the 95% CIs of the other rows (+-0.02-0.03; GEORGE's macro CIs were not computed), with one seed, so it should not be read as a ranking. With estimated K the gain is nil (ACC 0.638 vs 0.619-0.634).
+- **The gain comes from stage 1, not from GEORGE's clustering:** the ERM model alone (make cross-entropy, no clusters) scores the same as the group-DRO model (oracle-K ACC 0.743 vs 0.746, kNN 0.978 vs 0.977). Group DRO over the discovered clusters adds nothing measurable here. This is the expected outcome: the DRO objective still only predicts the make, so it gives the backbone no signal to separate the clusters inside a make.
+- **No subclass metric improves in a way that matters:** Recall@1 and the fine probe are slightly below frozen (0.938 / 0.968 vs 0.947 / 0.969), Delta1/Delta2 is the worst of all models (0.65; makes become tight and compact relative to the gap between makes, as for any make-supervised model) and the var ratio is 0.73 (frozen 0.69, so a larger share of within-make variance is not subclass). Single-subclass makes are still over-split (K-hat error 1.42).
+- **Comparison with the other methods:** GEORGE with fine-tuning on make labels behaves like SupCon, with a somewhat tighter make structure; it is above NHP (oracle-K ACC 0.58) and level with the other baselines inside the CIs. It does not close the gap to the supervised oracle features (ACC 0.93). Hidden-subclass discovery from coarse labels is not solved by GEORGE on Stanford Cars.
+- Limits: one seed; stage-2 settings (UMAP 2-d, GMM, K <= 24) and group-DRO settings (step size 0.01, size adjustment 2) are the defaults declared before the run and were not tuned; GEORGE's overclustering and hardness components are not used.
+
+**GEORGE's own clusters (`scripts/eval_george_clusters.py`, `reports/repr/george_clusters_s0/`).** Scored on the *train* images (the only ones GEORGE clusters), so not comparable to the test tables above; macro over the 30 makes with K_c >= 2. Reference: k-means on the frozen DINOv3-B train embeddings, same images and metric code.
+
+| clustering                                   | ACC                  | NMI                  | ARI                  | mean K |
+|:---------------------------------------------|:---------------------|:---------------------|:---------------------|-------:|
+| GEORGE (ERM activations, UMAP, GMM, own K)   | 0.701 [0.698, 0.721] | 0.667 [0.662, 0.687] | 0.559 [0.551, 0.583] |    5.4 |
+| frozen DINOv3-B, k-means, oracle K (uses K)  | 0.704 [0.689, 0.733] | 0.599 [0.586, 0.633] | 0.511 [0.490, 0.550] |    5.7 |
+| frozen DINOv3-B, k-means, label-free K-hat   | 0.592 [0.581, 0.631] | 0.530 [0.507, 0.582] | 0.421 [0.391, 0.461] |    6.4 |
+
+- **As a clustering method GEORGE is the best label-free option here:** without knowing K it matches k-means with the oracle K on ACC (0.701 vs 0.704) and is above it on NMI (0.667 vs 0.599, CIs do not overlap) and ARI (0.559 vs 0.511, CIs touch). Against the label-free K-hat pipeline used for the other encoders it is clearly better (ACC +0.11, NMI +0.14, ARI +0.14), and it picks K close to the true mean (5.4 vs 5.7) where the frozen K-hat overshoots (6.4).
+- **This contrasts with the embedding result above:** GEORGE's clusters are useful, but training on them (group DRO) does not put that structure into the representation (R2 on the group-DRO embedding is level with the baselines). The cluster-quality gain is not available to the R1-R5 embedding metrics, which is why this separate row exists.
+- Caveats: scored on train, where the stage-1 ERM model has fit the make labels (final train loss 0.011) and the clustering sees the same images it is scored on; K is chosen on this data, whereas the frozen-K-hat row also chooses it label-free on train. Which of the two ingredients helps (make-supervised ERM features, or UMAP + GMM) is not separated: k-means on the ERM embedding was not run. Over-splitting of the 19 single-subclass makes (forced K >= 2) is not part of these numbers. One seed.
+
+## Full comparison by objective (DINOv3-B family at 256 px, seed 0; oracle = fine classifier, 128 px, not a baseline)
+Macro means over makes, test split, 16 Oct 2026 (point estimates; CIs in `<encoder>_<crop>/*.csv`). Bold = best among the non-oracle rows (not for the R3 ratios, where lower is not simply better). Effective rank depends on the embedding width (NHP 128-d, CLIP-L / DINOv3-L 1024-d), so it is not ranked. Conflicting images excluded.
+
+**O1, coarse distinctions (R1, R3 Eq. 2)**
+
+| encoder                         | R1 kNN make   | R1 probe make   |   R3 % Eq1 |   R3 % Eq2 | R3 d1/d2   |
+|:--------------------------------|:--------------|:----------------|-----------:|-----------:|:-----------|
+| DINOv3-B frozen                 | 0.949         | 0.973           |        100 |       96.7 | 0.744      |
+| DINOv3-L frozen                 | 0.973         | **0.983**       |        100 |       96.7 | 0.709      |
+| CLIP-L frozen                   | 0.921         | 0.947           |        100 |       96.7 | 0.743      |
+| SupCon                          | 0.968         | 0.975           |        100 |       96.7 | 0.719      |
+| SimCLR                          | 0.813         | 0.929           |        100 |       90   | 0.847      |
+| SupCon+SimCLR                   | 0.942         | 0.971           |        100 |       96.7 | 0.813      |
+| MaskCon                         | 0.953         | 0.972           |        100 |       96.7 | 0.744      |
+| FALCON                          | 0.967         | 0.979           |        100 |      100   | 0.710      |
+| NHP (z_sub)                     | 0.965         | 0.975           |        100 |      100   | 0.727      |
+| GEORGE stage 1 (ERM)            | **0.978**     | 0.982           |        100 |      100   | 0.644      |
+| GEORGE (group DRO)              | 0.977         | 0.982           |        100 |      100   | 0.653      |
+| Oracle (fine classifier, 128px) | 0.901         | 0.860           |        100 |       96.7 | 0.824      |
+
+**O2, subclasses (R2, R3 Eq. 1, R5)**
+
+| encoder                         | Recall@1   | fine probe   | ACC (true K)   | NMI (true K)   | ARI (true K)   | ACC (K̂)   | NMI (K̂)   | ARI (K̂)   |   mean K̂ | K̂ err (K_c=1)   | ARI boot   | R3 d0/d1   |
+|:--------------------------------|:-----------|:-------------|:---------------|:---------------|:---------------|:----------|:----------|:----------|---------:|:----------------|:-----------|:-----------|
+| DINOv3-B frozen                 | 0.947      | 0.969        | 0.717          | 0.613          | 0.526          | 0.619     | 0.554     | 0.439     |      6.5 | 1.16            | 0.837      | 0.630      |
+| DINOv3-L frozen                 | **0.948**  | 0.967        | **0.782**      | **0.703**      | **0.634**      | **0.698** | **0.650** | **0.551** |      5.4 | 1.58            | **0.886**  | 0.570      |
+| CLIP-L frozen                   | 0.856      | 0.928        | 0.717          | 0.612          | 0.541          | 0.581     | 0.556     | 0.426     |      3.1 | **0.42**        | 0.664      | 0.767      |
+| SupCon                          | 0.946      | 0.969        | 0.718          | 0.604          | 0.517          | 0.634     | 0.579     | 0.472     |      6.3 | 1.26            | 0.830      | 0.645      |
+| SimCLR                          | 0.869      | 0.945        | 0.583          | 0.423          | 0.324          | 0.478     | 0.420     | 0.287     |      7.3 | 2.68            | 0.709      | 0.778      |
+| SupCon+SimCLR                   | 0.924      | 0.961        | 0.695          | 0.568          | 0.485          | 0.595     | 0.557     | 0.430     |      6.6 | 3.68            | 0.758      | 0.738      |
+| MaskCon                         | 0.946      | **0.971**    | 0.705          | 0.592          | 0.500          | 0.582     | 0.526     | 0.408     |      6.3 | 1.47            | 0.830      | 0.648      |
+| FALCON                          | 0.941      | 0.967        | 0.698          | 0.589          | 0.494          | 0.613     | 0.561     | 0.454     |      6.5 | 1.47            | 0.812      | 0.700      |
+| NHP (z_sub)                     | 0.912      | 0.930        | 0.580          | 0.437          | 0.306          | 0.541     | 0.421     | 0.293     |      4.3 | 1.32            | 0.881      | 0.614      |
+| GEORGE stage 1 (ERM)            | 0.940      | 0.966        | 0.743          | 0.652          | 0.565          | 0.640     | 0.595     | 0.495     |      5.3 | 1.42            | 0.834      | 0.682      |
+| GEORGE (group DRO)              | 0.938      | 0.968        | 0.746          | 0.652          | 0.563          | 0.638     | 0.610     | 0.495     |      6.5 | 1.42            | 0.829      | 0.678      |
+| Oracle (fine classifier, 128px) | 0.922      | 0.929        | 0.928          | 0.827          | 0.829          | 0.849     | 0.792     | 0.764     |      5.2 | 1.42            | 0.921      | 0.526      |
+
+**O3, variation within a subclass (R4)**
+
+| encoder                         | R4 var ratio (lower = more subclass-explained)   |   R4 effective rank |
+|:--------------------------------|:-------------------------------------------------|--------------------:|
+| DINOv3-B frozen                 | 0.690                                            |                 8.2 |
+| DINOv3-L frozen                 | **0.635**                                        |                 8.9 |
+| CLIP-L frozen                   | 0.813                                            |                19   |
+| SupCon                          | 0.703                                            |                 8.5 |
+| SimCLR                          | 0.821                                            |                11.9 |
+| SupCon+SimCLR                   | 0.787                                            |                12.5 |
+| MaskCon                         | 0.707                                            |                 7.6 |
+| FALCON                          | 0.754                                            |                 9.5 |
+| NHP (z_sub)                     | 0.679                                            |                 4.9 |
+| GEORGE stage 1 (ERM)            | 0.739                                            |                10.9 |
+| GEORGE (group DRO)              | 0.734                                            |                10.6 |
+| Oracle (fine classifier, 128px) | 0.601                                            |                13.8 |
 
 ## Known problems
 1. **K̂ bootstrap CIs were invalid (fixed, verified on the rerun).** Resamples contain duplicate images; duplicates form tight pairs and inflate the silhouette-selected K̂. Example (DINOv3-L 256): macro K̂ = 5.43 with CI [12.97, 16.33]; CLIP-L 128 `acc_khat` 0.56 with CI [0.29, 0.33]. Fix: K̂ metrics now take their CIs from draws of 63.2% of each make's images without replacement (`khat_subsample` in `configs/eval_representation.yaml`, table `r2_khat.csv`); oracle-K, R1 and R3 keep the standard bootstrap. R4 `var_ratio` was found to have the same duplicate-image bias and now also uses the subsample CIs; R4 `pr_subclass` (effective rank) has no CI because it depends on the sample size (rerun 6 Oct 2026, git `3a4acd7`). The point estimates did not change, and the new K̂ CIs contain them (on the 8 Oct rerun the exception is `sscd_128` `ari_khat`).

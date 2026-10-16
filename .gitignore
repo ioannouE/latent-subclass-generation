@@ -26,3 +26,4 @@ __pycache__/
 *.pdf
 .claude/
 .devin/
+/third_party/

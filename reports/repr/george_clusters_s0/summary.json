@@ -1,0 +1,34 @@
+{
+ "git_hash": "7a203885abe2135b1d0446d197ecf4364dc20ac8-dirty",
+ "created_utc": "2026-10-16T13:00:58+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "reference": "dinov3_base_256",
+  "n_boot": 1000,
+  "subsample": 0.632,
+  "n_jobs": 12,
+  "seed": 0
+ },
+ "config_path": "configs/eval_george_clusters.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 59,
+  "val": 8,
+  "test": 87
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "george": 94,
+  "reference_oracle": 93,
+  "reference_khat": 124
+ },
+ "table_git_hash": {
+  "george": "7a203885abe2135b1d0446d197ecf4364dc20ac8-dirty",
+  "reference_oracle": "7a203885abe2135b1d0446d197ecf4364dc20ac8-dirty",
+  "reference_khat": "7a203885abe2135b1d0446d197ecf4364dc20ac8-dirty"
+ },
+ "reference": "dinov3_base_256",
+ "split": "train",
+ "n": 7270
+}

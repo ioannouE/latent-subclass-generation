@@ -1,0 +1,30 @@
+{
+ "git_hash": "7a203885abe2135b1d0446d197ecf4364dc20ac8",
+ "created_utc": "2026-10-11T15:45:38+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "backbone": "dinov3_base",
+  "crop": "bbox15_256",
+  "split": "train",
+  "n_pcs": 5,
+  "cv_folds": 5,
+  "n_boot": 1000,
+  "batch_size_embed": 128,
+  "num_workers": 8,
+  "seed": 0,
+  "decision": {
+   "weak_below": 0.15,
+   "supported_from": 0.3
+  }
+ },
+ "config_path": "configs/gate0.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "n_images": 7270,
+ "n_makes": 48,
+ "decision": {
+  "weak_below": 0.15,
+  "supported_from": 0.3
+ },
+ "verdict": "weak: nuisance proxies explain little of the top within-make PCs; NHP is not expected to help, stop"
+}

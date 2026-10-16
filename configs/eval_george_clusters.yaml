@@ -1,0 +1,8 @@
+# GEORGE's own clusters vs the hidden subclasses (scripts/eval_george_clusters.py), scored on train; reference = k-means on the same images in
+# the embedding of `reference` (no fine-tuning).
+data_config: configs/data.yaml
+reference: dinov3_base_256
+n_boot: 1000
+subsample: 0.632      # K-hat CIs, see configs/eval_representation.yaml
+n_jobs: 12          # = --cpus-per-task in slurm/eval_george_clusters.sh
+seed: 0

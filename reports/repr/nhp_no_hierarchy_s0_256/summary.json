@@ -1,0 +1,62 @@
+{
+ "git_hash": "23ad961cf2f777915ed3a933dc9555425036e62e",
+ "created_utc": "2026-10-11T14:45:17+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "encoders": [
+   "nhp_s0",
+   "nhp_s0_cat",
+   "nhp_no_invariance_s0",
+   "nhp_no_hierarchy_s0",
+   "nhp_no_sparsity_s0",
+   "nhp_no_nuis_s0"
+  ],
+  "crop_sizes": [
+   256
+  ],
+  "knn_k": 20,
+  "n_boot": 1000,
+  "subsample": 0.632,
+  "tables": [
+   "r1",
+   "r2_within_make",
+   "r2_oracle",
+   "r2_khat",
+   "r3",
+   "r4",
+   "r5"
+  ],
+  "n_jobs": 16,
+  "seed": 0
+ },
+ "config_path": "configs/eval_repr_nhp.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 59,
+  "val": 8,
+  "test": 87
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "r1": 100,
+  "r2_within_make": 62,
+  "r2_oracle": 93,
+  "r2_khat": 124,
+  "r3": 350,
+  "r4": 62,
+  "r5": 50
+ },
+ "table_git_hash": {
+  "r1": "23ad961cf2f777915ed3a933dc9555425036e62e",
+  "r2_within_make": "23ad961cf2f777915ed3a933dc9555425036e62e",
+  "r2_oracle": "23ad961cf2f777915ed3a933dc9555425036e62e",
+  "r2_khat": "23ad961cf2f777915ed3a933dc9555425036e62e",
+  "r3": "23ad961cf2f777915ed3a933dc9555425036e62e",
+  "r4": "23ad961cf2f777915ed3a933dc9555425036e62e",
+  "r5": "23ad961cf2f777915ed3a933dc9555425036e62e"
+ },
+ "encoder": "nhp_no_hierarchy_s0_256",
+ "n_train": 7270,
+ "n_test": 7954
+}
