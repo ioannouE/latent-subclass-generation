@@ -43,3 +43,43 @@ class Contrastive:
 
     def end_step(self, i):
         pass
+
+
+def sigreg_loss(z, num_slices=1024, num_points=17):
+    """SIGReg (Balestriero & LeCun 2025, LeJEPA): Epps-Pulley statistic of random 1-D projections of z (N, d) against N(0, 1),
+    averaged over slices. Zero iff every projection is standard normal, i.e. z is isotropic Gaussian."""
+    z = z.float()
+    dirs = torch.randn(z.shape[1], num_slices, device=z.device)
+    proj = z @ (dirs / dirs.norm(dim=0))
+    t = torch.linspace(-5, 5, num_points, device=z.device)
+    phi = torch.exp(-t ** 2 / 2)  # characteristic function of N(0, 1)
+    w = torch.full_like(t, (t[1] - t[0]).item())  # trapezoid weights times the Gaussian window
+    w[[0, -1]] /= 2
+    arg = proj[:, :, None] * t
+    err = (arg.cos().mean(0) - phi) ** 2 + arg.sin().mean(0) ** 2
+    return ((err * phi * w).sum(1) * len(z)).mean()
+
+
+def lejepa_loss(z, lam=0.05, num_slices=1024, num_points=17):
+    """(1 - lam) * invariance + lam * SIGReg. z: (V, B, d) embeddings of V views; invariance = mean squared distance of each
+    view to the mean over views."""
+    invariance = (z.float().mean(0, keepdim=True) - z.float()).square().mean()
+    sigreg = torch.stack([sigreg_loss(v, num_slices, num_points) for v in z]).mean()
+    return (1 - lam) * invariance + lam * sigreg
+
+
+class LeJEPA:
+    """LeJEPA objective (no labels: the make in the batch is ignored). Needs batches (view 1, view 2, make)."""
+
+    def __init__(self, net, lam, num_slices, num_points):
+        self.net, self.args = net, (lam, num_slices, num_points)
+
+    def loss(self, batch):
+        v1, v2, _ = batch
+        return lejepa_loss(forward_fp16(self.net, torch.cat([v1, v2])).chunk(2), *self.args)
+
+    def start_epoch(self, epoch):
+        pass
+
+    def end_step(self, i):
+        pass

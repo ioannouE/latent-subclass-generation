@@ -7,7 +7,7 @@ from torchvision import transforms as T
 
 from lsgen.data.datasets import CarsNuisanceViews, CarsTwoViews, replace_background
 from lsgen.methods.repr.falcon import Falcon, assign_fine_to_coarse, coarse_log_prob, coarse_neighbors
-from lsgen.methods.repr.losses import contrastive_loss, supcon_loss
+from lsgen.methods.repr.losses import contrastive_loss, lejepa_loss, sigreg_loss, supcon_loss
 from lsgen.methods.repr.maskcon import MaskCon, maskcon_loss
 
 E1, E2, E3, E4 = torch.eye(4)
@@ -146,3 +146,22 @@ def test_nuisance_views_return_views_parameters_and_make_only(tmp_path):
         assert v1.shape == v2.shape == (3, 16, 16) and params.shape == (2, 2) and make == 6
         assert set(params[:, 0].tolist()) <= set(range(6)) and set(params[:, 1].tolist()) <= {0, 1}
         assert invariance or (params[:, 0] == 0).all()  # no colour permutation without invariance
+
+
+def test_sigreg_prefers_isotropic_gaussian():
+    torch.manual_seed(0)
+    gauss = torch.randn(2048, 16)
+    collapsed = gauss[:, :1] * torch.ones(1, 16)  # rank 1
+    stretched = gauss * torch.linspace(0.1, 3, 16)  # anisotropic
+    null = sigreg_loss(gauss)  # the statistic is scaled by N, so its null value is O(1)
+    assert null < 3
+    assert sigreg_loss(collapsed) > 50 * null
+    assert sigreg_loss(stretched) > 50 * null
+
+
+def test_lejepa_invariance_term():
+    torch.manual_seed(0)
+    z = torch.randn(2, 512, 8)
+    aligned = torch.stack([z[0], z[0]])
+    assert lejepa_loss(aligned, lam=0.0) == 0
+    assert lejepa_loss(z, lam=0.0) > 0.5

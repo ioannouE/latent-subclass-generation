@@ -1,4 +1,4 @@
-"""Step 2: SupCon / SimCLR / SupCon+SimCLR / MaskCon / FALCON fine-tuning of the last blocks of a frozen-recipe backbone
+"""Step 2: SupCon / SimCLR / SupCon+SimCLR / MaskCon / FALCON / LeJEPA (label-free) fine-tuning of the last blocks of a frozen-recipe backbone
 (configs/repr_baselines.yaml), and NHP (configs/repr_nhp.yaml, same recipe). Coarse (make) labels only; FALCON additionally needs the
 number of fine classes K. Needs a GPU:
     sbatch slurm/train_repr.sh
@@ -24,7 +24,7 @@ from lsgen.eval.representation import knn_accuracy
 from lsgen.features.encoders import Embedder
 from lsgen.features.extract import embed_images, read_csv, write_csv
 from lsgen.methods.repr.falcon import Falcon, coarse_neighbors
-from lsgen.methods.repr.losses import Contrastive
+from lsgen.methods.repr.losses import Contrastive, LeJEPA
 from lsgen.methods.repr.maskcon import MaskCon
 from lsgen.methods.repr.nhp import NHP, Encoder, Head
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging, sha256_file, write_json
@@ -81,6 +81,8 @@ def build_objective(kind, params, net, cfg, num_coarse, device):
         return NHP(net, temperature=cfg["temperature"], **params)
     if kind == "contrastive":
         return Contrastive(net, params["supcon"], params["simclr"], cfg["temperature"])
+    if kind == "lejepa":
+        return LeJEPA(net, **params)
     if kind == "maskcon":
         return MaskCon(net, cfg["head"][1], device=device, **params)
     return Falcon(net, num_coarse=num_coarse, device=device, **params)
