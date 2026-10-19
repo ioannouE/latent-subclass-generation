@@ -105,6 +105,7 @@ Last 4 blocks of DINOv3-B fine-tuned with one fixed recipe (`configs/repr_baseli
 - **SupCon + SimCLR** ends slightly below frozen on R1 and R2 (kNN 0.942, ACC 0.695); the instance term costs part of what the coarse term gains.
 - **MaskCon and FALCON** match SupCon on the coarse level (kNN 0.953 / 0.967) and are level with the frozen encoder on subclass clustering (ACC 0.705 / 0.698 vs 0.717, inside the CIs); FALCON has the worst Δ0/Δ1 of the three (0.700) despite using K.
 - **No variant improves subclass discovery (R2, Δ0/Δ1, R5)**, and all over-fragment single-subclass makes (K̂ error 1.3-3.7 vs 1.16 frozen). This is the gap the benchmark is meant to expose.
+- **LeJEPA (label-free SSL, SIGReg, `configs/eval_repr_lejepa.yaml`, added 19 Oct; point estimates in the GEORGE and full-comparison tables below)** is the best of the label-free fine-tunes: make kNN 0.938 and oracle-K ACC 0.683 against 0.813 / 0.583 for SimCLR, but below the frozen encoder (0.949 / 0.717) and clearly below SupCon on the coarse level (0.968), with a larger var ratio (0.727 vs 0.690) and more over-fragmentation of single-subclass makes (K-hat error 1.58, mean K-hat 7.7). Val make kNN drifted from 0.948 (epoch 10) to 0.938 (epoch 50); untuned, 50 epochs, one seed. It does not improve subclass discovery over the frozen encoder either.
 - One seed only: differences of a few hundredths in R2 between frozen, SupCon, MaskCon and FALCON are within the CIs and should not be read as ranking.
 - CI flaw: the only point estimates outside their CI are the oracle row's oracle-K ACC (0.928 vs [0.902, 0.926], bootstrap bias at high ACC) and `sscd_128` `ari_khat`. Subsampling is slightly biased when the clustering is very strong or very weak. No conclusion depends on it.
 
@@ -118,6 +119,7 @@ GEORGE (Sohoni et al. 2020; official code in `third_party/hidden-stratification`
 | FALCON                      |       0.967 |    0.941 |      0.967 |      0.698 |      0.589 |    0.613 |    0.561 |   0.700 |   0.710 |     0.754 |    0.812 |         1.47 |       6.5 |
 | GEORGE stage 1 (ERM, make CE) |     0.978 |    0.940 |      0.966 |      0.743 |      0.652 |    0.640 |    0.595 |   0.682 |   0.644 |     0.739 |    0.834 |         1.42 |       5.3 |
 | **GEORGE (group DRO)**      |   **0.977** |    0.938 |      0.968 |  **0.746** |  **0.652** |    0.638 |    0.610 |   0.678 |   0.653 |     0.734 |    0.829 |         1.42 |       6.5 |
+| LeJEPA (label-free)         |       0.938 |    0.942 |      0.966 |      0.683 |      0.568 |    0.593 |    0.557 |   0.670 |   0.780 |     0.727 |    0.800 |         1.58 |       7.7 |
 
 GEORGE's own clustering (stage 2, on train activations) chose K = 2 for 18 makes and K = 3-7 for most others (mean 4.3, max 17 over the 49 makes; true mean K_c is 5.7 over makes with K_c >= 2). Its search starts at K = 2, so the 19 single-subclass makes are always split.
 
@@ -125,6 +127,7 @@ GEORGE's own clustering (stage 2, on train activations) chose K = 2 for 18 makes
 - **The gain comes from stage 1, not from GEORGE's clustering:** the ERM model alone (make cross-entropy, no clusters) scores the same as the group-DRO model (oracle-K ACC 0.743 vs 0.746, kNN 0.978 vs 0.977). Group DRO over the discovered clusters adds nothing measurable here. This is the expected outcome: the DRO objective still only predicts the make, so it gives the backbone no signal to separate the clusters inside a make.
 - **No subclass metric improves in a way that matters:** Recall@1 and the fine probe are slightly below frozen (0.938 / 0.968 vs 0.947 / 0.969), Delta1/Delta2 is the worst of all models (0.65; makes become tight and compact relative to the gap between makes, as for any make-supervised model) and the var ratio is 0.73 (frozen 0.69, so a larger share of within-make variance is not subclass). Single-subclass makes are still over-split (K-hat error 1.42).
 - **Comparison with the other methods:** GEORGE with fine-tuning on make labels behaves like SupCon, with a somewhat tighter make structure; it is above NHP (oracle-K ACC 0.58) and level with the other baselines inside the CIs. It does not close the gap to the supervised oracle features (ACC 0.93). Hidden-subclass discovery from coarse labels is not solved by GEORGE on Stanford Cars.
+- **GEORGE vs LeJEPA (label-free SSL, added 19 Oct):** GEORGE is clearly ahead on the make level (kNN 0.977 vs 0.938) and on subclass clustering (oracle-K ACC 0.746 vs 0.683, NMI 0.652 vs 0.568; with estimated K 0.638 vs 0.593), and it is less over-fragmenting (mean K-hat 6.5 vs 7.7, K-hat error 1.42 vs 1.58). Within-make information is level (Recall@1 0.938 vs 0.942, fine probe 0.968 vs 0.966), the var ratio is level (0.734 vs 0.727), and LeJEPA has the looser make structure (Delta1/Delta2 0.78 vs 0.65), as expected without make supervision. The oracle-K ACC gap (0.06) is larger than the CI widths of the other rows, but neither row has macro CIs in this table and each has one seed.
 - Limits: one seed; stage-2 settings (UMAP 2-d, GMM, K <= 24) and group-DRO settings (step size 0.01, size adjustment 2) are the defaults declared before the run and were not tuned; GEORGE's overclustering and hardness components are not used.
 
 **GEORGE's own clusters (`scripts/eval_george_clusters.py`, `reports/repr/george_clusters_s0/`).** Scored on the *train* images (the only ones GEORGE clusters), so not comparable to the test tables above; macro over the 30 makes with K_c >= 2. Reference: k-means on the frozen DINOv3-B train embeddings, same images and metric code.
@@ -157,6 +160,7 @@ Macro means over makes, test split, 16 Oct 2026 (point estimates; CIs in `<encod
 | NHP (z_sub)                     | 0.965         | 0.975           |        100 |      100   | 0.727      |
 | GEORGE stage 1 (ERM)            | **0.978**     | 0.982           |        100 |      100   | 0.644      |
 | GEORGE (group DRO)              | 0.977         | 0.982           |        100 |      100   | 0.653      |
+| LeJEPA (label-free)             | 0.938         | 0.964           |        100 |      100   | 0.780      |
 | Oracle (fine classifier, 128px) | 0.901         | 0.860           |        100 |       96.7 | 0.824      |
 
 **O2, subclasses (R2, R3 Eq. 1, R5)**
@@ -174,6 +178,7 @@ Macro means over makes, test split, 16 Oct 2026 (point estimates; CIs in `<encod
 | NHP (z_sub)                     | 0.912      | 0.930        | 0.580          | 0.437          | 0.306          | 0.541     | 0.421     | 0.293     |      4.3 | 1.32            | 0.881      | 0.614      |
 | GEORGE stage 1 (ERM)            | 0.940      | 0.966        | 0.743          | 0.652          | 0.565          | 0.640     | 0.595     | 0.495     |      5.3 | 1.42            | 0.834      | 0.682      |
 | GEORGE (group DRO)              | 0.938      | 0.968        | 0.746          | 0.652          | 0.563          | 0.638     | 0.610     | 0.495     |      6.5 | 1.42            | 0.829      | 0.678      |
+| LeJEPA (label-free)             | 0.942      | 0.966        | 0.683          | 0.568          | 0.472          | 0.593     | 0.557     | 0.433     |      7.7 | 1.58            | 0.800      | 0.670      |
 | Oracle (fine classifier, 128px) | 0.922      | 0.929        | 0.928          | 0.827          | 0.829          | 0.849     | 0.792     | 0.764     |      5.2 | 1.42            | 0.921      | 0.526      |
 
 **O3, variation within a subclass (R4)**
@@ -191,6 +196,7 @@ Macro means over makes, test split, 16 Oct 2026 (point estimates; CIs in `<encod
 | NHP (z_sub)                     | 0.679                                            |                 4.9 |
 | GEORGE stage 1 (ERM)            | 0.739                                            |                10.9 |
 | GEORGE (group DRO)              | 0.734                                            |                10.6 |
+| LeJEPA (label-free)             | 0.727                                            |                 7.7 |
 | Oracle (fine classifier, 128px) | 0.601                                            |                13.8 |
 
 ## Known problems
