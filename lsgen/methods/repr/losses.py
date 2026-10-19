@@ -76,7 +76,7 @@ class LeJEPA:
 
     def loss(self, batch):
         v1, v2, _ = batch
-        return lejepa_loss(forward_fp16(self.net, torch.cat([v1, v2])).chunk(2), *self.args)
+        return lejepa_loss(torch.stack(forward_fp16(self.net, torch.cat([v1, v2])).chunk(2)), *self.args)
 
     def start_epoch(self, epoch):
         pass
