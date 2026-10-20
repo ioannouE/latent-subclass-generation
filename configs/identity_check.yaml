@@ -1,0 +1,15 @@
+# Pre-check of the identity score (docs/EXPERIMENT_IDSCORE.md): within each make, z(DINO cosine) - z(DreamSim cosine), z-scored over the
+# make's pairs. Reads cached frozen embeddings; fine labels only score the rankings. The decision rule was fixed before the first run.
+data_config: configs/data.yaml
+split: train                   # the split the method would train on; its targets are what is being checked
+crop_size: 256
+dino: dinov3_base              # frozen DINO (the backbone the method would fine-tune)
+dreamsim: dreamsim_ensemble    # DreamSim default (DINO + CLIP + OpenCLIP), least tied to the DINO family
+gate_k: 20                     # identity score used only among each image's 20 nearest same-make DINO neighbours
+top_n: 5                       # precision@5: share of an image's 5 top-scored neighbours with its subclass
+n_boot: 1000
+subsample: 0.632               # draws without replacement (duplicated images would form fake same-subclass pairs)
+n_jobs: 8                      # = --cpus-per-task in slurm/identity_check.sh
+seed: 0
+decision:                      # on the macro gain_p5_gated = p5_gated - p5_dino
+  min_gain: 0.02               # go if the gain is >= 0.02 and its 95% CI lower bound is > 0; otherwise stop

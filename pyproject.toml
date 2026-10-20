@@ -17,6 +17,7 @@ dependencies = [
   "matplotlib",
   "scikit-learn",
   "torch",
+  "dreamsim==0.2.1",   # DreamSim embeddings (pulls peft, open-clip-torch)
   "torchvision",
   "timm",
   "ImageHash==4.3.2",

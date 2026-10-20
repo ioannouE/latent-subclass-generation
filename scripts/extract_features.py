@@ -11,6 +11,7 @@ from pathlib import Path
 import torch
 
 from lsgen.data.splits import load_split
+from lsgen.features.dreamsim import DREAMSIM, DreamSimEmbedder
 from lsgen.features.encoders import Embedder
 from lsgen.features.extract import embed_images, write_csv
 from lsgen.features.gram import GRAM, GramEmbedder
@@ -44,7 +45,8 @@ def main():
     log.info("images per split after excluding conflicting ones: %s", {s: len(v) for s, v in ids.items()})
 
     exclude_sha = sha256_file(splits_dir / "exclude.txt")
-    weights = {"sscd": sscd, "fine_classifier": derived / "evaluators" / "fine" / "model.pt"}
+    weights = {"sscd": sscd, "fine_classifier": derived / "evaluators" / "fine" / "model.pt",
+               **dict.fromkeys(DREAMSIM, derived / "weights" / "dreamsim")}
     for name in cfg["encoders"]:
         sizes = [s for s in cfg["crop_sizes"] if cfg.get("only_crop", {}).get(name, s) == s]
         todo = [(size, split) for size in sizes for split in ids
@@ -52,7 +54,7 @@ def main():
         if not todo:
             log.info("%s: all embeddings already cached, skipped", name)
             continue
-        model = (GramEmbedder if name in GRAM else Embedder)(name, weights.get(name)).to(device)
+        model = (GramEmbedder if name in GRAM else DreamSimEmbedder if name in DREAMSIM else Embedder)(name, weights.get(name)).to(device)
         for size in sizes:
             out = derived / "features" / f"{name}_{size}"
             out.mkdir(parents=True, exist_ok=True)

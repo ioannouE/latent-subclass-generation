@@ -16,7 +16,8 @@ FINE_TOKENS = re.compile(r"fine_id|class_id|model_id|make_model|class_name|\byea
 ALLOWED = {"lsgen/eval", "lsgen/data/stanford_cars.py", "lsgen/data/hierarchy.py", "lsgen/data/splits.py",
            "lsgen/data/episodes.py", "lsgen/data/reports.py", "scripts/prepare_data.py", "scripts/build_episodes.py", "scripts/train_eval_classifier.py", "scripts/analyze_features.py",
            "scripts/eval_representation.py", "scripts/eval_george_clusters.py", "scripts/eval_generation.py", "scripts/make_controls.py", "scripts/gram_check.py",
-           "lsgen/data/labels.py", "scripts/reproduce_maskcon.py", "scripts/visualize_embeddings.py"}
+           "lsgen/data/labels.py", "scripts/reproduce_maskcon.py", "scripts/visualize_embeddings.py",
+           "scripts/identity_check.py"}
 
 
 def test_dataset_returns_only_image_and_make(tmp_path):

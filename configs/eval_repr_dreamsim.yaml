@@ -1,0 +1,11 @@
+# R1-R5 for the DreamSim embeddings and their pre-alignment backbones. Same protocol as configs/eval_representation.yaml.
+data_config: configs/data.yaml
+encoders: [dreamsim_dinov2_vitb14, dreamsim_dino_vitb16, dreamsim_clip_vitb32, dreamsim_open_clip_vitb32, dreamsim_ensemble, dreamsim_dino_vitb16_patch, dreamsim_dinov2_vitb14_patch,
+           dreamsim_base_dinov2_vitb14, dreamsim_base_dino_vitb16, dreamsim_base_clip_vitb32, dreamsim_base_open_clip_vitb32, dreamsim_base_ensemble, dreamsim_base_dino_vitb16_patch, dreamsim_base_dinov2_vitb14_patch]
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632          # K-hat and R4 CIs, see configs/eval_representation.yaml
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]   # what to (re)compute; the others are kept
+n_jobs: 16
+seed: 0

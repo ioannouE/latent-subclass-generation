@@ -48,3 +48,15 @@ helps most, +0.03); with one seed and no CIs the ablations cannot be ranked. Con
 factoring it out removes nothing.
 
 **Not done.** Loss weights untuned; no tuning on `val`; second seed; non-linear nuisance probes; the `nhp_adversary` variant is configured but has no results.
+
+## 2. Identity score: DINO minus DreamSim (pre-check only)
+
+Code: `lsgen/eval/identity.py`, `scripts/identity_check.py`, `configs/identity_check.yaml`. Details and results: docs/EXPERIMENT_IDSCORE.md, `reports/identity_check/`.
+
+**Idea.** Two-head DINO fine-tuning (SupCon on make; subclass head with soft targets). Targets = identity score z(frozen DINO cosine) - z(frozen
+DreamSim cosine) within a make: similar for reasons other than looking alike. Checked before training whether these targets rank same-subclass
+pairs better than DINO alone (rule fixed beforehand: gated precision@5 gain >= 0.02, CI above 0).
+
+**Verdict.** Stop. AUROC 0.619 vs 0.799 for DINO; gated precision@5 0.795 vs 0.903 (gain -0.109); worse in 29-30 of 30 makes. DreamSim is
+itself subclass-informative (p@5 0.70, chance 0.27), so subtracting it removes signal. No other combination tried (sum, min, re-rank, other
+DreamSim variants) beats DINO alone. Training was not implemented.

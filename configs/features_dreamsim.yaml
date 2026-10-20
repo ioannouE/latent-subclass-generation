@@ -1,0 +1,14 @@
+# DreamSim embeddings (lsgen/features/dreamsim.py) next to their pre-alignment backbones (dreamsim_base_*: same models, no LoRA).
+# Same cache layout and protocol as configs/features.yaml; the DINOv3-B 224 px anchor is dinov3_base_256 there (256 px crop -> 224).
+data_config: configs/data.yaml
+encoders: [dreamsim_dinov2_vitb14, dreamsim_dino_vitb16, dreamsim_clip_vitb32, dreamsim_open_clip_vitb32, dreamsim_ensemble, dreamsim_dino_vitb16_patch, dreamsim_dinov2_vitb14_patch,
+           dreamsim_base_dinov2_vitb14, dreamsim_base_dino_vitb16, dreamsim_base_clip_vitb32, dreamsim_base_open_clip_vitb32, dreamsim_base_ensemble, dreamsim_base_dino_vitb16_patch, dreamsim_base_dinov2_vitb14_patch]
+crop_sizes: [256]
+splits: [train, val, test]       # conflicting images (data/splits/exclude.txt) are dropped
+batch_size: 128
+num_workers: 8                   # = --cpus-per-task in slurm/extract_features.sh
+demo:                            # scripts/check_dreamsim.py demo: the package's demo.py (images of its repo, third_party/dreamsim/images)
+  images: third_party/dreamsim/images
+  distances: [0.4453, 0.2756]
+  tol: 5.0e-4
+n_test: 7954                     # test images after the exclusions; scripts/check_dreamsim.py features asserts it

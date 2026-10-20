@@ -1,0 +1,70 @@
+{
+ "git_hash": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty",
+ "created_utc": "2026-10-20T12:36:23+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "encoders": [
+   "dreamsim_dinov2_vitb14",
+   "dreamsim_dino_vitb16",
+   "dreamsim_clip_vitb32",
+   "dreamsim_open_clip_vitb32",
+   "dreamsim_ensemble",
+   "dreamsim_dino_vitb16_patch",
+   "dreamsim_dinov2_vitb14_patch",
+   "dreamsim_base_dinov2_vitb14",
+   "dreamsim_base_dino_vitb16",
+   "dreamsim_base_clip_vitb32",
+   "dreamsim_base_open_clip_vitb32",
+   "dreamsim_base_ensemble",
+   "dreamsim_base_dino_vitb16_patch",
+   "dreamsim_base_dinov2_vitb14_patch"
+  ],
+  "crop_sizes": [
+   256
+  ],
+  "knn_k": 20,
+  "n_boot": 1000,
+  "subsample": 0.632,
+  "tables": [
+   "r1",
+   "r2_within_make",
+   "r2_oracle",
+   "r2_khat",
+   "r3",
+   "r4",
+   "r5"
+  ],
+  "n_jobs": 16,
+  "seed": 0
+ },
+ "config_path": "configs/eval_repr_dreamsim.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 59,
+  "val": 8,
+  "test": 87
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "r1": 100,
+  "r2_within_make": 62,
+  "r2_oracle": 93,
+  "r2_khat": 124,
+  "r3": 350,
+  "r4": 62,
+  "r5": 50
+ },
+ "table_git_hash": {
+  "r1": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty",
+  "r2_within_make": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty",
+  "r2_oracle": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty",
+  "r2_khat": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty",
+  "r3": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty",
+  "r4": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty",
+  "r5": "1cdb5905f6ffb1c6a2eedbcab8caf50647230ebc-dirty"
+ },
+ "encoder": "dreamsim_base_dinov2_vitb14_256",
+ "n_train": 7270,
+ "n_test": 7954
+}

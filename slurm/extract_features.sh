@@ -1,7 +1,7 @@
 #!/bin/bash
 # Milestone 3: cache embeddings (CSV: filename, z1..zD) for DINOv3, CLIP-L, SSCD. Submit from the repo root:
 #   sbatch slurm/extract_features.sh
-# Settings are in configs/features.yaml. Run after slurm/prepare_data.sh.
+# Settings are in the config below (default configs/features.yaml; CONFIG=configs/features_dreamsim.yaml for DreamSim). Run after slurm/prepare_data.sh.
 #SBATCH --job-name=lsgen-features
 #SBATCH --partition=rtx           # any GPU partition works (a100, rtx, a5000, ...)
 #SBATCH --nodes=1
@@ -18,4 +18,6 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-python scripts/extract_features.py --config configs/features.yaml
+CONFIG=${CONFIG:-configs/features.yaml}
+
+python scripts/extract_features.py --config $CONFIG
