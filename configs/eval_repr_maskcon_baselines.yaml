@@ -3,7 +3,9 @@
 data_config: configs/data.yaml
 labels: maskcon
 report_dir: repr_maskcon
-encoders: [supcon_bodytype_s0, simclr_bodytype_s0, supcon_simclr_bodytype_s0, maskcon_bodytype_s0, falcon_bodytype_s0]
+encoders: [supcon_bodytype_s0, simclr_bodytype_s0, supcon_simclr_bodytype_s0, maskcon_bodytype_s0, falcon_bodytype_s0,
+           george_bodytype_s0, george_erm_bodytype_s0, nhp_bodytype_s0, nhp_bodytype_s0_cat,
+           lejepa_s0]   # lejepa uses no labels: the default-scheme features are reused, only the evaluation labels change
 crop_sizes: [256]
 knn_k: 20
 n_boot: 1000

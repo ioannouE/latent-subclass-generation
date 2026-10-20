@@ -1,0 +1,54 @@
+# NHP and its ablations on the MaskCon label scheme (coarse = 8 body types), otherwise identical to configs/repr_nhp.yaml.
+# Nuisance-factored hierarchical prototypes (NHP, lsgen/methods/repr/nhp.py): the same recipe as configs/repr_baselines.yaml (backbone,
+# crop, last 4 blocks, optimiser, epochs, batch size), make labels only, no hidden-subclass labels. Run: CONFIG=configs/repr_nhp_maskcon.yaml sbatch slurm/train_repr.sh
+#
+# Evaluation embedding, declared before any run and not to be changed afterwards (R1-R5 and K-hat unchanged, scripts/eval_representation.py):
+#   primary   = z_sub, L2-normalised, 128-d      -> encoder <method>_s<seed>      (the backbone-CLS baselines are 768-d)
+#   secondary = z_make + z_sub, L2-normalised parts, 256-d -> encoder <method>_s<seed>_cat
+# z_nuis is never part of an evaluated embedding.
+data_config: configs/data.yaml
+labels: maskcon                # lsgen/data/labels.py; use configs/repr_nhp.yaml for the default make scheme
+tag: _bodytype                 # run names <method>_bodytype_s<seed>: the make-trained features are not overwritten
+backbone: dinov3_base
+crop: bbox15_256
+methods:
+  nhp: &nhp
+    kind: nhp
+    invariance: true            # nuisance views (colour permutation, strong jitter, background swap / mask); false = the baselines' augmentation strength
+    sparse: true                # hard-concrete gates on the prototypes with an L0 penalty (w_l0)
+    adversary: false            # gradient-reversal adversary predicting colour permutation and flip from z_sub (w_adversary)
+    dims: {make: 128, sub: 128, nuis: 64}
+    n_proto: 52                 # prototypes per body type: the largest K_c (Sedan, 50 classes) plus a margin of 2
+    nuisance_aug: {scale_min: 0.4, color_jitter: 0.8, hue: 0.5, jitter_p: 0.9, grayscale_p: 0.2, swap_p: 0.3, mask_p: 0.2}
+    tau_student: 0.1
+    tau_teacher: 0.04           # sharpened teacher targets
+    ema_decay: 0.99
+    margins: [0.1, 0.1]         # m1, m2 of the hierarchy hinges (squared distances of L2-normalised z_sub, range 0-4)
+    active_min: 0.05            # monitoring only: a prototype is active if it takes >= 5% of its make's mean assignment
+    w_make: 1.0                 # loss weights; 0 switches a term off
+    w_assign: 1.0
+    w_usage: 0.1                # weak anti-collapse: entropy of each make's mean assignment (no equipartition)
+    w_hierarchy: 1.0
+    w_nuis: 0.1                 # VICReg variance + covariance on z_nuis
+    w_l0: 0.05
+    w_adversary: 0.1
+  # single-component ablations
+  nhp_no_invariance: {<<: *nhp, invariance: false}
+  nhp_no_hierarchy: {<<: *nhp, w_hierarchy: 0.0}
+  nhp_no_sparsity: {<<: *nhp, sparse: false}
+  nhp_no_nuis: {<<: *nhp, w_nuis: 0.0}
+  nhp_adversary: {<<: *nhp, adversary: true}
+seeds: [0]
+trainable_blocks: 4
+head: [2048, 128]               # hidden width of the head body (the output is the sum of dims)
+temperature: 0.1                # SupCon on z_make
+epochs: 50
+batch_size: 256
+lr_backbone: 2.0e-5
+lr_head: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 3
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # used by nhp_no_invariance (hue = color_jitter / 4)
+eval_every: 10                  # val make kNN@20 of z_sub and z_make + z_sub (monitoring only: no model selection, last epoch is used)
+num_workers: 8
+batch_size_embed: 128

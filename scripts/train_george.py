@@ -4,9 +4,10 @@ recipe as configs/repr_baselines.yaml (configs/repr_george.yaml). Three stages, 
   2. Per make: UMAP, then a GMM whose number of components is chosen by silhouette score (GEORGE's UMAPReducer / AutoKMixtureModel).
   3. Fine-tune a fresh backbone to predict the make with group DRO over the (make, cluster) groups (GEORGE's LossComputer).
 Needs a GPU: sbatch slurm/train_george.sh
-Output per seed: <derived_root>/features/george_s<seed>_<size> (GDRO model, primary) and george_erm_s<seed>_<size> (stage-1 model), in the
+Output per seed: <derived_root>/features/george<tag>_s<seed>_<size> (GDRO model, primary) and george_erm<tag>_s<seed>_<size> (stage-1 model), in the
 format of the frozen encoders, so scripts/eval_representation.py scores them by name (configs/eval_repr_george.yaml); and
-<derived_root>/george_clusters/george_s<seed>.csv with the cluster of every train image.
+<derived_root>/george_clusters/george<tag>_s<seed>.csv with the cluster of every train image. `tag` (config, default empty) keeps runs on
+another label scheme (`labels`) from overwriting the default ones.
 """
 import argparse
 import json
@@ -130,13 +131,14 @@ def main():
     make, val = make_of[ids["train"]].to_numpy(), (ids["val"], make_of[ids["val"]].to_numpy())
     size = cfg["crop"].split("_")[-1]
 
+    tag = cfg.get("tag", "")
     for seed in cfg["seeds"]:
         erm, erm_loss = fit(cfg, ids["train"], meta, derived, make, None, device, seed, val)
         assign, ks = george_clusters(embed_split(erm, derived, cfg["crop"], ids["train"], cfg, device), make, cfg, seed)
         (derived / "george_clusters").mkdir(exist_ok=True)
-        pd.DataFrame({"id": ids["train"], "make_id": make, "cluster": assign}).to_csv(derived / "george_clusters" / f"george_s{seed}.csv", index=False)
+        pd.DataFrame({"id": ids["train"], "make_id": make, "cluster": assign}).to_csv(derived / "george_clusters" / f"george{tag}_s{seed}.csv", index=False)
         gdro, gdro_loss = fit(cfg, ids["train"], meta, derived, make, assign, device, seed, val)
-        for run, model, loss in ((f"george_erm_s{seed}", erm, erm_loss), (f"george_s{seed}", gdro, gdro_loss)):
+        for run, model, loss in ((f"george_erm{tag}_s{seed}", erm, erm_loss), (f"george{tag}_s{seed}", gdro, gdro_loss)):
             for split, split_ids in ids.items():
                 emb = embed_split(model, derived, cfg["crop"], split_ids, cfg, device)
                 out = derived / "features" / f"{run}_{size}"
