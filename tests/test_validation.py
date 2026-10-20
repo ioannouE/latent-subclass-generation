@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from lsgen.eval.validation import read_metric, verdict, worse_than
+from lsgen.eval.validation import headline_table, read_metric, verdict, worse_than
 
 nan = np.nan
 
@@ -25,3 +25,11 @@ def test_read_metric(tmp_path):
     assert read_metric(tmp_path, "g3", "tv") == (0.2, 0.1, 0.3)
     value, lo, hi = read_metric(tmp_path, "g1", "fid")
     assert value == 3.0 and np.isnan(lo) and np.isnan(hi)
+
+
+def test_headline_table(tmp_path):
+    pd.DataFrame({"fid": [3.0], "kid": [0.1]}).to_csv(tmp_path / "g1.csv", index=False)
+    cfg = {"metrics": {"A": {"G1 FID": ["g1", "fid", "lower"], "G1 KID": ["g1", "kid", "lower"]}}, "headline": {"A": {"realism": ["G1 FID"]}},
+           "expected": {"A": {"c6": ["G1 FID"]}}}
+    t = headline_table(tmp_path, cfg, "A")
+    assert t.metric.tolist() == ["G1 FID"] and t.evaluates.iloc[0] == "realism" and t.validated.iloc[0]  # KID is not a headline metric

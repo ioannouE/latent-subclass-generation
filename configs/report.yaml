@@ -5,6 +5,16 @@ repr_config: configs/eval_representation.yaml    # its encoders x crop_sizes are
 oracle: fine_classifier_128                      # reference row, labelled "supervised oracle features (not a baseline)"
 primary: dinov3_large_256                        # encoder of the per-make breakdown
 worst_n: 10                                      # worst makes listed on R2 (lowest oracle-K ACC) and R3 (highest d0/d1)
+validation_config: configs/metric_validation.yaml    # its `headline` metrics are the rows of the floor table
 validation: reports/metric_validation            # .csv / .md / .png from scripts/metric_validation.py
 out: reports/report.md
 tables: {frozen: reports/repr_frozen.csv, per_make: reports/repr_per_make.csv}
+# Headline representation metrics by what they evaluate (keys of frozen_table's columns); the rest stay in reports/repr_frozen.csv.
+repr_headline:
+  "R1 coarse level: does the embedding recognise the make?": [knn_make]
+  "R2 subclass discovery, K known: do clusters inside a make match the subclasses?": [acc_oracle, nmi_oracle]
+  "R2 subclass discovery, K unknown: label-free pipeline": [acc_khat, khat, khat_error]
+  "R2 subclass retrieval: are same-subclass images close?": [recall1, probe_fine]
+  "R3 geometry: subclasses closer than makes (< 1 desired)": [d0/d1, d1/d2, eq2]
+  "R4 share of a make's variance that lies inside its subclasses": [var_ratio]
+  "R5 stability of the clustering": [ari_boot]

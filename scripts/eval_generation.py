@@ -21,6 +21,7 @@ from lsgen.eval.classifier import calibrated_probs, load_classifier
 from lsgen.eval.evaluators import check_disjoint, read_method
 from lsgen.eval.report import write_results
 from lsgen.eval.stats import bootstrap, bootstrap_table, point_table, without_ci
+from lsgen.eval.validation import headline_table
 from lsgen.features.encoders import Embedder
 from lsgen.features.extract import embed_images, read_csv
 from lsgen.utils import REPO_ROOT, load_config, setup_logging
@@ -193,6 +194,7 @@ def main():
         tables, extra_output = run_b(ctx, samples, paths)
     out = Path(dcfg["reports_root"]) / "generation" / f"{method['name']}_{cfg['use_case']}"
     write_results(out, tables, cfg, cfg["seed"], ctx.dataset_hash, ctx.splits_dir, method=method, same_family_warnings=warnings)
+    headline_table(out, load_config(REPO_ROOT / cfg["validation_config"]), cfg["use_case"]).to_csv(out / "headline.csv", index=False)
     if extra_output:
         extra_output(out)
 

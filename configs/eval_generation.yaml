@@ -2,6 +2,7 @@
 #   use case A: columns filename, make_id [, group] [, fine_id = requested subclass: only for methods conditioned on the fine class, adds E1];  use case B: columns filename, episode_id (N = 16 per episode).
 # method.json: {"name": ..., "uses": [encoders the method used for conditioning/training]}.
 data_config: configs/data.yaml
+validation_config: configs/metric_validation.yaml   # its `headline` metrics are written to headline.csv
 use_case: A                  # A | B
 samples_dir: outputs/samples/example
 crop_size: 128               # reference embeddings are the cached bbox15 crops of this size

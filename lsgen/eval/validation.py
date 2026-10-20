@@ -27,3 +27,18 @@ def read_metric(run_dir, table, name, b_set=None):
             t = t[t.set == b_set]
         return tuple(float(t[c].iloc[0]) for c in ("mean", "lo", "hi"))
     return float(t[name].iloc[0]), np.nan, np.nan
+
+
+def headline_table(run_dir, cfg, case):
+    """Headline metrics of one result directory: group (what it evaluates), metric, value, CI, and whether a control validates it.
+    Use case B has one block per episode set."""
+    validated = {m for per_control in cfg["expected"][case].values() for m in per_control}
+    sets = [None] if case == "A" else sorted(pd.read_csv(f"{run_dir}/by_set.csv").set.unique())
+    rows = []
+    for b_set in sets:
+        for group, names in cfg["headline"][case].items():
+            for name in names:
+                table, column, _ = cfg["metrics"][case][name]
+                value, lo, hi = read_metric(run_dir, table, column, b_set)
+                rows.append({"evaluates": group, "metric": name, "set": b_set, "value": value, "lo": lo, "hi": hi, "validated": name in validated})
+    return pd.DataFrame(rows)

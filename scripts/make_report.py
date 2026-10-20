@@ -34,16 +34,21 @@ def fmt(row, name, digits=3):
     return f"{row[name]:.{digits}f}{ci}"
 
 
-def frozen_table(rows):
-    """Markdown table of the macro metrics of {label: row}."""
-    cols = {"kNN make": "knn_make", "probe make": "probe_make", "Recall@1 (in make)": "recall1", "fine probe (in make)": "probe_fine",
-            "ACC oracle K": "acc_oracle", "NMI oracle K": "nmi_oracle", "ACC K-hat": "acc_khat", "mean K-hat": "khat",
-            "d0/d1": "d0/d1", "d1/d2": "d1/d2", "% Eq.(2)": "eq2", "var. ratio": "var_ratio", "ARI boot": "ari_boot", "K-hat err (K_c=1)": "khat_error"}
+COLUMNS = {"knn_make": "kNN make", "recall1": "Recall@1 (in make)", "probe_fine": "fine probe (in make)", "acc_oracle": "ACC oracle K",
+           "nmi_oracle": "NMI oracle K", "acc_khat": "ACC K-hat", "khat": "mean K-hat", "khat_error": "K-hat err (K_c=1)", "d0/d1": "d0/d1",
+           "d1/d2": "d1/d2", "eq2": "% Eq.(2)", "var_ratio": "var. ratio", "ari_boot": "ARI boot"}
+
+
+def frozen_table(rows, groups):
+    """One markdown table per headline group (what the metrics evaluate), one row per encoder, so a failure shows up under its question."""
     out = []
-    for label, row in rows.items():
-        row = row | {f"eq2{s}": row[f"eq2{s}"] * 100 for s in ("", "_lo", "_hi")}  # share of makes, in %
-        out.append({"encoder": label} | {c: fmt(row, k, 1 if c in ("% Eq.(2)", "mean K-hat") else 3) for c, k in cols.items()})
-    return pd.DataFrame(out).to_markdown(index=False)
+    for title, keys in groups.items():
+        table = []
+        for label, row in rows.items():
+            row = row | {f"eq2{s}": row[f"eq2{s}"] * 100 for s in ("", "_lo", "_hi")}  # share of makes, in %
+            table.append({"encoder": label} | {COLUMNS[k]: fmt(row, k, 1 if k in ("eq2", "khat") else 3) for k in keys})
+        out.append(f"**{title}**\n\n{pd.DataFrame(table).to_markdown(index=False)}\n")
+    return "\n".join(out)
 
 
 def data_summary(dcfg, hierarchy):
@@ -66,9 +71,10 @@ Details: [data_summary.md](data_summary.md), [preprocessing.md](preprocessing.md
 """
 
 
-def floor_table(validation_csv):
+def floor_table(validation_csv, headline):
+    """Real-vs-real floor of the headline generation metrics (cfg `headline` of the validation config)."""
     v = pd.read_csv(validation_csv)
-    f = v[v.verdict == "floor"]
+    f = v[(v.verdict == "floor") & v.metric.isin([m for case in headline.values() for names in case.values() for m in names])]
     f = f.assign(text=lambda d: d.apply(lambda r: f"{r.value:.4g}" + ("" if pd.isna(r.lo) else f" [{r.lo:.3g}, {r.hi:.3g}]"), axis=1))
     return f.pivot(index="metric", columns="use_case", values="text").rename(columns={"A": "A: test_A vs test_B", "B": "B: real episodes"}).reset_index().to_markdown(index=False)
 
@@ -126,12 +132,12 @@ Full table, verdicts and missed expectations: [metric_validation.md](metric_vali
 ## 3. Real-vs-real floor
 What a perfect generator scores (C2: `test_A` as samples against `test_B` for use case A, test images drawn like generated ones for use case B). Values with 95% CIs where the metric has them.
 
-{floor_table(validation.with_suffix('.csv'))}
+{floor_table(validation.with_suffix('.csv'), load_config(REPO_ROOT / cfg['validation_config'])['headline'])}
 
 ## 4. Frozen encoders (R1-R5, test)
-Macro means over makes with 95% CIs (kNN / probes fitted on train; per-make clustering of test embeddings). `ACC oracle K` uses the true number of subclasses, `ACC K-hat` does not. d0/d1 and d1/d2 are macro means of the per-make ratios (< 1 is the desired order), `% Eq.(2)` is the share of makes with d1 < d2. The last row, if present, is a reference trained with the fine labels.
+Headline metrics only, grouped by what they evaluate (read down a group to see where an encoder fails); all metrics: `repr_frozen.csv`. Macro means over makes with 95% CIs (kNN / probes fitted on train; per-make clustering of test embeddings). `ACC oracle K` uses the true number of subclasses, `ACC K-hat` does not. d0/d1 and d1/d2 are macro means of the per-make ratios (< 1 is the desired order), `% Eq.(2)` is the share of makes with d1 < d2. The last row, if present, is a reference trained with the fine labels.
 
-{frozen_table(rows_with_oracle)}
+{frozen_table(rows_with_oracle, cfg['repr_headline'])}
 
 Tables: [repr_frozen.csv](repr_frozen.csv) (with all CIs), per-encoder results in `repr/<encoder>_<crop>/`.
 

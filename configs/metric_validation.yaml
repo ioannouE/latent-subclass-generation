@@ -44,3 +44,18 @@ expected:
     c1b_copy_support: [B2 KID vs T, B3 ratio to S]
     c1b_retrieve_nn: [B2 KID vs T, B3 ratio to S]
     c4_prototype_collapse: [B4 diversity ratio]
+# Headline metrics (what eval_generation.py writes to headline.csv and the report shows), grouped by what they evaluate. Every other
+# metric stays in the result CSVs as a diagnostic. B1 is reported but no control exercises it (it is marked unvalidated).
+headline:
+  A:
+    realism: [G1 FID, G1 KID]
+    coverage of the real distribution: [G1 recall]
+    subclass prevalence: [G3 TV, G3 KL]
+    subclass coverage: [G4 covered, G4 rare covered]
+    within-subclass variation: [G5 excess KID, G5 coverage ratio]
+    copying of training images: [G7 copies]
+  B:
+    subclass identity: [B1 hit rate]
+    new images, not the support: [B2 KID vs T]
+    independence from the support: [B3 ratio to S]
+    diversity: [B4 diversity ratio]
