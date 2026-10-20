@@ -1,0 +1,12 @@
+# MaskCon label scheme: R1-R5 for NHP (after CONFIG=configs/repr_nhp_maskcon.yaml METHODS="nhp" sbatch slurm/train_repr.sh) and LeJEPA (label-free:
+# the default-scheme features are reused). Same settings as configs/eval_repr_maskcon_baselines.yaml.
+labels: maskcon
+report_dir: repr_maskcon
+encoders: [nhp_bodytype_s0, nhp_bodytype_s0_cat]
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16
+seed: 0
