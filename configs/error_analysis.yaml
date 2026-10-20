@@ -1,0 +1,12 @@
+# Error analysis of frozen DINO subclass neighbours within each make (scripts/error_analysis_neighbours.py). Diagnostic only: same
+# embeddings and split as configs/identity_check.yaml; fine labels only pick and describe the cases. SSCD threshold: configs/data.yaml.
+data_config: configs/data.yaml
+split: train
+crop: bbox15                   # the crops the embeddings were extracted from (shown in the HTML page)
+crop_size: 256
+dino: dinov3_base              # ranks the pairs
+dreamsim: dreamsim_ensemble
+sscd: sscd                     # near-duplicate flag
+n_cases: 50                    # false and missed neighbours each
+n_lowest_auroc: 5
+seed: 0                        # recorded; the selection is deterministic (no sampling, ties broken by image index)
