@@ -3,9 +3,8 @@
 data_config: configs/data.yaml
 labels: maskcon_new
 report_dir: repr_maskcon_new
-encoders: [geosub_geo_sub_bodytype_new_s0,   # done (reports/repr_maskcon_new): dinov3_base, dinov3_large, geosub_geo_bodytype_new_s0
-           geosub_geo_sub_supcon01_bodytype_new_s0, geosub_geo_sub_supcon03_bodytype_new_s0,
-           geosub_geo_sub_supcon1_bodytype_new_s0, geosub_geo_sub_supcon3_bodytype_new_s0]
+encoders: [geosub_full_bodytype_new_s0, geosub_geo_bodytype_new_large_s0, geosub_geo_sub_bodytype_new_large_s0, geosub_full_bodytype_new_large_s0]
+# done (reports/repr_maskcon_new): dinov3_base, dinov3_large, geosub_{geo,geo_sub,geo_sub_supcon01,03,1,3}_bodytype_new_s0
 crop_sizes: [256]
 knn_k: 20
 n_boot: 1000

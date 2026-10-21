@@ -8,6 +8,7 @@ crop: bbox15_256
 methods:
   geo: {geo: 1.0}                             # sanity check: should score as frozen DINOv3-L
   geo_sub: {geo: 1.0, sub: 1.0}                # the val choice on DINOv3-B (L_supcon weight 0)
+  full: {geo: 1.0, sub: 1.0, supcon: 0.1, var: 1.0}               # the proposed pipeline, all four terms; supcon 0.1 = best non-zero weight on val
 seeds: [0]
 views: 8                       # cached random augmentations per train image; two different ones per image and step
 aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # as configs/repr_baselines_maskcon.yaml (+ crop and flip)

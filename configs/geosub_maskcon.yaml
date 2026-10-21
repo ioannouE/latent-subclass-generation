@@ -16,7 +16,7 @@ methods:
   geo_sub_supcon03: {geo: 1.0, sub: 1.0, supcon: 0.3}
   geo_sub_supcon1: {geo: 1.0, sub: 1.0, supcon: 1.0}
   geo_sub_supcon3: {geo: 1.0, sub: 1.0, supcon: 3.0}
-  geo_sub_supcon1_var: {geo: 1.0, sub: 1.0, supcon: 1.0, var: 1.0}   # only if the ablation shows a need; set supcon to the val choice
+  full: {geo: 1.0, sub: 1.0, supcon: 0.1, var: 1.0}               # the proposed pipeline, all four terms; supcon 0.1 = best non-zero weight on val
 seeds: [0]
 views: 8                       # cached random augmentations per train image; two different ones per image and step
 aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # as configs/repr_baselines_maskcon.yaml (+ crop and flip)

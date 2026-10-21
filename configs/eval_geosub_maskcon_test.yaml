@@ -4,7 +4,7 @@ data_config: configs/data.yaml
 labels: maskcon_new
 report_dir: repr_maskcon_new
 split: test
-runs: [geosub_geo_sub_bodytype_new_s0]   # the val choice only: test is scored once
+runs: [geosub_geo_sub_bodytype_new_s0, geosub_full_bodytype_new_s0]   # reported, never used to choose
 reference: dinov3_base_256    # k-means (R2 pipeline, oracle K and K-hat) on the frozen embedding of the same images: the like-for-like baseline
 subsample: 0.632              # CIs of the reference K-hat table, as configs/eval_representation.yaml
 n_boot: 1000
