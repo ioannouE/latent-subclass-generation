@@ -1,0 +1,62 @@
+{
+ "git_hash": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+ "created_utc": "2026-10-21T16:37:42+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon_new",
+  "report_dir": "repr_maskcon_new",
+  "encoders": [
+   "geosub_full_bodytype_new_s0",
+   "geosub_geo_bodytype_new_large_s0",
+   "geosub_geo_sub_bodytype_new_large_s0",
+   "geosub_full_bodytype_new_large_s0"
+  ],
+  "crop_sizes": [
+   256
+  ],
+  "knn_k": 20,
+  "n_boot": 1000,
+  "subsample": 0.632,
+  "tables": [
+   "r1",
+   "r2_within_make",
+   "r2_oracle",
+   "r2_khat",
+   "r3",
+   "r4",
+   "r5"
+  ],
+  "n_jobs": 16,
+  "seed": 0
+ },
+ "config_path": "configs/eval_repr_maskcon_geosub.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 98,
+  "val": 12,
+  "test": 101
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "r1": 18,
+  "r2_within_make": 18,
+  "r2_oracle": 27,
+  "r2_khat": 36,
+  "r3": 63,
+  "r4": 18,
+  "r5": 9
+ },
+ "table_git_hash": {
+  "r1": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+  "r2_within_make": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+  "r2_oracle": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+  "r2_khat": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+  "r3": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+  "r4": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+  "r5": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty"
+ },
+ "encoder": "geosub_geo_bodytype_new_large_s0_256",
+ "n_train": 7231,
+ "n_test": 7940
+}

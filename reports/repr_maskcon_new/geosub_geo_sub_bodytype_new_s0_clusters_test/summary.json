@@ -1,13 +1,14 @@
 {
- "git_hash": "d24a193702f2059ac92024903f63d12bae1874b1-dirty",
- "created_utc": "2026-10-21T15:01:49+00:00",
+ "git_hash": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+ "created_utc": "2026-10-21T18:33:53+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "labels": "maskcon_new",
   "report_dir": "repr_maskcon_new",
   "split": "test",
   "runs": [
-   "geosub_geo_sub_bodytype_new_s0"
+   "geosub_geo_sub_bodytype_new_s0",
+   "geosub_full_bodytype_new_s0"
   ],
   "reference": "dinov3_base_256",
   "subsample": 0.632,
@@ -29,8 +30,8 @@
   "khat": 9
  },
  "table_git_hash": {
-  "clusters": "d24a193702f2059ac92024903f63d12bae1874b1-dirty",
-  "khat": "d24a193702f2059ac92024903f63d12bae1874b1-dirty"
+  "clusters": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty",
+  "khat": "037b4788f1ef0a1e0e2c2c45bb878757eb00de01-dirty"
  },
  "run": "geosub_geo_sub_bodytype_new_s0",
  "split": "test",
