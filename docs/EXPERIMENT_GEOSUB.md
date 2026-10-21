@@ -56,6 +56,19 @@ CONFIG=configs/eval_repr_maskcon_geosub.yaml sbatch slurm/eval_representation.sh
 - Caveats: val has about 4 images per fine class, one seed. The bootstrap CIs of `clusters.csv` lie above the point estimates (resampling repeats images
   and drops rare classes, which inflates Hungarian ACC): quote point estimates only.
 
+**Test, the val choice `geo_sub` scored once** (`reports/repr_maskcon_new/{geosub_geo_sub_bodytype_new_s0,dinov3_base_256}_clusters_test/`):
+
+| Clustering (same 7,940 test images) | ACC | ARI | K-hat / class |
+|---|---|---|---|
+| k-means on frozen DINOv3-B, label-free K-hat | **0.659** | **0.601** | 20.4 |
+| `geo_sub` prototypes (own K-hat) | 0.645 | 0.580 | 22.2 |
+| k-means on frozen DINOv3-B, oracle K (uses K) | 0.727 | 0.658 | - |
+
+The val gain does not hold: -0.014 ACC. geosub is ahead only where the k-means K-hat search is capped (Sedan, 50 classes, K <= 25: 0.499 vs 0.405)
+and in 3 small classes; without Sedan it is behind (0.666 vs 0.695 macro over the other 7). Flip-ARI 0.984, K-hat error -2.25 (abs 5.25), as on val.
+**Verdict (rule fixed before the comparison: > +0.03 over frozen k-means K-hat): geosub does not improve on frozen DINOv3-B; stop.** The +0.043 on val
+was within the noise of 803 images (about 4 per fine class) plus the Sedan cap.
+
 **R1-R5 of z on test** (k-means on the embedding, as for every baseline): `geo_sub` keeps the fine information (probe 0.951, oracle-K ACC 0.734) but
 its k-means K-hat ACC is lower than frozen (0.603 vs 0.659); with L_supcon 0.614-0.637. var_ratio 0.512 (`geo_sub`), 0.47-0.48 with L_supcon 0.1-1
 (frozen 0.521). So the gain is in the prototype assignment, not in the geometry of z.
