@@ -69,6 +69,12 @@ and in 3 small classes; without Sedan it is behind (0.666 vs 0.695 macro over th
 **Verdict (rule fixed before the comparison: > +0.03 over frozen k-means K-hat): geosub does not improve on frozen DINOv3-B; stop.** The +0.043 on val
 was within the noise of 803 images (about 4 per fine class) plus the Sedan cap.
 
+**DINOv3-L and the full model** (all four terms, L_supcon 0.1, L_var 1), test, full table with every maskcon_new baseline in
+`reports/repr_maskcon_new/summary.md`. On DINOv3-L, `geo_sub` is the best label-free row: K-hat ACC 0.724 with k-means on its z and 0.713 with its own
+prototypes, vs 0.660 for frozen DINOv3-L. Most of the gain is the Cab class, where the frozen K-hat rule picks K = 4 for 18 classes; without it, k-means on
+`geo_sub` z is +0.02 and the prototypes are level. Oracle-K ACC is unchanged (0.795 vs 0.800). `full` adds nothing over `geo_sub` (0.704 / 0.710).
+So the stop verdict holds for DINOv3-B; on DINOv3-L the effect is that label-free K selection fails less often. One seed: to be confirmed with more seeds.
+
 **R1-R5 of z on test** (k-means on the embedding, as for every baseline): `geo_sub` keeps the fine information (probe 0.951, oracle-K ACC 0.734) but
 its k-means K-hat ACC is lower than frozen (0.603 vs 0.659); with L_supcon 0.614-0.637. var_ratio 0.512 (`geo_sub`), 0.47-0.48 with L_supcon 0.1-1
 (frozen 0.521). So the gain is in the prototype assignment, not in the geometry of z.
