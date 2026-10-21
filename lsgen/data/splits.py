@@ -8,6 +8,8 @@ from pathlib import Path
 
 from sklearn.model_selection import StratifiedShuffleSplit
 
+from lsgen.data.labels import scheme
+
 SPLITS = ("train", "val", "test", "test_A", "test_B")
 
 
@@ -32,10 +34,10 @@ def save_splits(splits, out_dir):
         (out_dir / f"{name}.txt").write_text("\n".join(ids) + "\n")
 
 
-def load_split(out_dir, name, exclude=True):
-    """Image ids of a split. Conflicting images (exclude.txt) are dropped: every experiment uses this."""
+def load_split(out_dir, name, exclude=True, labels="make"):
+    """Image ids of a split. Conflicting images (the label scheme's exclusion list, configs/labels.yaml) are dropped: every experiment uses this."""
     ids = Path(out_dir, f"{name}.txt").read_text().split()
     if exclude:
-        drop = set(Path(out_dir, "exclude.txt").read_text().split())
+        drop = set(Path(out_dir, scheme(labels)["exclude"]).read_text().split())
         ids = [i for i in ids if i not in drop]
     return ids

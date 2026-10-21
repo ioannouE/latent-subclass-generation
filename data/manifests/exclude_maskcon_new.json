@@ -1,0 +1,59 @@
+{
+ "git_hash": "d24a193702f2059ac92024903f63d12bae1874b1-dirty",
+ "created_utc": "2026-10-21T10:15:27+00:00",
+ "config": {
+  "raw_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/kaggle",
+  "derived_root": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived",
+  "data_root": "/nvme/h/eioannou/code/latent-subclass-generation/data",
+  "reports_root": "/nvme/h/eioannou/code/latent-subclass-generation/reports",
+  "seed": 0,
+  "val_frac": 0.1,
+  "num_workers": 8,
+  "crops": {
+   "sizes": [
+    128,
+    256
+   ],
+   "bbox15": {
+    "margin": 1.5,
+    "min_margin": 1.02,
+    "pad_color": [
+     124,
+     116,
+     104
+    ]
+   },
+   "pad_gate_fraction": 0.1,
+   "pad_gate_share": 0.1,
+   "pad_gate_action": "warn",
+   "determinism_check_n": 300
+  },
+  "duplicates": {
+   "phash_max_hamming": 4,
+   "sscd_url": "https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt",
+   "sscd_sha256": "9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56",
+   "sscd_resize": 288,
+   "sscd_threshold": 0.75,
+   "device": "cuda",
+   "torch_threads": 8
+  }
+ },
+ "config_path": "configs/data.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "n_pairs": 235,
+ "n_label_conflict": 99,
+ "n_excluded": 211,
+ "excluded_per_split": {
+  "train": 98,
+  "val": 12,
+  "test": 101
+ },
+ "added_to_exclude_txt": {
+  "train": 39,
+  "val": 4,
+  "test": 14
+ },
+ "duplicates_all_csv_sha256": "86fe908e145a82b6d207b313b583f50a9a95371ee362b08bd661467f972b65e3",
+ "exclude_sha256": "c5dd81d81780573fea30468de3cc9a355cc3efd0291b334e64bb228ff8cbcfa2"
+}

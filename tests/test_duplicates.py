@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from lsgen.data.duplicates import duplicate_table, hamming_min, hamming_pairs, resolve_device, within_table
+from lsgen.data.duplicates import all_pairs_table, duplicate_table, hamming_min, hamming_pairs, resolve_device, within_table
 
 
 @pytest.mark.skipif(torch.cuda.is_available(), reason="checks the no-GPU guard")
@@ -46,3 +46,13 @@ def test_threshold_is_inclusive_and_within_table_excludes_self():
     assert set(zip(w.id_a, w.id_b)) == {("a", "b")} and w.flag_sscd.all()
     w = within_table(["a", "b", "c", "d"], h, e, 2, 0.99)
     assert len(w) == 6 and w.flag_phash.all() and not w.flag_sscd.any()
+
+
+def test_all_pairs_table_flags_conflicts_by_sscd_or_identical_bytes_only():
+    # a/b: same photo (cosine 1), different class -> conflict; a/c: same photo, same class -> pair, no conflict;
+    # d/e: byte-identical but distant embeddings, different class -> conflict; f: below threshold with everyone -> no pair
+    e = np.array([[1, 0, 0], [1, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [3 ** -0.5] * 3], dtype=np.float32)  # f: cosine 0.58 with all
+    ids, sha, cls = list("abcdef"), list("xyzwwv"), [0, 1, 0, 2, 3, 0]
+    t = all_pairs_table(ids, e, sha, cls, 0.75, chunk=2)  # chunk smaller than n: pairs across chunks
+    got = {(r.id_a, r.id_b): (r.exact_duplicate, r.label_conflict) for r in t.itertuples()}
+    assert got == {("a", "b"): (False, True), ("a", "c"): (False, False), ("b", "c"): (False, True), ("d", "e"): (True, True)}

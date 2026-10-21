@@ -38,3 +38,12 @@ def test_splits_partition_stratified_deterministic(tmp_path):
     assert all(load_split(tmp_path, k, exclude=False) == v for k, v in s.items())
     (tmp_path / "exclude.txt").write_text(f"{s['val'][0]}\n{s['test'][0]}\n")
     assert load_split(tmp_path, "val") == s["val"][1:] and load_split(tmp_path, "test") == s["test"][1:]
+
+
+def test_load_split_drops_the_label_schemes_exclusion_list(tmp_path):
+    (tmp_path / "train.txt").write_text("a\nb\nc\n")
+    (tmp_path / "exclude.txt").write_text("a\n")
+    (tmp_path / "exclude_maskcon_new.txt").write_text("a\nb\n")
+    assert load_split(tmp_path, "train") == ["b", "c"] == load_split(tmp_path, "train", labels="maskcon_old")
+    assert load_split(tmp_path, "train", labels="maskcon") == ["b", "c"]
+    assert load_split(tmp_path, "train", labels="maskcon_new") == ["c"]

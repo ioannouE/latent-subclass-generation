@@ -42,8 +42,10 @@ To score a method's generated images: put them (128 px PNG), `samples.csv` and `
 Results: [reports/repr/summary.md](reports/repr/summary.md).
 
 ## MaskCon label scheme, reproduction, visualisations
-- `labels: maskcon` in a config (see `configs/*_maskcon*.yaml`) switches to coarse = 8 body types, subclass = 196 official classes
-  ([data/maskcon_coarse.csv](data/maskcon_coarse.csv)); the default scheme (make / make-model) is unchanged.
+- `labels: <scheme>` in a config picks the label scheme ([configs/labels.yaml](configs/labels.yaml)): `make` (default, make / make-model),
+  `maskcon_old` (= `maskcon`, used by the existing `configs/*_maskcon*.yaml`) and `maskcon_new`: coarse = 8 body types, subclass = 196 official
+  classes ([data/maskcon_coarse.csv](data/maskcon_coarse.csv)); the two MaskCon schemes differ only in the exclusion list (docs/DATA.md).
+  When switching, also change `report_dir` / `tag` so the other scheme's results are not overwritten.
 - `sbatch slurm/reproduce_maskcon.sh` (GPU) reproduces MaskCon's Cars196 Recall@K (paper: 45.53 / 58.56 / 74.36 / 84.36) -> `reports/maskcon_repro/results.json`.
 - `sbatch slurm/visualize_embeddings.sh` (CPU) writes UMAP / t-SNE figures of every encoder to `reports/visualisations/<scheme>/`.
 

@@ -83,6 +83,25 @@ ALL experiments (training, evaluation, episodes, features): `data/splits/exclude
 `load_split` drops them by default. The raw files stay on disk and in `metadata.parquet`.
 Every report and paper table must state this exclusion and the number of images removed per split.
 
+## Label schemes and their exclusion lists (decision 21 Oct 2026)
+`configs/labels.yaml`; a config picks one with `labels: <name>` (default `make`). `load_split(..., labels=...)` drops that scheme's list.
+
+| Scheme | Coarse | Hidden subclass | Exclusion list | Excluded train / val / test |
+|---|---|---|---|---|
+| `make` | make (49) | make-model (189) | `exclude.txt` | 59 / 8 / 87 |
+| `maskcon_old` (= `maskcon`) | 8 body types (`data/maskcon_coarse.csv`) | 196 official classes | `exclude.txt` | 59 / 8 / 87 |
+| `maskcon_new` | 8 body types | 196 official classes | `exclude_maskcon_new.txt` | see `data/manifests/exclude_maskcon_new.json` |
+
+Why `maskcon_new`: `exclude.txt` was built for make-model subclasses and only from train-test and within-test pairs. Under the 196 classes the
+same photo appears under two years of one make-model (e.g. Bentley Continental GT Coupe 2007 / 2012, Dodge Caliber Wagon 2007 / 2012, 8 of them
+byte-identical), and train-train / train-val pairs were never compared (e.g. BMW 6 Series / M6 Convertible, Aston Martin V8 Vantage /
+Virage Convertible). Stage `exclude_maskcon_new` of `scripts/prepare_data.py` (`sbatch slurm/exclude_maskcon_new.sh`, CPU) compares all pairs
+of the 16,185 raw images: byte-identical or SSCD cosine >= 0.75 with different official classes -> excluded (`data/duplicates_all.csv`).
+pHash is not used: alone it flags different cars with the same studio layout. The list is `exclude.txt` plus these images, so features
+extracted for the default splits cover every `maskcon_new` split (scripts drop the extra rows); the ~20 images in `exclude.txt` flagged only by
+pHash stay excluded. The body-type mapping is the official one and is not corrected (e.g. Corvette ZR1, Gallardo Superleggera are
+"Convertible"), to stay comparable with MaskCon. Single mislabelled photos (e.g. train_04070, a Volvo S60 labelled C30) are not removed.
+
 ## Episodes (use case B, Milestone 2)
 `scripts/build_episodes.py --config configs/episodes.yaml` -> `data/episodes/*.json` (frozen; refuses to overwrite
 without `--overwrite`), `data/episodes/manifest.json`, `reports/episodes.md`.

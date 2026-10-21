@@ -18,7 +18,7 @@ import torch
 from torchvision import transforms as T
 
 from lsgen.data.datasets import CarsNuisanceViews, CarsTwoViews, car_boxes
-from lsgen.data.labels import load_labels
+from lsgen.data.labels import load_labels, scheme
 from lsgen.data.splits import load_split
 from lsgen.eval.representation import knn_accuracy
 from lsgen.features.encoders import Embedder
@@ -167,7 +167,7 @@ def main():
     dataset_hash = json.loads((splits_dir.parent / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
     meta = load_labels(derived, dcfg["data_root"], cfg.get("labels", "make"))[["make_id"]].reset_index()  # coarse labels only
     make_of = meta.set_index("id").make_id
-    ids = {s: load_split(splits_dir, s) for s in ("train", "val", "test")}
+    ids = {s: load_split(splits_dir, s, labels=cfg.get("labels", "make")) for s in ("train", "val", "test")}
     log.info("images per split after excluding conflicting ones: %s", {s: len(v) for s, v in ids.items()})
     size = cfg["crop"].split("_")[-1]
 
@@ -190,7 +190,7 @@ def main():
                         **provenance(cfg, seed, dataset_hash), "encoder": run + suffix, "family": model.family, "backbone": cfg["backbone"],
                         "method": params, "final_train_loss": final_loss, "crop": cfg["crop"], "split": split,
                         "n": len(split_ids), "dim": emb.shape[1], "labels": f"coarse only ({cfg.get('labels', 'make')} scheme)",
-                        "exclude_sha256": sha256_file(splits_dir / "exclude.txt")})
+                        "exclude_sha256": sha256_file(splits_dir / scheme(cfg.get("labels", "make"))["exclude"])})
                     log.info("%s %s: %s", run + suffix, split, emb.shape)
 
 

@@ -1,0 +1,12 @@
+# Label schemes (lsgen/data/labels.py). Pick one with `labels: <name>` in any config; default `make`.
+#   coarse:  mapping class_id -> coarse label in data/ (absent: coarse = make, subclass = make-model, data/hierarchy.csv)
+#   exclude: conflicting images left out of every split, in data/splits/ (docs/DATA.md)
+make:              # coarse = make (49), hidden subclass = make-model (189)
+  exclude: exclude.txt
+maskcon_old: &maskcon_old   # MaskCon protocol (Feng & Patras, CVPR 2023): coarse = 8 body types, hidden subclass = the 196 official classes,
+  coarse: maskcon_coarse.csv  # with the make-model exclusion list; every MaskCon-scheme result before 21 Oct 2026
+  exclude: exclude.txt
+maskcon: *maskcon_old       # earlier name of maskcon_old, kept so existing configs and reports resolve unchanged
+maskcon_new:       # same labels; also excludes images whose byte-identical copy or SSCD near-duplicate (any two images) has a different
+  coarse: maskcon_coarse.csv  # official class (prepare_data.py stage exclude_maskcon_new; superset of exclude.txt)
+  exclude: exclude_maskcon_new.txt

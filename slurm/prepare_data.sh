@@ -18,7 +18,7 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-STAGES="raw hierarchy crops splits duplicates finalize reports"
+STAGES="raw hierarchy crops splits duplicates finalize exclude_maskcon_new reports"
 EXTRA_ARGS="--recompute-embeddings"   # set to "" once the GPU SSCD embeddings exist
 BUILD_EPISODES=1                      # 0 to skip; episodes are frozen (rebuild needs --overwrite)
 

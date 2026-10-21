@@ -89,9 +89,8 @@ def main():
     dcfg = load_config(REPO_ROOT / cfg["data_config"])
     setup_logging()
     derived, out_root = Path(dcfg["derived_root"]), Path(dcfg["reports_root"]) / "visualisations"
-    test_ids = set(load_split(Path(dcfg["data_root"]) / "splits", "test"))
-
     for scheme, scfg in cfg["schemes"].items():
+        test_ids = load_split(Path(dcfg["data_root"]) / "splits", "test", labels=scheme)
         labels = load_labels(derived, dcfg["data_root"], scheme)
         out = out_root / scheme
         out.mkdir(parents=True, exist_ok=True)
@@ -102,10 +101,12 @@ def main():
                 log.warning("%s: no embeddings at %s, skipped (run the stage that creates them)", enc, path)
                 continue
             files, x = read_csv(path)
-            ids = [f[:-4] for f in files]
-            assert set(ids) == test_ids, f"{enc}: test embeddings do not match the test split (conflicting images must be excluded)"
+            ids = np.array([f[:-4] for f in files])
+            keep = np.isin(ids, test_ids)  # cached embeddings may hold images a scheme excludes on top of exclude.txt
+            assert keep.sum() == len(test_ids), f"{enc}: test embeddings do not cover the test split"
+            x, ids = x[keep], ids[keep]
             lab = labels.loc[ids]
-            glob = cached_projection(derived / "projections" / f"{enc}_global.npz", x, cfg)
+            glob = cached_projection(derived / "projections" / f"{enc}_{'' if keep.all() else scheme + '_'}global.npz", x, cfg)
             names, colors = lab.coarse_name, coarse_colors(lab.coarse_name, scfg["top_coarse"])
             within = {}
             for coarse in scfg["within"]:

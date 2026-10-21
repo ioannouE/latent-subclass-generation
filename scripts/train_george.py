@@ -30,7 +30,7 @@ from stratification.cluster.models.cluster import AutoKMixtureModel  # noqa: E40
 from stratification.cluster.models.reduction import UMAPReducer  # noqa: E402
 
 from lsgen.data.datasets import CarsCoarseDataset  # noqa: E402
-from lsgen.data.labels import load_labels  # noqa: E402
+from lsgen.data.labels import load_labels, scheme  # noqa: E402
 from lsgen.data.splits import load_split  # noqa: E402
 from lsgen.eval.representation import knn_accuracy  # noqa: E402
 from lsgen.features.extract import write_csv  # noqa: E402
@@ -126,7 +126,7 @@ def main():
     dataset_hash = json.loads((splits_dir.parent / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
     meta = load_labels(derived, dcfg["data_root"], cfg.get("labels", "make"))[["make_id"]].reset_index()  # coarse labels only
     make_of = meta.set_index("id").make_id
-    ids = {s: load_split(splits_dir, s) for s in ("train", "val", "test")}
+    ids = {s: load_split(splits_dir, s, labels=cfg.get("labels", "make")) for s in ("train", "val", "test")}
     log.info("images per split after excluding conflicting ones: %s", {s: len(v) for s, v in ids.items()})
     make, val = make_of[ids["train"]].to_numpy(), (ids["val"], make_of[ids["val"]].to_numpy())
     size = cfg["crop"].split("_")[-1]
@@ -148,7 +148,7 @@ def main():
                     **provenance(cfg, seed, dataset_hash), "encoder": run, "family": model.family, "backbone": cfg["backbone"],
                     "method": cfg["george"], "k_per_make": ks, "final_train_loss": loss, "crop": cfg["crop"], "split": split,
                     "n": len(split_ids), "dim": emb.shape[1], "labels": f"coarse only ({cfg.get('labels', 'make')} scheme)",
-                    "exclude_sha256": sha256_file(splits_dir / "exclude.txt")})
+                    "exclude_sha256": sha256_file(splits_dir / scheme(cfg.get("labels", "make"))["exclude"])})
                 log.info("%s %s: %s", run, split, emb.shape)
 
 

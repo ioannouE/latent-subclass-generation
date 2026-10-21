@@ -2,7 +2,7 @@
 
 Run on a GPU node via `sbatch slurm/prepare_data.sh` (the `duplicates` stage needs a GPU for SSCD; the others use
 CPU workers). Usage:
-    python scripts/prepare_data.py --config configs/data.yaml [--stages raw hierarchy crops splits duplicates finalize reports]
+    python scripts/prepare_data.py --config configs/data.yaml [--stages raw hierarchy crops splits duplicates finalize exclude_maskcon_new reports]
                                    [--recompute-embeddings] [--allow-cpu]
 Each stage reads the previous stages' outputs from disk, so stages can be re-run individually.
 """
@@ -22,13 +22,14 @@ from PIL import Image
 from lsgen.data import duplicates as dup
 from lsgen.data.crops import crop_bbox15, crop_full_cc, png_bytes
 from lsgen.data.hierarchy import build_hierarchy, kc_per_make, make_model_table
+from lsgen.data.labels import scheme
 from lsgen.data.reports import data_summary_report, preprocessing_report
 from lsgen.data.splits import load_split, make_splits, save_splits
 from lsgen.data.stanford_cars import BBOX_COLS, load_annotations, load_class_names, raw_manifest, verify_raw
 from lsgen.utils import load_config, manifest_hash, provenance, setup_logging, sha256_bytes, sha256_file, write_json
 
 log = logging.getLogger("prepare_data")
-STAGES = ("raw", "hierarchy", "crops", "splits", "duplicates", "finalize", "reports")
+STAGES = ("raw", "hierarchy", "crops", "splits", "duplicates", "finalize", "exclude_maskcon_new", "reports")
 
 
 class Paths:
@@ -49,7 +50,9 @@ class Paths:
         self.hierarchy = self.data / "hierarchy.csv"
         self.duplicates = self.data / "duplicates.csv"
         self.duplicates_within_test = self.data / "duplicates_within_test.csv"
-        self.exclude = self.splits / "exclude.txt"
+        self.exclude = self.splits / scheme("make")["exclude"]
+        self.exclude_maskcon_new = self.splits / scheme("maskcon_new")["exclude"]
+        self.duplicates_all = self.data / "duplicates_all.csv"
 
 
 def dataset_hash(P):
@@ -272,6 +275,29 @@ def stage_finalize(cfg, P):
         "per_dir": {k: {"n_files": len(v), "manifest_hash": manifest_hash(v)} for k, v in sorted(per_dir.items())},
         "determinism": json.loads((P.derived / "crops_determinism.json").read_text())["result"]})
     log.info("metadata: %d rows, %d columns; derived manifest hash %s", len(meta), meta.shape[1], mh[:16])
+
+
+def stage_exclude_maskcon_new(cfg, P):
+    """Exclusion list of the maskcon_new label scheme (configs/labels.yaml, decision 21 Oct 2026). The rule in stage_finalize compares
+    make-models and only train-test / within-test pairs; here the subclass is the official class (with year), so a conflict is any two
+    images, in any splits, that are byte-identical or SSCD near-duplicates (cosine >= threshold) with different classes. CPU, cached SSCD
+    embeddings. The list is a superset of exclude.txt, so features extracted for the default splits cover every maskcon_new split."""
+    meta = pd.read_parquet(P.metadata).set_index("id")
+    ids = pd.read_csv(P.dup_dir / "embedding_ids.csv").id.tolist()
+    m = meta.loc[ids]
+    pairs = dup.all_pairs_table(ids, np.load(P.dup_dir / "sscd_raw_embeddings.npy"), m.raw_sha256.to_numpy(), m.class_id.to_numpy(),
+                                cfg["duplicates"]["sscd_threshold"])
+    pairs.to_csv(P.duplicates_all, index=False, float_format="%.4f")
+    old = set(P.exclude.read_text().split())
+    new = old | set(pairs.loc[pairs.label_conflict, ["id_a", "id_b"]].to_numpy().ravel())
+    P.exclude_maskcon_new.write_text("".join(f"{i}\n" for i in sorted(new)))
+    count = lambda s: meta.loc[sorted(s)].split.value_counts().reindex(["train", "val", "test"], fill_value=0).to_dict()
+    write_json(P.manifests / "exclude_maskcon_new.json", {
+        **provenance(cfg, cfg["seed"], dataset_hash(P)), "n_pairs": len(pairs), "n_label_conflict": int(pairs.label_conflict.sum()),
+        "n_excluded": len(new), "excluded_per_split": count(new), "added_to_exclude_txt": count(new - old),
+        "duplicates_all_csv_sha256": sha256_file(P.duplicates_all), "exclude_sha256": sha256_file(P.exclude_maskcon_new)})
+    log.info("all-pairs duplicates: %d pairs, %d with different classes; maskcon_new excludes %d images %s (%d more than exclude.txt: %s)",
+             len(pairs), pairs.label_conflict.sum(), len(new), count(new), len(new - old), count(new - old))
 
 
 def stage_reports(cfg, P):

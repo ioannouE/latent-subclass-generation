@@ -1,6 +1,6 @@
 """Representation metrics R1-R5 (docs/METRICS.md) for cached embeddings. CPU, hours at n_boot=1000:
     sbatch slurm/eval_representation.sh
-Output: <reports_root>/<report_dir>/<encoder>_<crop>/*.csv (default repr/; `labels: maskcon` switches to the MaskCon label scheme) + summary.json. Fit/reference = train, scored on test.
+Output: <reports_root>/<report_dir>/<encoder>_<crop>/*.csv (default repr/; `labels` picks the label scheme, configs/labels.yaml) + summary.json. Fit/reference = train, scored on test.
 Only the tables listed in the config under `tables` are (re)computed; the others are left as they are.
 """
 import argparse
@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from lsgen.data.labels import load_labels
+from lsgen.data.splits import load_split
 from lsgen.eval.report import write_results
 from lsgen.eval.representation import (cluster_space, distance_matrix, khat_error, knn_correct, l2norm, probe_correct,
                                        r2_metric, r3_metric, r4_metric, r5_make, recall1_correct)
@@ -22,9 +23,14 @@ from lsgen.utils import REPO_ROOT, load_config, setup_logging
 log = logging.getLogger("eval_representation")
 
 
-def load(derived, enc, split, meta):
+def load(derived, enc, split, meta, keep):
+    """Embeddings and labels of the images in keep (the split under the label scheme; cached features may hold more, never fewer)."""
     files, x = read_csv(derived / "features" / enc / f"{split}.csv")
-    return x, meta.loc[[f[:-4] for f in files]]
+    ids = np.array([f[:-4] for f in files])
+    m = np.isin(ids, keep)
+    if m.sum() != len(keep):
+        raise ValueError(f"{enc} {split}: {len(keep) - m.sum()} images of the split have no embedding")
+    return x[m], meta.loc[ids[m]]
 
 
 def r5_tables(z, groups, k_of_make):
@@ -97,7 +103,7 @@ def main():
     for enc in cfg["encoders"]:
         for size in cfg["crop_sizes"]:
             name = f"{enc}_{size}"
-            (xtr, mtr), (xte, mte) = load(derived, name, "train", meta), load(derived, name, "test", meta)
+            (xtr, mtr), (xte, mte) = (load(derived, name, s, meta, load_split(splits_dir, s, labels=cfg.get("labels", "make"))) for s in ("train", "test"))
             log.info("%s: train %d, test %d", name, len(xtr), len(xte))
             write_results(Path(dcfg["reports_root"]) / cfg.get("report_dir", "repr") / name, repr_tables(xtr, mtr, xte, mte, cfg), cfg, cfg["seed"],
                           dataset_hash, splits_dir, encoder=name, n_train=len(xtr), n_test=len(xte))

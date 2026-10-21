@@ -124,3 +124,15 @@ def duplicate_table(test_ids, train_ids, h_test, h_train, e_test, e_train, phash
 def within_table(ids, h, e, phash_max, sscd_thr):
     """Near-duplicate pairs within one set of images (id_a < id_b by position)."""
     return _candidate_pairs(ids, ids, h, h, e @ e.T, phash_max, sscd_thr, ("id_a", "id_b"), upper_only=True)
+
+
+def all_pairs_table(ids, e, sha, label, sscd_thr, chunk=1024):
+    """All pairs of images (id_a < id_b by position, any splits) that are byte-identical (same sha) or have SSCD cosine >= sscd_thr,
+    and whether their labels differ. pHash is not used: alone it flags different cars with the same studio layout."""
+    sha, label, rows = np.asarray(sha), np.asarray(label), []
+    for s in range(0, len(ids), chunk):
+        sim = e[s:s + chunk] @ e.T
+        i, j = np.nonzero((sim >= sscd_thr) | (sha[s:s + chunk, None] == sha[None, :]))
+        keep = i + s < j
+        rows += [(ids[a + s], ids[b], float(sim[a, b]), sha[a + s] == sha[b], label[a + s] != label[b]) for a, b in zip(i[keep], j[keep])]
+    return pd.DataFrame(rows, columns=["id_a", "id_b", "sscd_sim", "exact_duplicate", "label_conflict"])
