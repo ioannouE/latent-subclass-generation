@@ -1,0 +1,12 @@
+# DINOv3-L runs (configs/geosub_maskcon_large.yaml), otherwise identical to configs/eval_geosub_maskcon.yaml. Run:
+#   CONFIG=configs/eval_geosub_maskcon_large.yaml sbatch slurm/eval_geosub.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: repr_maskcon_new
+split: val
+runs: [geosub_geo_bodytype_new_large_s0, geosub_geo_sub_bodytype_new_large_s0]
+reference: dinov3_large_256    # k-means (R2 pipeline, oracle K and K-hat) on the frozen embedding of the same images: the like-for-like baseline
+subsample: 0.632              # CIs of the reference K-hat table, as configs/eval_representation.yaml
+n_boot: 1000
+n_jobs: 12          # = --cpus-per-task in slurm/eval_geosub.sh
+seed: 0

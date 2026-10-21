@@ -1,0 +1,43 @@
+{
+ "git_hash": "d24a193702f2059ac92024903f63d12bae1874b1-dirty",
+ "created_utc": "2026-10-21T13:54:57+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon_new",
+  "report_dir": "repr_maskcon_new",
+  "split": "val",
+  "runs": [
+   "geosub_geo_bodytype_new_s0",
+   "geosub_geo_sub_bodytype_new_s0",
+   "geosub_geo_sub_supcon01_bodytype_new_s0",
+   "geosub_geo_sub_supcon03_bodytype_new_s0",
+   "geosub_geo_sub_supcon1_bodytype_new_s0",
+   "geosub_geo_sub_supcon3_bodytype_new_s0"
+  ],
+  "reference": "dinov3_base_256",
+  "subsample": 0.632,
+  "n_boot": 1000,
+  "n_jobs": 12,
+  "seed": 0
+ },
+ "config_path": "configs/eval_geosub_maskcon.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 98,
+  "val": 12,
+  "test": 101
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "clusters": 36,
+  "khat": 9
+ },
+ "table_git_hash": {
+  "clusters": "d24a193702f2059ac92024903f63d12bae1874b1-dirty",
+  "khat": "d24a193702f2059ac92024903f63d12bae1874b1-dirty"
+ },
+ "run": "geosub_geo_bodytype_new_s0",
+ "split": "val",
+ "n": 803
+}

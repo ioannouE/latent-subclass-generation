@@ -1,0 +1,38 @@
+# geosub (lsgen/methods/geosub, scripts/train_geosub.py) on the maskcon_new label scheme (coarse = 8 body types, configs/labels.yaml). Run: sbatch slurm/train_geosub.sh
+# Frozen backbone; residual head z = norm(f + g(f)) and n_proto subprototypes per coarse class, trained on cached features.
+# Loss = sum of w * term over geo (distil frozen similarities), supcon (coarse classes), sub (augmentation-consistent prototype
+# assignment), var (within-class variance floor); a missing weight is 0. The methods follow the planned order; L_supcon's weight is
+# chosen on val (configs/eval_geosub_maskcon.yaml, split: val), never on test. Another scheme / backbone: change `labels` / `backbone`
+# and `tag`, so that the runs are not overwritten.
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new             # run names geosub_<method>_bodytype_new_s<seed>
+backbone: dinov3_base          # frozen; its clean features must be cached (slurm/extract_features.sh); dinov3_large also cached
+crop: bbox15_256
+methods:
+  geo: {geo: 1.0}                             # sanity check: should score as the frozen backbone (z = f at initialisation)
+  geo_sub: {geo: 1.0, sub: 1.0}
+  geo_sub_supcon01: {geo: 1.0, sub: 1.0, supcon: 0.1}
+  geo_sub_supcon03: {geo: 1.0, sub: 1.0, supcon: 0.3}
+  geo_sub_supcon1: {geo: 1.0, sub: 1.0, supcon: 1.0}
+  geo_sub_supcon3: {geo: 1.0, sub: 1.0, supcon: 3.0}
+  geo_sub_supcon1_var: {geo: 1.0, sub: 1.0, supcon: 1.0, var: 1.0}   # only if the ablation shows a need; set supcon to the val choice
+seeds: [0]
+views: 8                       # cached random augmentations per train image; two different ones per image and step
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # as configs/repr_baselines_maskcon.yaml (+ crop and flip)
+hidden: 2048                   # width of g
+n_proto: 52                    # prototypes per coarse class: the largest K_c (Sedan, 50 classes) plus a margin of 2, as configs/repr_nhp_maskcon.yaml
+min_count: 10                  # a prototype is active (counts towards K-hat) if it is the nearest of >= 10 train images; fixed before any run
+tau_geo: 0.1                   # L_geo softmax temperature
+tau_student: 0.1               # L_sub assignment temperatures (sharpened targets, as configs/repr_nhp_maskcon.yaml)
+tau_teacher: 0.04
+usage: 0.1                     # weak anti-collapse inside L_sub: entropy of each class's mean assignment (no equipartition)
+temperature: 0.1               # L_supcon
+epochs: 100
+batch_size: 512
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+num_workers: 8                 # = --cpus-per-task in slurm/train_geosub.sh (feature caching)
+batch_size_embed: 128

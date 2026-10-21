@@ -113,6 +113,15 @@ def r2_metric(z, make, fine, k_of_make, seed=0, label_free=False):
     return metric
 
 
+def assignment_metric(fine, assign, assign_flip):
+    """Per make: ACC / NMI / ARI of a method's own cluster assignment (its own K, e.g. geosub prototypes) against the fine classes,
+    and flip_ari = ARI between the assignments of the images and of their mirror images (label-free consistency check)."""
+    def metric(idx):
+        y, c = fine[idx], assign[idx]
+        return {"acc": hungarian_acc(y, c), "nmi": nmi(y, c), "ari": ari(y, c), "flip_ari": ari(c, assign_flip[idx])}
+    return metric
+
+
 def r5_make(z, k, seed=0, n_seeds=3, n_boot=20):
     """Stability of oracle-K k-means on one make: ARI between runs with different seeds, and between the full-data
     clustering and clusterings fitted on bootstrap resamples (then applied to all points). Lists of ARI values."""

@@ -1,0 +1,15 @@
+# maskcon_new label scheme: R1-R5 for frozen DINOv3-B / L (the reference rows) and geosub's z (after sbatch slurm/train_geosub.sh). Same settings as configs/eval_repr_maskcon_baselines.yaml;
+# the frozen rows include the fine probe of step 1 (r2_within_make). Run: CONFIG=configs/eval_repr_maskcon_geosub.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: repr_maskcon_new
+encoders: [geosub_geo_sub_bodytype_new_s0,   # done (reports/repr_maskcon_new): dinov3_base, dinov3_large, geosub_geo_bodytype_new_s0
+           geosub_geo_sub_supcon01_bodytype_new_s0, geosub_geo_sub_supcon03_bodytype_new_s0,
+           geosub_geo_sub_supcon1_bodytype_new_s0, geosub_geo_sub_supcon3_bodytype_new_s0]
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16
+seed: 0

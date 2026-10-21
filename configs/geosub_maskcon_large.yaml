@@ -1,0 +1,29 @@
+# geosub on frozen DINOv3-L, otherwise identical to configs/geosub_maskcon.yaml (DINOv3-B; maskcon_new label scheme). DINOv3-L has the higher
+# oracle-K ceiling (0.80 vs 0.73). Run: CONFIG=configs/geosub_maskcon_large.yaml sbatch slurm/train_geosub.sh
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large       # run names geosub_<method>_bodytype_new_large_s<seed>
+backbone: dinov3_large         # frozen; clean features cached (slurm/extract_features.sh); views / mirror images cached by the first run
+crop: bbox15_256
+methods:
+  geo: {geo: 1.0}                             # sanity check: should score as frozen DINOv3-L
+  geo_sub: {geo: 1.0, sub: 1.0}                # the val choice on DINOv3-B (L_supcon weight 0)
+seeds: [0]
+views: 8                       # cached random augmentations per train image; two different ones per image and step
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # as configs/repr_baselines_maskcon.yaml (+ crop and flip)
+hidden: 2048                   # width of g
+n_proto: 52                    # prototypes per coarse class: the largest K_c (Sedan, 50 classes) plus a margin of 2, as configs/repr_nhp_maskcon.yaml
+min_count: 10                  # a prototype is active (counts towards K-hat) if it is the nearest of >= 10 train images; fixed before any run
+tau_geo: 0.1                   # L_geo softmax temperature
+tau_student: 0.1               # L_sub assignment temperatures (sharpened targets, as configs/repr_nhp_maskcon.yaml)
+tau_teacher: 0.04
+usage: 0.1                     # weak anti-collapse inside L_sub: entropy of each class's mean assignment (no equipartition)
+temperature: 0.1               # L_supcon
+epochs: 100
+batch_size: 512
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+num_workers: 8                 # = --cpus-per-task in slurm/train_geosub.sh (feature caching)
+batch_size_embed: 128

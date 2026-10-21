@@ -1,0 +1,14 @@
+# geosub's prototype clusters vs the hidden subclasses (scripts/eval_geosub.py), maskcon_new label scheme. Run after slurm/train_geosub.sh:
+#   sbatch slurm/eval_geosub.sh
+# split: val to choose the loss weights (L_supcon sweep); test only once, for the final report of the chosen runs.
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: repr_maskcon_new
+split: val
+runs: [geosub_geo_bodytype_new_s0, geosub_geo_sub_bodytype_new_s0, geosub_geo_sub_supcon01_bodytype_new_s0, geosub_geo_sub_supcon03_bodytype_new_s0,
+       geosub_geo_sub_supcon1_bodytype_new_s0, geosub_geo_sub_supcon3_bodytype_new_s0]
+reference: dinov3_base_256    # k-means (R2 pipeline, oracle K and K-hat) on the frozen embedding of the same images: the like-for-like baseline
+subsample: 0.632              # CIs of the reference K-hat table, as configs/eval_representation.yaml
+n_boot: 1000
+n_jobs: 12          # = --cpus-per-task in slurm/eval_geosub.sh
+seed: 0
