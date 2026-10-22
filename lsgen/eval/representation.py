@@ -102,14 +102,19 @@ def select_k(z, k_max=K_MAX, seed=0):
     return ks[int(np.argmax(sil))] if max(sil) >= SIL_MIN else gap_k(z, k_max, seed)
 
 
-def r2_metric(z, make, fine, k_of_make, seed=0, label_free=False):
-    """Per make (K_c >= 2): ACC / NMI / ARI of k-means with the oracle K = K_c ("uses K"), or with the label-free K-hat
-    (also returned as "khat"). K-hat is unreliable on bootstrap resamples: bootstrap it with `subsample`."""
+def kmeans_fit(z, k=None, seed=0):
+    """R2's default clustering: k-means with k clusters, or with the label-free K-hat (select_k) if k is None."""
+    return cluster(z, select_k(z, seed=seed) if k is None else k, seed)
+
+
+def r2_metric(z, make, fine, k_of_make, seed=0, label_free=False, fit=kmeans_fit):
+    """Per make (K_c >= 2): ACC / NMI / ARI of fit(z, k, seed) (k-means, or lsgen/eval/clustering.py) with the oracle K = K_c ("uses K"),
+    or with its label-free K-hat (the number of clusters, also returned as "khat"). K-hat is unreliable on bootstrap resamples: bootstrap
+    it with `subsample`."""
     def metric(idx):
         zz, y = z[idx], fine[idx]
-        k = select_k(zz, seed=seed) if label_free else k_of_make[make[idx[0]]]
-        c = cluster(zz, k, seed)
-        return {"acc": hungarian_acc(y, c), "nmi": nmi(y, c), "ari": ari(y, c)} | ({"khat": k} if label_free else {})
+        c = fit(zz, None if label_free else k_of_make[make[idx[0]]], seed)
+        return {"acc": hungarian_acc(y, c), "nmi": nmi(y, c), "ari": ari(y, c)} | ({"khat": len(np.unique(c))} if label_free else {})
     return metric
 
 
@@ -122,19 +127,26 @@ def assignment_metric(fine, assign, assign_flip):
     return metric
 
 
-def r5_make(z, k, seed=0, n_seeds=3, n_boot=20):
-    """Stability of oracle-K k-means on one make: ARI between runs with different seeds, and between the full-data
-    clustering and clusterings fitted on bootstrap resamples (then applied to all points). Lists of ARI values."""
-    labs = [cluster(z, k, seed + s) for s in range(n_seeds)]
+def r5_make(z, k, seed=0, n_seeds=3, n_boot=20, fit=kmeans_fit):
+    """Stability of the oracle-K clustering of one make: ARI between runs with different seeds, and between the full-data
+    clustering and clusterings fitted on bootstrap resamples. k-means fits are applied to all points; a graph method has no
+    out-of-sample assignment, so it is fitted on the distinct images of the resample and compared on those. Lists of ARI values."""
+    labs = [fit(z, k, seed + s) for s in range(n_seeds)]
     rng = np.random.default_rng(seed)
-    boot = [ari(labs[0], KMeans(k, n_init=10, random_state=seed + b).fit(z[rng.integers(0, len(z), len(z))]).predict(z))
-            for b in range(n_boot)]
+    boot = []
+    for b in range(n_boot):
+        i = rng.integers(0, len(z), len(z))
+        if fit is kmeans_fit:
+            boot.append(ari(labs[0], KMeans(k, n_init=10, random_state=seed + b).fit(z[i]).predict(z)))
+        else:
+            i = np.unique(i)
+            boot.append(ari(labs[0][i], fit(z[i], k, seed + b)))
     return {"ari_seeds": [ari(a, b) for a, b in itertools.combinations(labs, 2)], "ari_boot": boot}
 
 
-def khat_error(z, k_c=1):
+def khat_error(z, k_c=1, fit=kmeans_fit):
     """K-hat minus the true number of classes (use on K_c = 1 makes: an over-fragmenting method has error > 0)."""
-    return select_k(z) - k_c
+    return len(np.unique(fit(z, None))) - k_c
 
 
 # ---- R3: hierarchy geometry

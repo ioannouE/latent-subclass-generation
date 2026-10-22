@@ -2,6 +2,7 @@
     sbatch slurm/eval_representation.sh
 Output: <reports_root>/<report_dir>/<encoder>_<crop>/*.csv (default repr/; `labels` picks the label scheme, configs/labels.yaml) + summary.json. Fit/reference = train, scored on test.
 Only the tables listed in the config under `tables` are (re)computed; the others are left as they are.
+R2 / R5 cluster with k-means unless the config has a `clustering` entry (Leiden or diffusion maps, lsgen/eval/clustering.py).
 """
 import argparse
 import json
@@ -13,8 +14,9 @@ import pandas as pd
 
 from lsgen.data.labels import load_labels
 from lsgen.data.splits import load_split
+from lsgen.eval.clustering import fitter
 from lsgen.eval.report import write_results
-from lsgen.eval.representation import (cluster_space, distance_matrix, khat_error, knn_correct, l2norm, probe_correct,
+from lsgen.eval.representation import (cluster_space, distance_matrix, khat_error, kmeans_fit, knn_correct, l2norm, probe_correct,
                                        r2_metric, r3_metric, r4_metric, r5_make, recall1_correct)
 from lsgen.eval.stats import bootstrap, bootstrap_table
 from lsgen.features.extract import read_csv
@@ -33,17 +35,17 @@ def load(derived, enc, split, meta, keep):
     return x[m], meta.loc[ids[m]]
 
 
-def r5_tables(z, groups, k_of_make):
+def r5_tables(z, groups, k_of_make, fit):
     """R5 per make: mean ARI between seeds / bootstrap fits (K_c >= 2) and K-hat error (K_c = 1). The macro CI of the
     ARI columns is the 2.5/97.5 percentile of the make-averaged ARI of the i-th bootstrap fit."""
     rows, runs = [], []
     for c, idx in groups.items():
         if k_of_make[c] >= 2:
-            r = r5_make(z[idx], k_of_make[c])
+            r = r5_make(z[idx], k_of_make[c], fit=fit)
             rows.append({"make_id": c, "ari_seeds": np.mean(r["ari_seeds"]), "ari_boot": np.mean(r["ari_boot"])})
             runs.append(r["ari_boot"])
         else:
-            rows.append({"make_id": c, "khat_error": khat_error(z[idx])})
+            rows.append({"make_id": c, "khat_error": khat_error(z[idx], fit=fit)})
     t = pd.DataFrame(rows)
     macro = {"make_id": "macro", **t.drop(columns="make_id").mean().to_dict()}
     lo, hi = np.percentile(np.mean(runs, 0), [2.5, 97.5])
@@ -81,13 +83,14 @@ def repr_tables(xtr, mtr, xte, mte, cfg):
         return bootstrap_table(t, "make_id", ["recall1", "probe_fine"], nb, seed, nj)
 
     z = cluster_space(xte, make, seed=seed)
+    fit = fitter(**cfg["clustering"]) if "clustering" in cfg else kmeans_fit
     tables = {  # lazy: cfg["tables"] chooses what is computed
         "r1": r1, "r2_within_make": r2_within_make,
-        "r2_oracle": lambda: bootstrap(r2_metric(z, make, fine, k_of_make, seed), multi, nb, seed, nj),
-        "r2_khat": lambda: bootstrap(r2_metric(z, make, fine, k_of_make, seed, label_free=True), multi, nb, seed, nj, cfg["subsample"]),
+        "r2_oracle": lambda: bootstrap(r2_metric(z, make, fine, k_of_make, seed, fit=fit), multi, nb, seed, nj),
+        "r2_khat": lambda: bootstrap(r2_metric(z, make, fine, k_of_make, seed, True, fit), multi, nb, seed, nj, cfg["subsample"]),
         "r3": lambda: bootstrap(r3_metric(distance_matrix(xte), make, fine), groups, nb, seed, nj),
         "r4": lambda: r4_table(r4_metric(l2norm(xte), fine), multi, nb, seed, nj, cfg["subsample"]),
-        "r5": lambda: r5_tables(z, groups, k_of_make)}
+        "r5": lambda: r5_tables(z, groups, k_of_make, fit)}
     return {name: tables[name]() for name in cfg["tables"]}
 
 

@@ -1,0 +1,14 @@
+# maskcon_new label scheme: R2 / R5 of frozen DINOv3-B / L with diffusion-map spectral clustering in place of k-means (docs/EXPERIMENT_CLUSTERING.md); the
+# embedding-only tables (R1, R3, R4) are those of configs/eval_repr_maskcon_new.yaml. Parameters fixed before any run, not tuned.
+# Run: CONFIG=configs/eval_repr_maskcon_new_diffusion.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: repr_maskcon_new_diffusion
+encoders: [dinov3_base, dinov3_large]
+crop_sizes: [256]
+clustering: {algorithm: diffusion, n_neighbors: 15, t: 1}   # K-hat = largest eigengap, K = 2..25
+n_boot: 1000
+subsample: 0.632      # K-hat CIs, see configs/eval_representation.yaml
+tables: [r2_oracle, r2_khat, r5]
+n_jobs: 16
+seed: 0

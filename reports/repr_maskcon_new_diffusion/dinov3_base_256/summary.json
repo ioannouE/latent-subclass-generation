@@ -1,0 +1,52 @@
+{
+ "git_hash": "c5ba1d6a9a57b1512d90f2bfaa83d26bfe492f5d-dirty",
+ "created_utc": "2026-10-21T20:36:20+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon_new",
+  "report_dir": "repr_maskcon_new_diffusion",
+  "encoders": [
+   "dinov3_base",
+   "dinov3_large"
+  ],
+  "crop_sizes": [
+   256
+  ],
+  "clustering": {
+   "algorithm": "diffusion",
+   "n_neighbors": 15,
+   "t": 1
+  },
+  "n_boot": 1000,
+  "subsample": 0.632,
+  "tables": [
+   "r2_oracle",
+   "r2_khat",
+   "r5"
+  ],
+  "n_jobs": 16,
+  "seed": 0
+ },
+ "config_path": "configs/eval_repr_maskcon_new_diffusion.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 98,
+  "val": 12,
+  "test": 101
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "r2_oracle": 27,
+  "r2_khat": 36,
+  "r5": 9
+ },
+ "table_git_hash": {
+  "r2_oracle": "c5ba1d6a9a57b1512d90f2bfaa83d26bfe492f5d-dirty",
+  "r2_khat": "c5ba1d6a9a57b1512d90f2bfaa83d26bfe492f5d-dirty",
+  "r5": "c5ba1d6a9a57b1512d90f2bfaa83d26bfe492f5d-dirty"
+ },
+ "encoder": "dinov3_base_256",
+ "n_train": 7231,
+ "n_test": 7940
+}
