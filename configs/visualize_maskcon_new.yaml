@@ -1,0 +1,19 @@
+# UMAP / t-SNE for the maskcon_new label scheme only (same settings as configs/visualize.yaml). Run:
+#   CONFIG=configs/visualize_maskcon_new.yaml sbatch slurm/visualize_embeddings.sh
+data_config: configs/data.yaml
+frozen: [dinov3_base_256, dinov3_large_256, clip_l_256, sscd_256]
+umap_neighbors: 15
+tsne_perplexity: 30
+n_jobs: 16                       # = --cpus-per-task in slurm/visualize_embeddings.sh
+seed: 0
+schemes:
+  maskcon_new:                   # MaskCon labels with exclude_maskcon_new.txt; the methods of configs/eval_repr_maskcon_new_baselines.yaml and geosub's test runs
+    methods: [supcon_bodytype_new_s0_256, simclr_bodytype_new_s0_256, supcon_simclr_bodytype_new_s0_256, maskcon_bodytype_new_s0_256,
+              falcon_bodytype_new_s0_256, george_bodytype_new_s0_256, george_erm_bodytype_new_s0_256, nhp_bodytype_new_s0_256,
+              lejepa_bodytype_new_s0_256, geosub_geo_sub_bodytype_new_s0_256, geosub_full_bodytype_new_s0_256,
+              geosub_geo_sub_bodytype_new_large_s0_256, geosub_full_bodytype_new_large_s0_256]
+    top_coarse: 8
+    within: [Hatchback, Wagon, Van]
+    clusterings:                 # label-free clusters drawn on top of these encoders (configs/eval_repr_maskcon_new_diffusion.yaml)
+      dinov3_base_256: {algorithm: diffusion, n_neighbors: 15, t: 1}
+      dinov3_large_256: {algorithm: diffusion, n_neighbors: 15, t: 1}

@@ -1,7 +1,7 @@
 #!/bin/bash
 # UMAP / t-SNE figures for every encoder and representation method, both label schemes (CPU only). Submit from the repo root:
 #   sbatch slurm/visualize_embeddings.sh
-# Settings are in configs/visualize.yaml. Run after slurm/extract_features.sh and slurm/train_repr.sh (methods without
+# Settings are in configs/visualize.yaml (CONFIG=configs/visualize_maskcon_new.yaml for the maskcon_new scheme only). Run after slurm/extract_features.sh and slurm/train_repr.sh (methods without
 # embeddings are skipped with a warning; projections are cached, so re-running after adding methods only computes the new ones).
 #SBATCH --job-name=lsgen-viz
 #SBATCH --partition=cpu
@@ -18,4 +18,6 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-python scripts/visualize_embeddings.py --config configs/visualize.yaml
+CONFIG=${CONFIG:-configs/visualize.yaml}
+
+python scripts/visualize_embeddings.py --config $CONFIG
