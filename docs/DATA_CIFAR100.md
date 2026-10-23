@@ -64,4 +64,17 @@ excluded unnecessarily). Result: 57 pairs, **90 images excluded** (train 68, val
 at >= 0.75 are marked, not removed.
 
 ## Run
-`sbatch slurm/prepare_cifar100.sh` (stages raw, splits, duplicates, finalize, report; SSCD needs the GPU).
+Data: `sbatch slurm/prepare_cifar100.sh` (stages raw, splits, duplicates, finalize, report; SSCD needs the GPU).
+
+Representation table (same scripts as Stanford Cars, CIFAR-100 configs; results in `reports/cifar100/repr/<encoder>_32/`):
+
+| Step | Command | Needs |
+|---|---|---|
+| frozen features | `CONFIG=configs/features_cifar100.yaml sbatch slurm/extract_features.sh` | data |
+| frozen R1-R5 | `CONFIG=configs/eval_repr_cifar100.yaml sbatch slurm/eval_representation.sh` | frozen features |
+| SupCon, SimCLR, SupCon+SimCLR | `CONFIG=configs/repr_baselines_cifar100.yaml METHODS="supcon simclr supcon_simclr" sbatch slurm/train_repr.sh` | data |
+| LeJEPA, MaskCon, FALCON | `CONFIG=configs/repr_baselines_cifar100.yaml METHODS="lejepa maskcon falcon" sbatch slurm/train_repr.sh` | frozen features (FALCON's neighbours) |
+| GEORGE | `CONFIG=configs/repr_george_cifar100.yaml sbatch slurm/train_george.sh` | data |
+| baselines R1-R5 | `CONFIG=configs/eval_repr_cifar100_baselines.yaml sbatch slurm/eval_representation.sh` | all baselines trained |
+
+NHP is not run: its nuisance views need object bounding boxes.

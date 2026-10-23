@@ -1,0 +1,24 @@
+# CIFAR-100 (docs/DATA_CIFAR100.md): GEORGE with the recipe of configs/repr_baselines_cifar100.yaml, superclass labels only.
+# Copy of configs/repr_george_maskcon_new.yaml with only data_config / labels / crop / max_k changed.
+# Run: CONFIG=configs/repr_george_cifar100.yaml sbatch slurm/train_george.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100               # configs/labels.yaml
+backbone: dinov3_base
+crop: native_32
+george:
+  umap_components: 2            # UMAP(n_neighbors 10, min_dist 0) per superclass on the ERM activations (GEORGE defaults)
+  max_k: 7                      # upper end of the silhouette search over GMM components: largest K_c (5) + the margin of 2 used elsewhere
+  robust_lr: 0.01               # group-DRO step size
+  size_adjustment: 2            # group-DRO generalisation adjustment, C / sqrt(group size)
+seeds: [0]
+trainable_blocks: 4
+epochs: 50                      # per stage
+batch_size: 256
+lr_backbone: 2.0e-5
+lr_head: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 3
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}
+eval_every: 10                  # val make kNN@20 (monitoring only: no model selection, last epoch is used)
+num_workers: 8
+batch_size_embed: 128

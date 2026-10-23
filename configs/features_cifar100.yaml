@@ -1,0 +1,9 @@
+# CIFAR-100 (docs/DATA_CIFAR100.md): frozen-encoder embeddings of the native 32 px images (each encoder resizes to its own input size).
+# Copy of configs/features.yaml with only data_config / crop / encoders / crop_sizes changed.
+data_config: configs/data_cifar100.yaml
+crop: native                     # <derived_root>/native_32/{id}.png
+encoders: [dinov3_base, dinov3_large, clip_l, sscd]
+crop_sizes: [32]
+splits: [train, val, test]       # conflicting images (data/cifar100/splits/exclude.txt) are dropped
+batch_size: 128
+num_workers: 8                   # = --cpus-per-task in slurm/extract_features.sh

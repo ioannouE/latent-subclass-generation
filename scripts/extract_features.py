@@ -1,4 +1,5 @@
-"""Milestone 3: cache frozen-encoder embeddings (CSV: filename, z1..zD) for train/val/test crops. Needs a GPU:
+"""Milestone 3: cache frozen-encoder embeddings (CSV: filename, z1..zD) for train/val/test crops (`crop` in the config: bbox15 by default,
+native for CIFAR-100). Needs a GPU:
     sbatch slurm/extract_features.sh
 Embeddings that are already cached for the same images (and exclusion list) are skipped; delete a folder to force a rerun.
 Output: <derived_root>/features/<encoder>_<crop size>/<split>.csv (+ .json manifest).
@@ -39,7 +40,8 @@ def main():
         raise RuntimeError("feature extraction needs a GPU: sbatch slurm/extract_features.sh")
     device = torch.device("cuda")
     derived, splits_dir = Path(dcfg["derived_root"]), Path(dcfg["data_root"]) / "splits"
-    sscd = derived / "weights" / Path(dcfg["duplicates"]["sscd_url"]).name
+    sscd = Path(dcfg["duplicates"].get("sscd_weights_dir", derived / "weights")) / Path(dcfg["duplicates"]["sscd_url"]).name
+    crop = cfg.get("crop", "bbox15")
     dataset_hash = json.loads((Path(dcfg["data_root"]) / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
     ids = {s: load_split(splits_dir, s) for s in cfg["splits"]}
     log.info("images per split after excluding conflicting ones: %s", {s: len(v) for s, v in ids.items()})
@@ -61,12 +63,12 @@ def main():
             for split, split_ids in ids.items():
                 if (size, split) not in todo:
                     continue
-                emb = embed_images(model, [derived / f"bbox15_{size}" / f"{i}.png" for i in split_ids], model.transform,
+                emb = embed_images(model, [derived / f"{crop}_{size}" / f"{i}.png" for i in split_ids], model.transform,
                                    device, cfg["batch_size"], cfg["num_workers"])
                 write_csv(out / f"{split}.csv", [f"{i}.png" for i in split_ids], emb)
                 write_json(out / f"{split}.json", {
                     **provenance(cfg, None, dataset_hash), "encoder": name, "family": model.family,
-                    "timm_model": model.timm_name, "encoder_input_size": model.input_size, "crop": f"bbox15_{size}",
+                    "timm_model": model.timm_name, "encoder_input_size": model.input_size, "crop": f"{crop}_{size}",
                     "split": split, "n": len(split_ids), "dim": emb.shape[1],
                     "exclude_sha256": exclude_sha})
                 log.info("%s %d %s: %s", name, size, split, emb.shape)

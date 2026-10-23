@@ -1,0 +1,13 @@
+# CIFAR-100: R1-R5 for the fine-tuned baselines (configs/repr_baselines_cifar100.yaml, configs/repr_george_cifar100.yaml; names = <method>_s<seed>).
+# Same protocol as configs/eval_repr_cifar100.yaml; reference row = dinov3_base_32 there.
+data_config: configs/data_cifar100.yaml
+labels: cifar100
+report_dir: repr
+encoders: [supcon_s0, simclr_s0, supcon_simclr_s0, lejepa_s0, maskcon_s0, falcon_s0, george_s0, george_erm_s0]
+crop_sizes: [32]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16
+seed: 0
