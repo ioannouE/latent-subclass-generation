@@ -1,5 +1,7 @@
 # Data protocol (Step 1, Milestone 1)
 
+CIFAR-100 (second benchmark, same pipeline): docs/DATA_CIFAR100.md.
+
 Built by `sbatch slurm/prepare_data.sh` on a GPU node (runs `scripts/prepare_data.py --config configs/data.yaml`,
 then `scripts/build_episodes.py --config configs/episodes.yaml`).
 The SSCD step of the `duplicates` stage needs a GPU; the other stages use CPU workers.

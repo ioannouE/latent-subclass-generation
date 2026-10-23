@@ -1,0 +1,21 @@
+# CIFAR-100 benchmark (docs/DATA_CIFAR100.md): the counterpart of configs/data.yaml; other configs select it with `data_config`.
+raw_root: /nvme/h/eioannou/data_p315/CIFAR100/raw                 # read-only: cifar-100-python/{train,test,meta}
+derived_root: /nvme/h/eioannou/data_p315/CIFAR100/lsgen_derived   # PNGs, metadata, SSCD embeddings (never in git)
+data_root: data/cifar100                                          # small frozen artefacts, committed (relative to repo)
+reports_root: reports/cifar100
+labels: cifar100                  # configs/labels.yaml: its exclusion list (data_root/splits/exclude.txt)
+
+seed: 0
+val_frac: 0.10                    # of official train, stratified by class: 45,000 / 5,000
+num_workers: 8                    # = --cpus-per-task in slurm/prepare_cifar100.sh
+determinism_check_n: 300          # PNGs re-encoded and compared byte-for-byte
+
+duplicates:
+  sscd_url: https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt
+  sscd_sha256: 9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56
+  sscd_weights_dir: /nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/weights   # already downloaded for Stanford Cars
+  sscd_resize: 288                # SSCD "small_288" transform: the 32 px images are upsampled
+  sscd_threshold: 0.75            # fixed 23 Oct 2026 after the audit (docs/DATA_CIFAR100.md); same value as Stanford Cars
+  audit_min_sim: 0.65             # pairs above this are kept in data/cifar100/duplicates_all.csv and binned in the report
+  device: cuda
+  torch_threads: 8

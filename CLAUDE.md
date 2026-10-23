@@ -1,5 +1,6 @@
 # latent-subclass-generation
 Spec: docs/PLAN.md (Part A = design, Part B = Step 1 prompt). Read it before any task.
+Second benchmark: CIFAR-100 (configs/data_cifar100.yaml, docs/DATA_CIFAR100.md); its exclusion list is data/cifar100/splits/exclude.txt.
 
 ## Hard rules
 - Fine labels only inside lsgen/eval/ and split/episode construction; training datasets never return them.

@@ -10,3 +10,5 @@ maskcon: *maskcon_old       # earlier name of maskcon_old, kept so existing conf
 maskcon_new:       # same labels; also excludes images whose byte-identical copy or SSCD near-duplicate (any two images) has a different
   coarse: maskcon_coarse.csv  # official class (prepare_data.py stage exclude_maskcon_new; superset of exclude.txt)
   exclude: exclude_maskcon_new.txt
+cifar100:          # CIFAR-100 (configs/data_cifar100.yaml): coarse = 20 superclasses, hidden subclass = 100 classes, read from
+  exclude: exclude.txt  # data/cifar100/hierarchy.csv like `make`; exclusion list data/cifar100/splits/exclude.txt (docs/DATA_CIFAR100.md)

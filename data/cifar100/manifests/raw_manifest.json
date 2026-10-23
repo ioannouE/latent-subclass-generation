@@ -1,0 +1,35 @@
+{
+ "git_hash": "b69cff34126406dad7f7870e31c727fdbc76d1d2-dirty",
+ "created_utc": "2026-10-23T13:57:55+00:00",
+ "config": {
+  "raw_root": "/nvme/h/eioannou/data_p315/CIFAR100/raw",
+  "derived_root": "/nvme/h/eioannou/data_p315/CIFAR100/lsgen_derived",
+  "data_root": "/nvme/h/eioannou/code/latent-subclass-generation/data/cifar100",
+  "reports_root": "/nvme/h/eioannou/code/latent-subclass-generation/reports/cifar100",
+  "labels": "cifar100",
+  "seed": 0,
+  "val_frac": 0.1,
+  "num_workers": 8,
+  "determinism_check_n": 300,
+  "duplicates": {
+   "sscd_url": "https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_mixup.torchscript.pt",
+   "sscd_sha256": "9f26bd4c848cc19b73d2ae92eea6e04886f61a7b764ceb7a13aeee62e6a6db56",
+   "sscd_weights_dir": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/weights",
+   "sscd_resize": 288,
+   "sscd_threshold": 0.75,
+   "audit_min_sim": 0.65,
+   "device": "cuda",
+   "torch_threads": 8
+  }
+ },
+ "config_path": "configs/data_cifar100.yaml",
+ "seed": null,
+ "dataset_manifest_hash": "1cf015739e9b592dcee9dfbf0050118bced8343b8aa77ea080a6f27d1c394038",
+ "manifest_hash": "1cf015739e9b592dcee9dfbf0050118bced8343b8aa77ea080a6f27d1c394038",
+ "raw_root": "/nvme/h/eioannou/data_p315/CIFAR100/raw",
+ "files": {
+  "train": "735e79b04f092ca3d2e6d07f368c0a7d70d48c48d28865950cc24454cf45129b",
+  "test": "4b67687d9933c4db8f0831104447f15b93774f4f464bd0516f0f0f2ac83b7864",
+  "meta": "a5d4786345c961390f865e93b434dbd5c6904ce880667e0cb888c97d449f28b9"
+ }
+}

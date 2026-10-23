@@ -8,6 +8,7 @@
 !/data/episodes/
 !/data/splits/
 !/data/manifests/
+!/data/cifar100/
 /outputs/
 reports/*.png
 __pycache__/
