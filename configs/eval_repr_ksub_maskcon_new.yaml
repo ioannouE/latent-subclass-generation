@@ -1,0 +1,15 @@
+# Stanford Cars (maskcon_new scheme): R1-R5 (k-means, oracle K and K-hat) on test for frozen DINOv3-L and the ksub runs (configs/ksub_maskcon_new.yaml, after slurm/train_ksub.sh).
+# Same settings as configs/eval_repr_maskcon_geosub.yaml. Then scripts/summarize_ksub.py. Run: CONFIG=configs/eval_repr_ksub_maskcon_new.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: ksub_maskcon_new     # = report_dir in configs/ksub_maskcon_new.yaml
+encoders: [ksub_sub_var_coarse01_bodytype_new_large_s0, ksub_sub_var_coarse01_bodytype_new_large_s1, ksub_sub_var_coarse01_bodytype_new_large_s2]
+# done (reports/ksub_maskcon_new): dinov3_large (= frozen), ksub_{sub_only,sub_var}_bodytype_new_large_s{0,1,2}
+# trained, not scored: ksub_{coarse,sub,full}_bodytype_new_large_s{0,1,2}
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16            # = --cpus-per-task in slurm/eval_representation.sh
+seed: 0

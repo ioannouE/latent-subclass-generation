@@ -1,0 +1,14 @@
+# CIFAR-100: R1-R5 (k-means, oracle K and K-hat) on test for frozen DINOv3-L and the ksub runs (configs/ksub_cifar100.yaml, after slurm/train_ksub.sh).
+# Same settings as configs/eval_repr_cifar100.yaml. Then scripts/summarize_ksub.py. Run: CONFIG=configs/eval_repr_ksub_cifar100.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100
+report_dir: ksub                 # = report_dir in configs/ksub_cifar100.yaml
+encoders: [ksub_sub_var_coarse01_large_s0, ksub_sub_var_coarse01_large_s1, ksub_sub_var_coarse01_large_s2]
+# done (reports/cifar100/ksub): dinov3_large (= frozen), ksub_{coarse,sub,full,sub_only,sub_var}_large_s{0,1,2}
+crop_sizes: [32]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16            # = --cpus-per-task in slurm/eval_representation.sh
+seed: 0

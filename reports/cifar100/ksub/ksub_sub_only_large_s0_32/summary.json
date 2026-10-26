@@ -1,0 +1,64 @@
+{
+ "git_hash": "3209598aaa42a252272526b1498994c419ff56c4-dirty",
+ "created_utc": "2026-10-25T09:07:57+00:00",
+ "config": {
+  "data_config": "configs/data_cifar100.yaml",
+  "labels": "cifar100",
+  "report_dir": "ksub",
+  "encoders": [
+   "ksub_sub_only_large_s0",
+   "ksub_sub_only_large_s1",
+   "ksub_sub_only_large_s2",
+   "ksub_sub_var_large_s0",
+   "ksub_sub_var_large_s1",
+   "ksub_sub_var_large_s2"
+  ],
+  "crop_sizes": [
+   32
+  ],
+  "knn_k": 20,
+  "n_boot": 1000,
+  "subsample": 0.632,
+  "tables": [
+   "r1",
+   "r2_within_make",
+   "r2_oracle",
+   "r2_khat",
+   "r3",
+   "r4",
+   "r5"
+  ],
+  "n_jobs": 16,
+  "seed": 0
+ },
+ "config_path": "configs/eval_repr_ksub_cifar100.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "1cf015739e9b592dcee9dfbf0050118bced8343b8aa77ea080a6f27d1c394038",
+ "excluded_conflicting_images": {
+  "train": 68,
+  "val": 5,
+  "test": 17
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "r1": 42,
+  "r2_within_make": 42,
+  "r2_oracle": 63,
+  "r2_khat": 84,
+  "r3": 147,
+  "r4": 42,
+  "r5": 21
+ },
+ "table_git_hash": {
+  "r1": "3209598aaa42a252272526b1498994c419ff56c4-dirty",
+  "r2_within_make": "3209598aaa42a252272526b1498994c419ff56c4-dirty",
+  "r2_oracle": "3209598aaa42a252272526b1498994c419ff56c4-dirty",
+  "r2_khat": "3209598aaa42a252272526b1498994c419ff56c4-dirty",
+  "r3": "3209598aaa42a252272526b1498994c419ff56c4-dirty",
+  "r4": "3209598aaa42a252272526b1498994c419ff56c4-dirty",
+  "r5": "3209598aaa42a252272526b1498994c419ff56c4-dirty"
+ },
+ "encoder": "ksub_sub_only_large_s0_32",
+ "n_train": 44932,
+ "n_test": 9983
+}

@@ -1,0 +1,27 @@
+# Batch-size test of configs/ksub_cifar100.yaml, the counterpart of configs/ksub_maskcon_new_b1024.yaml (docs/EXPERIMENT_KSUB.md): identical
+# except 4x the batch (20 x 64 = 1280, about 13 images per subclass instead of about 3) and 4x the epochs / warm-up epochs to keep the
+# number of optimiser steps (14,000, 700 warm-up). A diagnostic, not a tuned setting.
+# Run: CONFIG=configs/ksub_cifar100_b1280.yaml sbatch slurm/train_ksub.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100               # configs/labels.yaml: also picks the exclusion list
+tag: _large_b1280              # run names ksub_<method>_large_b1280_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: native_32
+report_dir: ksub_b1280         # under reports_root: R1-R5 (configs/eval_repr_ksub_cifar100_b1280.yaml) and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                   # reference: no training, k-means with K_c on f (z = f)
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}
+seeds: [0, 1, 2]
+classes_per_batch: 20          # P: every superclass in every batch
+per_class: 64                  # m images per class: batch 1280
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 400                    # 35 steps per epoch: 14,000 steps, as 100 epochs at batch 320
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 20
+eval_every: 80                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)

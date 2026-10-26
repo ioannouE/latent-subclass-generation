@@ -19,6 +19,17 @@ def scheme(name):
     return SCHEMES[name]
 
 
+def coarse_classes(data_root, scheme_name="make"):
+    """DataFrame indexed by the coarse label (make_id): coarse_name and K_c, the number of hidden subclasses of the class (all splits).
+    K_c is the only fine-label information a "uses K" method is given."""
+    s = scheme(scheme_name)
+    if "coarse" not in s:
+        h = pd.read_csv(Path(data_root) / "hierarchy.csv").drop_duplicates("make_id").set_index("make_id")
+        return h.rename(columns={"make": "coarse_name"})[["coarse_name", "K_c"]].sort_index()
+    body = pd.read_csv(Path(data_root) / s["coarse"])
+    return body.groupby("body_type_id").agg(coarse_name=("body_type", "first"), K_c=("class_id", "size")).rename_axis("make_id")
+
+
 def load_labels(derived_root, data_root, scheme_name="make"):
     """id-indexed DataFrame: make_id (coarse), fine_id (subclass), coarse_name, fine_name. Conflicting images are not dropped here."""
     s = scheme(scheme_name)

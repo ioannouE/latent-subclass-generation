@@ -48,7 +48,7 @@ def macro_row(run_dir):
         for src, dst in metrics.items():
             row |= {dst: m.at[src, "mean"], f"{dst}_lo": m.at[src, "lo"], f"{dst}_hi": m.at[src, "hi"]}
     r5 = pd.read_csv(Path(run_dir) / "r5.csv").query("make_id == 'macro'").iloc[0]
-    return row | {c: r5[c] for c in R5} | {"ari_boot_lo": r5.ari_boot_lo, "ari_boot_hi": r5.ari_boot_hi}
+    return row | {c: r5.get(c, float("nan")) for c in R5} | {"ari_boot_lo": r5.ari_boot_lo, "ari_boot_hi": r5.ari_boot_hi}
 
 
 def per_make_table(run_dir):
@@ -62,7 +62,7 @@ def per_make_table(run_dir):
         if table == "r1":
             cols["n_test"] = t[t.metric == "knn_make"].set_index("group")["n"]
     r5 = pd.read_csv(Path(run_dir) / "r5.csv").query("make_id != 'macro'").assign(make_id=lambda d: d.make_id.astype(int)).set_index("make_id")
-    return pd.DataFrame(cols | {c: r5[c] for c in R5}).rename_axis("make_id")
+    return pd.DataFrame(cols | {c: r5[c] for c in R5 if c in r5}).rename_axis("make_id")
 
 
 def worst_makes(per_make, column, n=10, lowest=True):

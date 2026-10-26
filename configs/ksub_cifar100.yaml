@@ -1,0 +1,31 @@
+# ksub (lsgen/methods/repr/ksub, scripts/train_ksub.py) on CIFAR-100: coarse = 20 superclasses, K_c = 5 prototypes each (uses K).
+# Frozen DINOv3-L features of the native 32 px images (configs/features_cifar100.yaml). Run: CONFIG=configs/ksub_cifar100.yaml sbatch slurm/train_ksub.sh
+# Loss = sum of w * term over coarse (SupCon), sub (soft within-class contrastive), var (within-subclass variance floor); a missing weight is 0.
+# Defaults fixed before any run, not tuned (val is monitored only); test is scored once (configs/eval_repr_ksub_cifar100.yaml).
+data_config: configs/data_cifar100.yaml
+labels: cifar100               # configs/labels.yaml: also picks the exclusion list
+tag: _large                    # run names ksub_<method>_large_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: native_32
+report_dir: ksub               # under reports_root: R1-R5 of every run (configs/eval_repr_ksub_cifar100.yaml) and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                   # reference: no training, k-means with K_c on f (z = f)
+  coarse: {coarse: 1.0}
+  sub: {coarse: 1.0, sub: 1.0}
+  full: {coarse: 1.0, sub: 1.0, var: 1.0}
+  sub_only: {sub: 1.0}                         # without L_coarse: L_coarse alone collapses each class (docs/EXPERIMENT_KSUB.md)
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}   # weak L_coarse to keep classes apart; 0.1 fixed in advance (geosub val choice), not tuned
+seeds: [0, 1, 2]
+classes_per_batch: 20          # P: every superclass in every batch
+per_class: 16                  # m images per class: batch 320
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)

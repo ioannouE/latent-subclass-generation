@@ -1,0 +1,27 @@
+# Batch-size test of configs/ksub_maskcon_new.yaml (docs/EXPERIMENT_KSUB.md): identical except 8 x 128 = 1024 images per batch, so a body type
+# with 50 subclasses gets about 2.5 images per subclass (CIFAR-100: about 3), and 4x the epochs / warm-up epochs to keep the number of
+# optimiser steps (2,800, 140 warm-up). A diagnostic of the batch-coverage explanation, not a tuned setting.
+# Run: CONFIG=configs/ksub_maskcon_new_b1024.yaml sbatch slurm/train_ksub.sh
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_b1024 # run names ksub_<method>_bodytype_new_large_b1024_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+report_dir: ksub_maskcon_new_b1024   # under reports_root: R1-R5 (configs/eval_repr_ksub_maskcon_new_b1024.yaml) and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                   # reference: no training, k-means with K_c on f (z = f)
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}
+seeds: [0, 1, 2]
+classes_per_batch: 8           # P: every body type in every batch
+per_class: 128                 # m images per class: batch 1024
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 400                    # 7 steps per epoch: 2,800 steps, as 100 epochs at batch 256
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 20
+eval_every: 80                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
