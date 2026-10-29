@@ -1,0 +1,59 @@
+{
+ "git_hash": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041-dirty",
+ "created_utc": "2026-10-20T14:26:34+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon",
+  "report_dir": "error_analysis_maskcon",
+  "split": "train",
+  "crop": "bbox15",
+  "crop_size": 256,
+  "dino": "dinov3_base",
+  "dreamsim": "dreamsim_ensemble",
+  "sscd": "sscd",
+  "n_cases": 50,
+  "n_lowest_auroc": 5,
+  "seed": 0
+ },
+ "config_path": "configs/error_analysis_maskcon.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 59,
+  "val": 8,
+  "test": 87
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "pairs": 200,
+  "lowest_auroc_body_types": 5
+ },
+ "table_git_hash": {
+  "pairs": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041-dirty",
+  "lowest_auroc_body_types": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041-dirty"
+ },
+ "n_images": 7270,
+ "n_body_types": 8,
+ "n_candidate_pairs": 4295879,
+ "sscd_threshold": 0.75,
+ "coverage": {
+  "false": {
+   "pairs": 50,
+   "body_types": 6,
+   "distinct_images": 83,
+   "possible_near_duplicates": 11
+  },
+  "missed": {
+   "pairs": 50,
+   "body_types": 6,
+   "distinct_images": 61,
+   "possible_near_duplicates": 0
+  },
+  "control": {
+   "pairs": 100,
+   "body_types": 8,
+   "distinct_images": 111,
+   "possible_near_duplicates": 0
+  }
+ }
+}

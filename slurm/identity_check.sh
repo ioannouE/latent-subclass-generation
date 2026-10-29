@@ -1,6 +1,8 @@
 #!/bin/bash
 # Pre-check of the DINO-minus-DreamSim identity score (docs/EXPERIMENT_IDSCORE.md). CPU only. Submit from the repo root:
 #   sbatch slurm/identity_check.sh
+#   CONFIG=configs/identity_check_maskcon.yaml sbatch slurm/identity_check.sh      (MaskCon label scheme: within body types)
+#   CONFIG=configs/identity_check_maskcon_new.yaml sbatch slurm/identity_check.sh  (maskcon_new label scheme)
 # Settings are in configs/identity_check.yaml. Run after slurm/extract_features.sh (dinov3_base and dreamsim_ensemble embeddings).
 #SBATCH --job-name=lsgen-identity-check
 #SBATCH --partition=cpu
@@ -17,4 +19,6 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-python scripts/identity_check.py --config configs/identity_check.yaml
+CONFIG=${CONFIG:-configs/identity_check.yaml}
+
+python scripts/identity_check.py --config $CONFIG

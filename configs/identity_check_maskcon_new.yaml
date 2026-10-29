@@ -1,0 +1,17 @@
+# Identity-score pre-check on the maskcon_new label scheme (configs/labels.yaml: coarse = 8 body types, hidden subclass = 196 classes, its own
+# exclusion list), otherwise identical to configs/identity_check_maskcon.yaml. Run: CONFIG=configs/identity_check_maskcon_new.yaml sbatch slurm/identity_check.sh
+data_config: configs/data.yaml
+labels: maskcon_new            # also picks data/splits/exclude_maskcon_new.txt
+report_dir: identity_check_maskcon_new
+split: train
+crop_size: 256
+dino: dinov3_base
+dreamsim: dreamsim_ensemble
+gate_k: 20
+top_n: 5
+n_boot: 200                    # body types have up to ~1,850 train images, 1000 draws would take hours
+subsample: 0.632
+n_jobs: 8                      # = --cpus-per-task in slurm/identity_check.sh
+seed: 0
+decision:                      # same rule as configs/identity_check.yaml, fixed before the run
+  min_gain: 0.02

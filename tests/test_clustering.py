@@ -1,7 +1,7 @@
 import numpy as np
 
 from lsgen.eval.clustering import diffusion_fit, fitter, knn_graph, leiden_fit
-from lsgen.eval.representation import cluster_space, hungarian_acc, r2_metric, r5_make
+from lsgen.eval.representation import cluster_space, hungarian_acc, l2norm, r2_metric, r5_make
 from tests.test_representation import blobs
 
 
@@ -34,3 +34,10 @@ def test_r2_and_r5_with_graph_fits():
     assert m["acc"] == 1 and m["khat"] == 3
     r = r5_make(z, 3, n_boot=3, fit=fitter("leiden"))
     assert np.allclose(r["ari_seeds"], 1) and np.allclose(r["ari_boot"], 1)
+
+
+def test_full_embedding_space_and_graph_fit_on_it():
+    x, y = blobs(3)
+    z = cluster_space(x, np.zeros(len(x), int), None)  # no PCA
+    assert z.shape == x.shape and np.allclose(z, l2norm(x))
+    assert hungarian_acc(y, diffusion_fit(z, 3)) == 1 and hungarian_acc(y, leiden_fit(z, 3)) == 1

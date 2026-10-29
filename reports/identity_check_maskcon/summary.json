@@ -1,0 +1,41 @@
+{
+ "git_hash": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041-dirty",
+ "created_utc": "2026-10-20T14:04:45+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon",
+  "report_dir": "identity_check_maskcon",
+  "split": "train",
+  "crop_size": 256,
+  "dino": "dinov3_base",
+  "dreamsim": "dreamsim_ensemble",
+  "gate_k": 20,
+  "top_n": 5,
+  "n_boot": 200,
+  "subsample": 0.632,
+  "n_jobs": 8,
+  "seed": 0,
+  "decision": {
+   "min_gain": 0.02
+  }
+ },
+ "config_path": "configs/identity_check_maskcon.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 59,
+  "val": 8,
+  "test": 87
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "table": 90
+ },
+ "table_git_hash": {
+  "table": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041-dirty"
+ },
+ "decision": {
+  "min_gain": 0.02
+ },
+ "verdict": "stop: the gated identity score does not beat DINO alone by the fixed margin"
+}

@@ -1,0 +1,15 @@
+# maskcon_new label scheme (configs/labels.yaml: MaskCon labels, exclusion list data/splits/exclude_maskcon_new.txt); copy of configs/error_analysis_maskcon.yaml with only labels / tag / report_dir changed.
+# Error analysis of frozen DINO subclass neighbours on the MaskCon label scheme (coarse = 8 body types, subclass = the 196 classes,
+# data/maskcon_coarse.csv), otherwise identical to configs/error_analysis.yaml: pairs are formed and ranked within each body type.
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml
+report_dir: error_analysis_maskcon_new
+split: train
+crop: bbox15
+crop_size: 256
+dino: dinov3_base
+dreamsim: dreamsim_ensemble
+sscd: sscd
+n_cases: 50
+n_lowest_auroc: 5              # of the 8 body types
+seed: 0                        # recorded; the selection is deterministic (no sampling, ties broken by image index)

@@ -1,0 +1,14 @@
+# As configs/eval_repr_maskcon_new_diffusion.yaml, but the graph is built on the full L2-normalised embedding (768-d B, 1024-d L) instead of
+# each body type's top-50 PCs. Run: CONFIG=configs/eval_repr_maskcon_new_diffusion_full.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: repr_maskcon_new_diffusion_full
+encoders: [dinov3_base, dinov3_large]
+crop_sizes: [256]
+cluster_pcs: null     # no PCA (default 50)
+clustering: {algorithm: diffusion, n_neighbors: 15, t: 1}   # K-hat = largest eigengap, K = 2..25
+n_boot: 1000
+subsample: 0.632      # K-hat CIs, see configs/eval_representation.yaml
+tables: [r2_oracle, r2_khat, r5]
+n_jobs: 16
+seed: 0

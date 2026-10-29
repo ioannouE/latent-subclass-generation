@@ -82,7 +82,7 @@ def repr_tables(xtr, mtr, xte, mte, cfg):
         t = pd.DataFrame({"make_id": make, "recall1": recall1, "probe_fine": probe_fine})[np.isfinite(recall1)]
         return bootstrap_table(t, "make_id", ["recall1", "probe_fine"], nb, seed, nj)
 
-    z = cluster_space(xte, make, seed=seed)
+    z = cluster_space(xte, make, cfg.get("cluster_pcs", 50), seed)  # cluster_pcs: null clusters the full embedding
     fit = fitter(**cfg["clustering"]) if "clustering" in cfg else kmeans_fit
     tables = {  # lazy: cfg["tables"] chooses what is computed
         "r1": r1, "r2_within_make": r2_within_make,

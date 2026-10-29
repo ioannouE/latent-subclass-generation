@@ -1,6 +1,6 @@
 {
- "git_hash": "23ad961cf2f777915ed3a933dc9555425036e62e",
- "created_utc": "2026-10-11T14:28:23+00:00",
+ "git_hash": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041",
+ "created_utc": "2026-10-20T12:57:38+00:00",
  "config": {
   "data_config": "configs/data.yaml",
   "labels": "maskcon",
@@ -10,7 +10,12 @@
    "simclr_bodytype_s0",
    "supcon_simclr_bodytype_s0",
    "maskcon_bodytype_s0",
-   "falcon_bodytype_s0"
+   "falcon_bodytype_s0",
+   "george_bodytype_s0",
+   "george_erm_bodytype_s0",
+   "nhp_bodytype_s0",
+   "nhp_bodytype_s0_cat",
+   "lejepa_s0"
   ],
   "crop_sizes": [
    256
@@ -49,13 +54,13 @@
   "r5": 9
  },
  "table_git_hash": {
-  "r1": "23ad961cf2f777915ed3a933dc9555425036e62e",
-  "r2_within_make": "23ad961cf2f777915ed3a933dc9555425036e62e",
-  "r2_oracle": "23ad961cf2f777915ed3a933dc9555425036e62e",
-  "r2_khat": "23ad961cf2f777915ed3a933dc9555425036e62e",
-  "r3": "23ad961cf2f777915ed3a933dc9555425036e62e",
-  "r4": "23ad961cf2f777915ed3a933dc9555425036e62e",
-  "r5": "23ad961cf2f777915ed3a933dc9555425036e62e"
+  "r1": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041",
+  "r2_within_make": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041",
+  "r2_oracle": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041",
+  "r2_khat": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041",
+  "r3": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041",
+  "r4": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041",
+  "r5": "504b5d9f22ae5a8bd43b3cdc47b360fc7e9cf041"
  },
  "encoder": "supcon_bodytype_s0_256",
  "n_train": 7270,

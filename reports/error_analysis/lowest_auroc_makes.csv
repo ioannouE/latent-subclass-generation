@@ -1,0 +1,6 @@
+make_id,make_name,auroc_dino,n_images,n_subclasses
+6,Bugatti,0.5493786226544847,67,2
+2,Aston Martin,0.5715362453155465,139,4
+14,FIAT,0.6189753320683112,56,2
+40,Rolls-Royce,0.6222879570209121,100,3
+27,Lamborghini,0.6481668890385761,144,4

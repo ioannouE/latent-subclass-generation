@@ -62,7 +62,10 @@ def recall_at_k(x, labels, ks=(1, 2, 5, 10), chunk=1000):
 
 # ---- R2 / R5: clustering
 def cluster_space(x, make, n=50, seed=0):
-    """Rows of each make projected on that make's own top-n PCs (L2-normalised input); clustering runs here."""
+    """Rows of each make projected on that make's own top-n PCs (L2-normalised input); clustering runs here.
+    n=None: the L2-normalised embedding itself, no projection."""
+    if n is None:
+        return l2norm(x).astype(np.float32)
     z = np.zeros((len(x), n), np.float32)
     for c in np.unique(make):
         m = make == c
