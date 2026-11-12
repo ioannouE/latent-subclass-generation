@@ -1,9 +1,11 @@
 """ksub (known-K subclasses): geosub's residual head z = norm(f + g(f)) (lsgen/methods/geosub/model.py, imported unchanged) and K_c
 prototypes per coarse class that are not learnable: k-means on the frozen train features of the class, then an EMA of the embeddings
 softly assigned to them. Prototypes are stored zero-padded as (n_coarse, K, d), K = max K_c; prototype g of class c exists iff g < K_c."""
+import numpy as np
 import torch
 import torch.nn.functional as F
 from sklearn.cluster import KMeans
+from sklearn.metrics import adjusted_rand_score
 
 from lsgen.methods.geosub.model import GeoSub
 
@@ -27,6 +29,18 @@ def soft_assign(z, coarse, mu, k_c, tau_a=0.05):
     cos = torch.einsum("bd,bkd->bk", z, mu[coarse])
     pad = torch.arange(mu.shape[1], device=z.device)[None] >= k_c[coarse][:, None]
     return (cos / tau_a).masked_fill(pad, float("-inf")).softmax(1)
+
+
+def assignment_ari(z, f, coarse, mu, mu0, k_c, seed):
+    """Prototype-staleness diagnostic: mean over classes with K_c > 1 of the ARI between the current assignments (z to the EMA prototypes mu)
+    and (a) a fresh k-means on z (init_prototypes, same seed), (b) the initial k-means on f (f to mu0). Returns (ari_fresh, ari_init)."""
+    cur = soft_assign(z, coarse, mu, k_c).argmax(1).cpu().numpy()
+    fresh_mu = init_prototypes(z.cpu(), coarse.cpu(), k_c.tolist(), seed).to(z.device)
+    fresh = soft_assign(z, coarse, fresh_mu, k_c).argmax(1).cpu().numpy()
+    init = soft_assign(f, coarse, mu0, k_c).argmax(1).cpu().numpy()
+    c = coarse.cpu().numpy()
+    classes = [k for k in range(len(k_c)) if k_c[k] > 1]
+    return tuple(float(np.mean([adjusted_rand_score(cur[c == k], ref[c == k]) for k in classes])) for ref in (fresh, init))
 
 
 def group_weights(r, coarse, n_coarse):

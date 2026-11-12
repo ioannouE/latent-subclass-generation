@@ -1,0 +1,25 @@
+# Prototype-staleness diagnostic of configs/ksub_cifar100.yaml (docs/EXPERIMENT_KSUB.md): identical training, plus per epoch the train ARI
+# of the current assignments vs a fresh k-means on z and vs the initial k-means on f (ari_every). Own tag: no existing run is overwritten.
+# Run: CONFIG=configs/ksub_cifar100_ari.yaml sbatch slurm/train_ksub.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100               # configs/labels.yaml: also picks the exclusion list
+tag: _large_ari                # run names ksub_<method>_large_ari_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: native_32
+methods:
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}
+seeds: [0]                     # one seed: a diagnostic, seed spread of the runs themselves is <= 0.012
+classes_per_batch: 20          # P: every superclass in every batch
+per_class: 16                  # m images per class: batch 320
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+ari_every: 1                   # epochs between assignment-ARI logs (k-means on z per class: diagnostic only, adds time)

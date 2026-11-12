@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 from lsgen.data.labels import coarse_classes
 from lsgen.methods.repr.ksub.losses import ksub_loss, pair_weights, sub_loss, var_loss
-from lsgen.methods.repr.ksub.model import ema_update, head, init_prototypes, soft_assign
+from lsgen.methods.repr.ksub.model import assignment_ari, ema_update, head, init_prototypes, soft_assign
 from lsgen.methods.repr.losses import supcon_loss
 from lsgen.utils import REPO_ROOT
 
@@ -77,3 +77,9 @@ def test_k_c_per_scheme():
     make = coarse_classes(REPO_ROOT / "data", "make")
     assert len(make) == 49 and make.K_c.sum() == 189
     assert (coarse_classes(REPO_ROOT / "data" / "cifar100", "cifar100").K_c == 5).all()
+
+
+def test_assignment_ari_is_one_before_training():
+    f, coarse, _ = batch()
+    mu = init_prototypes(f, coarse, K_C.tolist(), seed=0)  # z = f and mu = mu0: all three assignments coincide
+    assert assignment_ari(f, f, coarse, mu, mu.clone(), K_C, seed=0) == (1.0, 1.0)

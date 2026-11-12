@@ -23,7 +23,7 @@ from lsgen.data.splits import load_split
 from lsgen.eval.representation import knn_accuracy
 from lsgen.features.extract import write_csv
 from lsgen.methods.repr.ksub.losses import ksub_loss
-from lsgen.methods.repr.ksub.model import ema_update, head, init_prototypes, soft_assign
+from lsgen.methods.repr.ksub.model import assignment_ari, ema_update, head, init_prototypes, soft_assign
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging, sha256_file, write_json
 from train_geosub import load_features
 from train_repr import lr_factor
@@ -43,6 +43,7 @@ def train(cfg, weights, seed, f, coarse, k_c, device, val=None):
     torch.manual_seed(seed)
     gen = torch.Generator().manual_seed(seed)
     mu = init_prototypes(f, coarse, k_c.tolist(), seed).to(device)
+    mu0 = mu.clone()  # initial k-means, for the optional assignment ARI (ari_every)
     net = head(f.shape[1], cfg["hidden"]).to(device)
     if not weights:
         return net.eval(), mu, float("nan")
@@ -69,6 +70,10 @@ def train(cfg, weights, seed, f, coarse, k_c, device, val=None):
             with torch.no_grad():
                 xtr, xva = net(f).cpu().numpy(), net(val[0].to(device)).cpu().numpy()
             msg += f" | val kNN@20 coarse acc {knn_accuracy(xtr, coarse.cpu().numpy(), xva, val[1]):.4f}"
+        if cfg.get("ari_every") and (epoch + 1) % cfg["ari_every"] == 0:  # diagnostic only, on train: nothing feeds back into training
+            with torch.no_grad():
+                ari_fresh, ari_init = assignment_ari(net(f), f, coarse, mu, mu0, k_c, seed)
+            msg += f" | ARI current vs fresh k-means on z {ari_fresh:.4f}, vs initial k-means on f {ari_init:.4f}"
         log.info(msg)
     return net.eval(), mu, float(np.mean([t["loss"] for t in logs]))
 
