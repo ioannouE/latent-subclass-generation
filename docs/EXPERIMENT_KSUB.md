@@ -130,3 +130,33 @@ Diagnostic of the batch-coverage explanation, compared on test; the batch size s
 - **On CIFAR-100 (about 3 images per subclass already at batch 320), a larger batch costs a little:** -0.005 to -0.007 ACC.
 - **What sets the batch:** what matters is enough images per subclass in a batch, which depends on K_c. A pseudo-subclass-stratified sampler
   would give that at a fixed batch size.
+
+## Prototype staleness (train ARI per epoch; `configs/ksub_{maskcon_new,cifar100}_ari.yaml`, code `c1a11d1`)
+Diagnostic of whether the EMA prototypes keep up with z, i.e. whether re-running k-means each epoch would change anything. Training is
+identical to `configs/ksub_{maskcon_new,cifar100}.yaml` (batch 256 / 320), with `sub_var` and `sub_var_coarse01`, seed 0 only and their own run tags (`_ari`).
+At the end of every epoch (`ari_every: 1`, `assignment_ari`), on train, per class with K_c >= 2 and then averaged over classes, the
+current assignment argmax_g r_ig (z to the EMA prototypes) is compared with (a) a fresh k-means on z (`init_prototypes`, n_init 10, run
+seed) and (b) the initial k-means on f. This is monitoring only: nothing feeds back into training. Conflicting images excluded: Stanford Cars 211
+(`maskcon_new` list), CIFAR-100 90. Slurm jobs 412808 / 412810; per-epoch values in `reports/ksub_ari/ari_per_epoch.csv`.
+
+| epoch | Cars `sub_var` fresh / initial | Cars `sub_var_coarse01` fresh / initial | CIFAR `sub_var` fresh / initial | CIFAR `sub_var_coarse01` fresh / initial |
+|---|---|---|---|---|
+| 1 | 0.89 / 0.99 | 0.91 / 0.97 | 0.95 / 0.93 | 0.95 / 0.94 |
+| 10 | 0.89 / 0.90 | 0.90 / 0.91 | 0.999 / 0.88 | 0.99 / 0.88 |
+| 20 | 0.81 / 0.85 | 0.79 / 0.84 | 1.000 / 0.88 | 0.99 / 0.88 |
+| 50 | 0.69 / 0.70 | 0.67 / 0.69 | 1.000 / 0.88 | 0.99 / 0.88 |
+| 100 | 0.72 / 0.66 | 0.66 / 0.64 | 1.000 / 0.88 | 0.99 / 0.88 |
+
+- **CIFAR-100: the EMA prototypes track z.** Agreement with a fresh k-means is above 0.99 from epoch 5 on (`sub_var`: exactly 1 from epoch 21).
+  The assignments move away from the frozen k-means in the first ~10 epochs (ARI 0.88), then stay fixed. Re-clustering would change nothing.
+- **Stanford Cars, batch 256: they do not.** Agreement with a fresh k-means falls from about 0.9 to 0.65-0.72 by epoch 50 and does not
+  settle. About 0.9 is k-means' own noise floor here: at epoch 1 z is still almost f, and the frozen ARI boot is 0.874.
+- **The existing test reports locate the gap.** "ACC oracle K" is a fresh k-means on z, "ACC own" the EMA assignment. At batch 256
+  (`reports/ksub_maskcon_new/per_class.csv`) the gap oracle - own is in the body types with many subclasses: Sedan +0.14 / +0.26, SUV
+  +0.09 / +0.16, Coupe +0.07 / +0.05, Cab +0.06 / +0.06 (`sub_var` / `sub_var_coarse01`); about 0 for K_c <= 14. At batch 1024
+  (`reports/ksub_maskcon_new_b1024/per_class.csv`) it is at most 0.02 in every body type except Wagon (`sub_var_coarse01` -0.06). This is
+  test-split analysis of runs that already existed, not a model choice.
+- **The stale readout is only a small part of the Cars loss.** At batch 256 even a fresh k-means on z gives Sedan 0.45 against frozen
+  0.73, so most of the damage is in z itself. Likely cause (not tested): the stale prototypes give the wrong r, and L_sub / L_var then train z
+  towards the wrong groups. Whether re-clustering during training helps at batch 256 is open: it needs a variant that re-clusters, chosen on val.
+- Not run: the same diagnostic at batch 1024. Its near-zero oracle - own gap already predicts that the ARI stays high.
