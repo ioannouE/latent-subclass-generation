@@ -1,10 +1,11 @@
-"""Step 2: SupCon / SimCLR / SupCon+SimCLR / MaskCon / FALCON / LeJEPA (label-free) fine-tuning of the last blocks of a frozen-recipe backbone
+"""Step 2: SupCon / SimCLR / SupCon+SimCLR / MaskCon / FALCON / SCGM / LeJEPA (label-free) fine-tuning of the last blocks of a frozen-recipe backbone
 (configs/repr_baselines.yaml), and NHP (configs/repr_nhp.yaml, same recipe). Coarse (make) labels only; FALCON additionally needs the
-number of fine classes K. Needs a GPU:
+number of fine classes K, SCGM the total number of subclasses K. Needs a GPU:
     sbatch slurm/train_repr.sh
 Output per method and seed: <derived_root>/features/<method>_s<seed>_<crop size>/{train,val,test}.csv (+ .json), the same format as the
 frozen encoders, so scripts/eval_representation.py scores them by name; and <derived_root>/repr_models/<method>_s<seed>.pt.
 NHP writes two embeddings per run: <method>_s<seed>_<size> (z_sub, primary) and <method>_s<seed>_cat_<size> (z_make + z_sub).
+SCGM too: <method>_s<seed>_<size> (its 128-d embedding, what the paper evaluates) and <method>_s<seed>_backbone_<size> (backbone CLS).
 """
 import argparse
 import json
@@ -17,7 +18,7 @@ import pandas as pd
 import torch
 from torchvision import transforms as T
 
-from lsgen.data.datasets import CarsNuisanceViews, CarsTwoViews, car_boxes
+from lsgen.data.datasets import CarsIndexedView, CarsNuisanceViews, CarsTwoViews, car_boxes
 from lsgen.data.labels import load_labels, scheme
 from lsgen.data.splits import load_split
 from lsgen.eval.representation import knn_accuracy
@@ -27,6 +28,7 @@ from lsgen.methods.repr.falcon import Falcon, coarse_neighbors
 from lsgen.methods.repr.losses import Contrastive, LeJEPA
 from lsgen.methods.repr.maskcon import MaskCon
 from lsgen.methods.repr.nhp import NHP, Encoder, Head
+from lsgen.methods.repr import scgm
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging, sha256_file, write_json
 
 log = logging.getLogger("train_repr")
@@ -67,8 +69,8 @@ def lr_factor(step, warmup, total):
 
 
 def exports(model, emb):
-    """{name suffix: embedding}: one embedding per run, two for NHP (z_sub, and z_make + z_sub)."""
-    return model.exports(emb) if isinstance(model, Encoder) else {"": emb}
+    """{name suffix: embedding}: one embedding per run, two for NHP (z_sub, and z_make + z_sub) and SCGM (embedding, backbone CLS)."""
+    return model.exports(emb) if isinstance(model, (Encoder, scgm.Encoder)) else {"": emb}
 
 
 def embed_split(model, derived, crop, ids, cfg, device):
@@ -76,7 +78,7 @@ def embed_split(model, derived, crop, ids, cfg, device):
                         cfg["batch_size_embed"], cfg["num_workers"])
 
 
-def build_objective(kind, params, net, cfg, num_coarse, device):
+def build_objective(kind, params, net, cfg, num_coarse, device, ds):
     if kind == "nhp":
         return NHP(net, temperature=cfg["temperature"], **params)
     if kind == "contrastive":
@@ -85,6 +87,8 @@ def build_objective(kind, params, net, cfg, num_coarse, device):
         return LeJEPA(net, **params)
     if kind == "maskcon":
         return MaskCon(net, cfg["head"][1], device=device, **params)
+    if kind == "scgm":
+        return scgm.Scgm(net, dataset=ds, batch_size=cfg["batch_size"], num_workers=cfg["num_workers"], device=device, **params)
     return Falcon(net, num_coarse=num_coarse, device=device, **params)
 
 
@@ -96,7 +100,7 @@ def neighbor_table(cfg, derived, ids, make, k):
 
 
 def train(cfg, kind, params, seed, ids, meta, derived, device, val=None):
-    """Fine-tune and return the Embedder (NHP: the Encoder around backbone and head). val = (ids, make labels) for the monitoring kNN only."""
+    """Fine-tune and return the Embedder (NHP, SCGM: the Encoder around backbone and head). val = (ids, make labels) for the monitoring kNN only."""
     torch.manual_seed(seed)
     np.random.seed(seed)
     params = {k: v for k, v in params.items() if k != "kind"}
@@ -110,6 +114,8 @@ def train(cfg, kind, params, seed, ids, meta, derived, device, val=None):
         nhp = {k: params.pop(k) for k in ("invariance", "sparse", "adversary", "dims", "n_proto", "nuisance_aug")}
         head = Head(dim, hidden, [nhp["dims"][k] for k in ("make", "sub", "nuis")], int(make.max()) + 1, nhp["n_proto"], nhp["sparse"],
                     ADVERSARY_CLASSES if nhp["adversary"] else ())
+    elif kind == "scgm":
+        head = scgm.ScgmHead(dim, hidden, out, int(make.max()) + 1, params["num_fine"])
     else:
         head = torch.nn.Linear(dim, params["num_fine"]) if kind == "falcon" else \
             torch.nn.Sequential(torch.nn.Linear(dim, hidden), torch.nn.ReLU(), torch.nn.Linear(hidden, out))
@@ -119,6 +125,9 @@ def train(cfg, kind, params, seed, ids, meta, derived, device, val=None):
         ds = CarsNuisanceViews(meta, derived, ids, *nhp_transforms(model, a), car_boxes(derived, ids, int(size)), variant, int(size),
                                nhp["invariance"], a.get("swap_p", 0.0), a.get("mask_p", 0.0))
         model = Encoder(model, head)
+    elif kind == "scgm":
+        ds = CarsIndexedView(meta, derived, ids, augmentation(model, cfg), variant, int(size))
+        model = scgm.Encoder(model, head)
     else:
         weak = model.transform if kind != "contrastive" else None  # MaskCon key view, FALCON EMA view and neighbours: no augmentation
         neighbors = neighbor_table(cfg, derived, ids, make, params.pop("neighbor_pool")) if kind == "falcon" else None
@@ -126,7 +135,7 @@ def train(cfg, kind, params, seed, ids, meta, derived, device, val=None):
                           params.pop("n_neighbors", 5))
     dl = torch.utils.data.DataLoader(ds, cfg["batch_size"], shuffle=True, drop_last=True, num_workers=cfg["num_workers"],
                                      persistent_workers=True)
-    objective = build_objective(kind, params, net, cfg, int(make.max()) + 1, device)
+    objective = build_objective(kind, params, net, cfg, int(make.max()) + 1, device, ds)
     opt = torch.optim.AdamW([{"params": trainable, "lr": cfg["lr_backbone"]}, {"params": head.parameters(), "lr": cfg["lr_head"]}],
                             weight_decay=cfg["weight_decay"])
     total, warmup = cfg["epochs"] * len(dl), cfg["warmup_epochs"] * len(dl)

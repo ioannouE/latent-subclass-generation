@@ -5,10 +5,13 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 
-from lsgen.data.datasets import CarsNuisanceViews, CarsTwoViews, replace_background
+import torch.nn.functional as F
+
+from lsgen.data.datasets import CarsIndexedView, CarsNuisanceViews, CarsTwoViews, replace_background
 from lsgen.methods.repr.falcon import Falcon, assign_fine_to_coarse, coarse_log_prob, coarse_neighbors
 from lsgen.methods.repr.losses import contrastive_loss, lejepa_loss, sigreg_loss, supcon_loss
 from lsgen.methods.repr.maskcon import MaskCon, maskcon_loss
+from lsgen.methods.repr.scgm import joint_prob, scgm_loss, sinkhorn_knopp
 
 E1, E2, E3, E4 = torch.eye(4)
 TAU = 0.1
@@ -165,3 +168,40 @@ def test_lejepa_invariance_term():
     aligned = torch.stack([z[0], z[0]])
     assert lejepa_loss(aligned, lam=0.0) == 0
     assert lejepa_loss(z, lam=0.0) > 0.5
+
+
+def test_scgm_matches_original():
+    """Line-by-line transcription of the original ResNet.loss (beta 1, ang_norm False, norm_type 'logit') and forward_to_prob."""
+    torch.manual_seed(0)
+    emb, mu_y, mu_z = torch.randn(8, 16), torch.randn(3, 16), torch.randn(5, 16)
+    make, q = torch.randint(0, 3, (8,)), torch.randint(0, 5, (8,))
+    y, q1 = F.one_hot(make, 3).float(), F.one_hot(q, 5).float()
+    x, my, mz = F.normalize(emb, p=2, dim=1), F.normalize(mu_y, p=2, dim=1), F.normalize(mu_z, p=2, dim=1)
+    ls1 = F.cross_entropy(x @ mz.t() / TAU, q1.argmax(1))
+    ls2 = (-torch.log(torch.exp((y @ my) @ mz.t()) / torch.exp(my @ mz.t()).sum(0).view(1, -1)) * q1).sum() / 8
+    ls3 = F.cross_entropy(F.relu(x) @ mu_y.t(), y.argmax(1))
+    assert torch.isclose(scgm_loss(emb, q, make, mu_y, mu_z, TAU, 0.5), 0.5 * (ls1 + ls2) + ls3, atol=1e-5)
+    p_z_x = torch.exp(x @ mz.t() / TAU)
+    expected = p_z_x / p_z_x.sum(1).view(-1, 1) * torch.exp((y @ my) @ mz.t()) / torch.exp(my @ mz.t()).sum(0).view(1, -1)
+    assert torch.allclose(joint_prob(emb, make, mu_y, mu_z, TAU), expected, atol=1e-6)
+
+
+def test_sinkhorn_equipartitions():
+    rng = np.random.default_rng(0)
+    prob = rng.dirichlet(np.ones(3), size=60)
+    prob[:, 0] += 1  # every row prefers subclass 0
+    prob /= prob.sum(1, keepdims=True)
+    q, argmax = sinkhorn_knopp(prob, 25)
+    assert np.allclose(q.sum(1), 1 / 60) and np.allclose(q.sum(0), 1 / 3, rtol=0.01)
+    assert (np.bincount(argmax, minlength=3) == 20).all()
+
+
+def test_indexed_view_dataset_returns_view_make_and_index(tmp_path):
+    import pandas as pd
+    meta = pd.DataFrame({"id": ["train_00001", "train_00002"], "make_id": [5, 6], "fine_id": [3, 4]})
+    (tmp_path / "bbox15_16").mkdir()
+    for i in meta.id:
+        Image.fromarray(np.zeros((16, 16, 3), np.uint8)).save(tmp_path / "bbox15_16" / f"{i}.png")
+    ds = CarsIndexedView(meta, tmp_path, list(meta.id), T.ToTensor(), size=16)
+    v, make, idx = ds[1]
+    assert v.shape == (3, 16, 16) and make == 6 and idx == 1

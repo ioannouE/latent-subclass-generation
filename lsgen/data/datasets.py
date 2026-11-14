@@ -73,6 +73,18 @@ class CarsTwoViews(CarsCoarseDataset):
         return *views, near, make_id
 
 
+class CarsIndexedView(CarsCoarseDataset):
+    """SCGM: one random augmentation (`transform`: PIL -> tensor) of each image, its make_id and its row index (the key of the
+    image's pseudo-subclass). Still no hidden-subclass labels."""
+
+    def __init__(self, metadata, derived_root, ids, transform, variant="bbox15", size=128):
+        super().__init__(metadata, derived_root, ids, variant, size, augment="none")
+        self.transform = transform
+
+    def __getitem__(self, idx):
+        path, make_id = self.items[idx]
+        return self.transform(Image.open(path).convert("RGB")), make_id, idx
+
 
 def car_boxes(derived, ids, size):
     """(N, 4) the car's bbox in the pixels of the stored `size` crops, rows in the order of ids."""

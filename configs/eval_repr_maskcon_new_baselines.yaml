@@ -4,9 +4,9 @@
 data_config: configs/data.yaml
 labels: maskcon_new
 report_dir: repr_maskcon_new
-encoders: [supcon_bodytype_new_s0, simclr_bodytype_new_s0, supcon_simclr_bodytype_new_s0, maskcon_bodytype_new_s0, falcon_bodytype_new_s0,
-           george_bodytype_new_s0, george_erm_bodytype_new_s0, nhp_bodytype_new_s0, nhp_bodytype_new_s0_cat,
-           lejepa_bodytype_new_s0]
+encoders: [scgm_bodytype_new_s0, scgm_bodytype_new_s0_backbone]   # SCGM: its embedding and the backbone CLS
+# done (reports/repr_maskcon_new): supcon_bodytype_new_s0, simclr_bodytype_new_s0, supcon_simclr_bodytype_new_s0, maskcon_bodytype_new_s0,
+# falcon_bodytype_new_s0, george_bodytype_new_s0, george_erm_bodytype_new_s0, nhp_bodytype_new_s0, nhp_bodytype_new_s0_cat, lejepa_bodytype_new_s0
 crop_sizes: [256]
 knn_k: 20
 n_boot: 1000

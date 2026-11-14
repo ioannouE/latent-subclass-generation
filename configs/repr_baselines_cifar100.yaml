@@ -22,6 +22,13 @@ methods:
     solve_every: 20             # steps between re-estimates of M
     soft_epochs: 25             # soft pseudo-labels (tau 1 -> 0) for this many epochs, then hard
     ema_decay: 0.99
+  scgm:                         # SCGM-G, uses K: num_fine = total number of hidden subclasses (the 100 classes); the original's defaults (README, train_scgm_g.py)
+    kind: scgm
+    num_fine: 100
+    tau: 0.1                    # subclass temperature (variance)
+    alpha: 0.5                  # weight of the mixture likelihood terms
+    lmd: 25                     # Sinkhorn-Knopp sharpness
+    estep_every: 5              # epochs between E-steps
 seeds: [0]
 trainable_blocks: 4            # last N transformer blocks (+ final norm) are fine-tuned, the rest stays frozen
 head: [2048, 128]              # projection head hidden / output dims (dropped after training)

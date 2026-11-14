@@ -24,6 +24,8 @@ per-class tables and CIs are in `<encoder>_<crop>/*.csv`. All backbones are fine
 | NHP (z_sub) | 0.972 | 0.873 | 0.853 | 0.469 | 0.632 | 0.393 | 0.280 | 10.0 | 0.440 | 0.454 | 0.749 |
 | NHP (z_make + z_sub) | **0.983** | 0.867 | 0.861 | 0.462 | 0.629 | 0.396 | 0.284 | 10.6 | 0.463 | 0.477 | 0.758 |
 | LeJEPA (no labels) | 0.916 | 0.946 | 0.923 | 0.688 | 0.793 | 0.549 | 0.494 | 20.4 | 0.553 | 0.567 | 0.779 |
+| SCGM (uses K; embedding) | 0.973 | 0.839 | 0.822 | 0.564 | 0.652 | 0.485 | 0.355 | 20.4 | 0.696 | 0.707 | 0.639 |
+| SCGM (uses K; backbone CLS) | 0.928 | 0.939 | 0.914 | 0.655 | 0.766 | 0.523 | 0.466 | 21.8 | 0.649 | 0.662 | 0.739 |
 | geosub `geo` (B; sanity check) | 0.932 | 0.950 | 0.934 | 0.730 | 0.830 | 0.659 | 0.601 | 20.4 | 0.507 | 0.521 | 0.831 |
 | geosub `geo_sub` (B) | 0.937 | 0.951 | 0.932 | 0.734 | 0.832 | 0.603 | 0.556 | 19.8 | 0.498 | 0.512 | 0.839 |
 | geosub `full` (B) | 0.940 | **0.953** | 0.931 | 0.724 | 0.833 | 0.632 | 0.582 | 20.3 | 0.561 | 0.574 | 0.847 |
@@ -46,6 +48,9 @@ geosub `full` = L_geo + L_sub + L_supcon (0.1) + L_var (1); `geo_sub` = L_geo + 
 ## Reading (one seed; differences of about 0.02 are within noise)
 - **No fine-tuned baseline beats frozen DINOv3 on subclass recovery.** They raise coarse kNN (0.95-0.98) and keep the fine probe (0.94-0.95, NHP 0.87),
   but lower oracle-K and K-hat ACC. SupCon is the closest (0.656 vs 0.659 K-hat ACC).
+- **SCGM-G (uses K = 196; DINOv3-B, the baselines' recipe, the paper's defaults; `lsgen/methods/repr/scgm.py`) is below its own starting point.**
+  ACC oracle K 0.564 (its 128-d embedding, what the paper evaluates) and 0.655 (backbone CLS) vs frozen DINOv3-B 0.727; ACC K-hat 0.485 / 0.523 vs 0.659.
+  The embedding has the best-separated body types (d1/d2 0.48, kNN coarse 0.973) but the least stable subclass clustering of the trained rows (ARI boot 0.639).
 - **geosub on DINOv3-B does not help**: K-hat ACC 0.603-0.632 (k-means) and 0.645-0.649 (prototypes) vs 0.659.
 - **geosub on DINOv3-L is the best label-free row**: K-hat ACC 0.724 (k-means on `geo_sub` z) and 0.713 (prototypes) vs 0.660 for frozen DINOv3-L, also
   the highest ARI K-hat and ARI boot. Most of it is one class: on Cab (18 classes) the frozen K-hat rule picks K = 4 (ACC 0.24), on `geo_sub` z it picks 11
@@ -89,6 +94,8 @@ and the `make` scheme they collapse each class.
 | NHP (z_sub) | 0.972 | 0.976 | 0.873 | 0.853 | 0.469 | 0.632 | 0.393 | 0.280 | 10.0 | 0.440 | 0.856 | 0.454 | 0.749 | - |
 | NHP (z_make + z_sub) | 0.983 | 0.982 | 0.867 | 0.861 | 0.462 | 0.629 | 0.396 | 0.284 | 10.6 | 0.463 | 0.452 | 0.477 | 0.758 | - |
 | LeJEPA (no labels) | 0.916 | 0.943 | 0.946 | 0.923 | 0.688 | 0.793 | 0.549 | 0.494 | 20.4 | 0.553 | 0.893 | 0.567 | 0.779 | - |
+| SCGM (uses K; embedding) | 0.973 | 0.976 | 0.839 | 0.822 | 0.564 | 0.652 | 0.485 | 0.355 | 20.4 | 0.696 | 0.483 | 0.707 | 0.639 | - |
+| SCGM (uses K; backbone CLS) | 0.928 | 0.941 | 0.939 | 0.914 | 0.655 | 0.766 | 0.523 | 0.466 | 21.8 | 0.649 | 0.902 | 0.662 | 0.739 | - |
 | geosub `geo_sub` (B) | 0.937 | 0.922 | 0.951 | 0.932 | 0.734 | 0.832 | 0.603 | 0.556 | 19.8 | 0.498 | 0.867 | 0.512 | 0.839 | - |
 | geosub `full` (B) | 0.940 | 0.973 | 0.953 | 0.931 | 0.724 | 0.833 | 0.632 | 0.582 | 20.2 | 0.561 | 0.827 | 0.574 | 0.847 | - |
 | geosub `geo_sub` (L) | 0.947 | 0.948 | 0.949 | 0.934 | 0.795 | 0.889 | 0.724 | 0.696 | 17.5 | 0.402 | 0.886 | 0.416 | 0.896 | - |

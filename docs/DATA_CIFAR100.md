@@ -74,6 +74,7 @@ Representation table (same scripts as Stanford Cars, CIFAR-100 configs; results 
 | frozen R1-R5 | `CONFIG=configs/eval_repr_cifar100.yaml sbatch slurm/eval_representation.sh` | frozen features |
 | SupCon, SimCLR, SupCon+SimCLR | `CONFIG=configs/repr_baselines_cifar100.yaml METHODS="supcon simclr supcon_simclr" sbatch slurm/train_repr.sh` | data |
 | LeJEPA, MaskCon, FALCON | `CONFIG=configs/repr_baselines_cifar100.yaml METHODS="lejepa maskcon falcon" sbatch slurm/train_repr.sh` | frozen features (FALCON's neighbours) |
+| SCGM-G | `CONFIG=configs/repr_baselines_cifar100.yaml METHODS=scgm sbatch slurm/train_repr.sh` | data |
 | GEORGE | `CONFIG=configs/repr_george_cifar100.yaml sbatch slurm/train_george.sh` | data |
 | baselines R1-R5 | `CONFIG=configs/eval_repr_cifar100_baselines.yaml sbatch slurm/eval_representation.sh` | all baselines trained |
 

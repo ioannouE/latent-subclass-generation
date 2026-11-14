@@ -39,6 +39,8 @@
 | GEORGE | 0.966 | 0.964 | 0.950 | 0.913 | 0.862 | 0.763 | 0.761 | 0.666 | 4.7 | 0.705 | 0.786 | 0.747 | 0.888 | - |
 | GEORGE stage 1 (ERM) | 0.966 | 0.964 | 0.949 | 0.912 | 0.860 | 0.767 | 0.766 | 0.668 | 4.5 | 0.697 | 0.763 | 0.740 | 0.902 | - |
 | LeJEPA (no labels) | 0.946 | 0.952 | 0.946 | 0.896 | 0.838 | 0.716 | 0.733 | 0.624 | 5.8 | 0.733 | 0.927 | 0.773 | 0.869 | - |
+| SCGM (uses K; embedding) | 0.964 | 0.964 | 0.876 | 0.816 | 0.670 | 0.494 | 0.554 | 0.389 | 7.7 | 0.649 | 0.542 | 0.696 | 0.844 | - |
+| SCGM (uses K; backbone CLS) | 0.962 | 0.962 | 0.953 | 0.914 | 0.874 | 0.762 | 0.755 | 0.658 | 5.8 | 0.781 | 0.940 | 0.816 | 0.871 | - |
 | ksub `coarse`, batch 320 | 0.970 ± 0.000 | 0.970 ± 0.000 | 0.797 ± 0.004 | 0.731 ± 0.008 | 0.224 ± 0.001 | 0.038 ± 0.001 | 0.217 ± 0.000 | 0.001 ± 0.000 | 2.4 | 0.974 ± 0.000 | 0.063 ± 0.001 | 0.979 ± 0.000 | 0.845 ± 0.007 | 0.229 ± 0.003 |
 | ksub `sub`, batch 320 | 0.970 ± 0.000 | 0.969 ± 0.001 | 0.783 ± 0.004 | 0.731 ± 0.005 | 0.224 ± 0.000 | 0.039 ± 0.001 | 0.217 ± 0.001 | 0.001 ± 0.000 | 2.3 | 0.974 ± 0.000 | 0.062 ± 0.000 | 0.979 ± 0.000 | 0.850 ± 0.002 | 0.230 ± 0.002 |
 | ksub `full`, batch 320 | 0.971 ± 0.001 | 0.971 ± 0.001 | 0.818 ± 0.002 | 0.764 ± 0.004 | 0.269 ± 0.005 | 0.045 ± 0.004 | 0.231 ± 0.002 | 0.004 ± 0.000 | 2.0 | 0.992 ± 0.000 | 0.556 ± 0.000 | 0.994 ± 0.000 | 0.212 ± 0.009 | 0.233 ± 0.002 |
@@ -55,6 +57,9 @@ label-free rule to an embedding trained knowing K. Batch = P classes x m images 
 ## Reading
 - **Frozen encoders and baselines:** DINOv3-L is the best frozen encoder. The fine-tuned baselines (on DINOv3-B) gain coarse accuracy but no
   subclass accuracy over it: the best baseline ACC oracle K is MaskCon's 0.884 vs frozen DINOv3-L 0.892.
+- **SCGM-G (uses K = 100; DINOv3-B, the baselines' recipe, the paper's defaults; `lsgen/methods/repr/scgm.py`):** no subclass gain.
+  - Its own 128-d embedding (what the paper evaluates) separates superclasses (d1/d2 0.54) but loses the subclasses: ACC oracle K 0.670, fine probe 0.876.
+  - Its backbone CLS is level with the other baselines: ACC oracle K 0.874 (frozen DINOv3-B 0.849, FALCON 0.876), ACC K-hat 0.755.
 - **ksub with full-weight L_coarse (`coarse`, `sub`, `full`):** every superclass collapses. Subclass ACC is at chance (about 0.22 for 5 classes).
 - **ksub `sub_var_coarse01`, batch 320: the best row of the table.**
   - Subclasses: ACC oracle K 0.919 (frozen DINOv3-L 0.892, best baseline 0.884); ACC K-hat 0.918 (best other row: FALCON 0.788), with K-hat = 5.0.

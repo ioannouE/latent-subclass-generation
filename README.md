@@ -40,6 +40,7 @@ To score a method's generated images: put them (128 px PNG), `samples.csv` and `
 `sbatch slurm/train_repr.sh` fine-tunes SupCon, SimCLR, SupCon+SimCLR, MaskCon and FALCON on a DINOv3-B backbone with make labels only
 (~10-15 min per method); score them with `CONFIG=configs/eval_repr_baselines.yaml sbatch slurm/eval_representation.sh` (~1 h).
 Results: [reports/repr/summary.md](reports/repr/summary.md).
+SCGM-G (`kind: scgm`, uses K; [lsgen/methods/repr/scgm.py](lsgen/methods/repr/scgm.py)) is in `configs/repr_baselines_{maskcon_new,cifar100}.yaml`: `METHODS=scgm` with those configs.
 
 ## MaskCon label scheme, reproduction, visualisations
 - `labels: <scheme>` in a config picks the label scheme ([configs/labels.yaml](configs/labels.yaml)): `make` (default, make / make-model),
