@@ -1,0 +1,25 @@
+# Prototype-staleness diagnostic of configs/ksub_maskcon_new_b1024.yaml (docs/EXPERIMENT_KSUB.md): identical training, plus the train ARI
+# of the current assignments vs a fresh k-means on z and vs the initial k-means on f (ari_every). Own tag: no existing run is overwritten.
+# Run: CONFIG=configs/ksub_maskcon_new_b1024_ari.yaml sbatch slurm/train_ksub.sh
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_b1024_ari   # run names ksub_<method>_bodytype_new_large_b1024_ari_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+methods:
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}
+seeds: [0]                     # one seed, as configs/ksub_maskcon_new_ari.yaml
+classes_per_batch: 8           # P: every body type in every batch
+per_class: 128                 # m images per class: batch 1024
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 400                    # 7 steps per epoch: 2,800 steps, as 100 epochs at batch 256
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 20
+eval_every: 80                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+ari_every: 4                   # every 28 steps: the same step grid as configs/ksub_maskcon_new_ari.yaml (every epoch of 28 steps)

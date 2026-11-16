@@ -131,7 +131,7 @@ Diagnostic of the batch-coverage explanation, compared on test; the batch size s
 - **What sets the batch:** what matters is enough images per subclass in a batch, which depends on K_c. A pseudo-subclass-stratified sampler
   would give that at a fixed batch size.
 
-## Prototype staleness (train ARI per epoch; `configs/ksub_{maskcon_new,cifar100}_ari.yaml`, code `c1a11d1`)
+## Prototype staleness (train ARI per epoch; `configs/ksub_{maskcon_new,maskcon_new_b1024,cifar100}_ari.yaml`, code `c1a11d1`)
 Diagnostic of whether the EMA prototypes keep up with z, i.e. whether re-running k-means each epoch would change anything. Training is
 identical to `configs/ksub_{maskcon_new,cifar100}.yaml` (batch 256 / 320), with `sub_var` and `sub_var_coarse01`, seed 0 only and their own run tags (`_ari`).
 At the end of every epoch (`ari_every: 1`, `assignment_ari`), on train, per class with K_c >= 2 and then averaged over classes, the
@@ -158,5 +158,37 @@ seed) and (b) the initial k-means on f. This is monitoring only: nothing feeds b
   test-split analysis of runs that already existed, not a model choice.
 - **The stale readout is only a small part of the Cars loss.** At batch 256 even a fresh k-means on z gives Sedan 0.45 against frozen
   0.73, so most of the damage is in z itself. Likely cause (not tested): the stale prototypes give the wrong r, and L_sub / L_var then train z
-  towards the wrong groups. Whether re-clustering during training helps at batch 256 is open: it needs a variant that re-clusters, chosen on val.
-- Not run: the same diagnostic at batch 1024. Its near-zero oracle - own gap already predicts that the ARI stays high.
+  towards the wrong groups. Re-clustering during training tests this (next section).
+- **Stanford Cars, batch 1024 (`configs/ksub_maskcon_new_b1024_ari.yaml`, job 421836): they do.** Logged every 4 epochs (`ari_every: 4`)
+  = every 28 steps, the same step grid as batch 256. Agreement with a fresh k-means rises from 0.90 / 0.89 (first log) to 0.95 / 0.93
+  by step 280 and stays there to the end (0.957 / 0.928 at step 2,800, `sub_var` / `sub_var_coarse01`); agreement with the initial
+  k-means stays at 0.93 / 0.92: at batch 1024 the clusters barely move from the frozen ones. Staleness is a batch-256 problem.
+
+## Re-clustering every epoch (`configs/ksub_{maskcon_new,cifar100}_recluster.yaml`; test, DINOv3-L, seeds 0-2)
+Variant (`recluster_every: 1`): at the end of every epoch the prototypes are reset to a fresh k-means on z (`init_prototypes`, n_init 10,
+run seed); EMA in between, as before. Otherwise identical to `configs/ksub_{maskcon_new,cifar100}.yaml` (batch 256 / 320). Fixed in advance,
+not tuned. The last reset follows the last epoch, so ACC own is the assignment of a k-means on train z. R1-R5:
+`configs/eval_repr_ksub_{maskcon_new,cifar100}_recluster.yaml`; summaries `reports/ksub_maskcon_new_recluster/summary.md`,
+`reports/cifar100/ksub_recluster/summary.md` (per class: `per_class.csv`). Slurm jobs 421857 (Cars), 421859 / 421860 (CIFAR-100).
+Conflicting images excluded: Stanford Cars 211 (`maskcon_new` list), CIFAR-100 90. Run from uncommitted code on top of `734259f`
+(summaries record `734259f-dirty`); committed unchanged afterwards.
+
+| | ACC oracle K | ACC own | ARI boot | kNN coarse |
+|---|---|---|---|---|
+| Cars frozen DINOv3-L | 0.800 | 0.792 | 0.874 | 0.944 |
+| Cars `sub_var`: batch 256 EMA / batch 1024 EMA / batch 256 re-cluster | 0.653 / 0.796 / **0.810 ± 0.007** | 0.610 / 0.795 / **0.810** | 0.805 / **0.973** / 0.941 | 0.908 / 0.951 / 0.929 |
+| Cars `sub_var_coarse01`: same | 0.652 / 0.788 / **0.810 ± 0.008** | 0.588 / 0.790 / **0.811** | 0.741 / 0.953 / 0.927 | 0.973 / **0.985** / 0.978 |
+| CIFAR frozen DINOv3-L | 0.892 | 0.902 | 0.891 | 0.964 |
+| CIFAR `sub_var`: batch 320 EMA / batch 1280 EMA / batch 320 re-cluster | **0.917** / 0.912 / 0.909 ± 0.001 | **0.917** / 0.912 / 0.910 | **0.994** / 0.992 / 0.992 | 0.960 / 0.954 / 0.959 |
+| CIFAR `sub_var_coarse01`: same | **0.919** / 0.912 / 0.911 ± 0.000 | **0.918** / 0.911 / 0.911 | 0.990 / 0.988 / 0.991 | **0.968** / 0.967 / **0.968** |
+
+- **Stanford Cars: re-clustering fixes batch 256.** ACC oracle K 0.65 -> 0.81, slightly above batch 1024 (0.79-0.80) and the first ksub rows
+  above frozen DINOv3-L (+0.010, about 1.5 std). The gain is in the body types with many subclasses: Sedan 0.45 -> 0.76 (frozen 0.73), SUV
+  0.48 -> 0.85 (frozen 0.82), Cab 0.65 -> 0.78 (frozen 0.72) (`sub_var`). Hatchback (0.96) and Convertible (0.79) stay below frozen (0.99 / 0.84),
+  as at batch 1024. Clustering is less stable than at batch 1024 (ARI boot 0.94 vs 0.97).
+- **So on Cars the batch-256 loss came from stale prototypes**, not from too few same-subclass pairs per batch: with fresh prototypes, batch
+  256 does as well as batch 1024.
+- **CIFAR-100: re-clustering costs a little** (-0.008 ACC, std <= 0.002) but stays well above frozen. The EMA prototypes already tracked z
+  (ARI 1.0, above), so a fresh k-means each epoch only adds k-means noise.
+- **No single setting is best on both datasets** (re-cluster on Cars, EMA at the small batch on CIFAR-100). These are test numbers: the
+  choice between EMA / re-cluster and the batch size still has to be made on val.

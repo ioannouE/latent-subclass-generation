@@ -1,0 +1,27 @@
+# Re-clustering variant of configs/ksub_maskcon_new.yaml (docs/EXPERIMENT_KSUB.md, prototype staleness): identical (batch 256), except that
+# at the end of every epoch the prototypes are reset to a fresh k-means on z (recluster_every). Fixed in advance, not tuned.
+# Run: CONFIG=configs/ksub_maskcon_new_recluster.yaml sbatch slurm/train_ksub.sh
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_recluster  # run names ksub_<method>_bodytype_new_large_recluster_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+report_dir: ksub_maskcon_new_recluster  # under reports_root: R1-R5 (configs/eval_repr_ksub_maskcon_new_recluster.yaml) and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                   # reference: no training, k-means with K_c on f (z = f)
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}
+seeds: [0, 1, 2]
+classes_per_batch: 8           # P: every body type in every batch
+per_class: 32                  # m images per class: batch 256, as the make runs (8 x 16 would halve it)
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+recluster_every: 1             # epochs between prototype resets to a fresh k-means on z (n_init 10, run seed); EMA in between

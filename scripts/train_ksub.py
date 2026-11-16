@@ -75,6 +75,9 @@ def train(cfg, weights, seed, f, coarse, k_c, device, val=None):
                 ari_fresh, ari_init = assignment_ari(net(f), f, coarse, mu, mu0, k_c, seed)
             msg += f" | ARI current vs fresh k-means on z {ari_fresh:.4f}, vs initial k-means on f {ari_init:.4f}"
         log.info(msg)
+        if cfg.get("recluster_every") and (epoch + 1) % cfg["recluster_every"] == 0:  # variant: prototypes reset to a fresh k-means on z
+            with torch.no_grad():
+                mu = init_prototypes(net(f).cpu(), coarse.cpu(), k_c.tolist(), seed).to(device)
     return net.eval(), mu, float(np.mean([t["loss"] for t in logs]))
 
 
