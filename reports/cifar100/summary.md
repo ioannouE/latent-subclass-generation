@@ -70,3 +70,21 @@ label-free rule to an embedding trained knowing K. Batch = P classes x m images 
 - **Batch 1280 instead of 320:** slightly worse on every subclass metric (-0.005 to -0.007 ACC) and on probe coarse (0.909 vs 0.951). CIFAR-100
   already has about 3 images per subclass in a batch of 320, so a larger batch adds nothing here.
 - Std over seeds is <= 0.004 for every `sub_var*` row.
+
+## SCGM-G on DINOv3-L (comparison with ksub)
+`configs/repr_scgm_large_cifar100.yaml`: the SCGM-G run above with only the backbone changed to DINOv3-L (last 4 blocks fine-tuned, same recipe and
+paper defaults, uses K = 100, not tuned), seeds 0-2; scored with `configs/eval_repr_cifar100_baselines.yaml` (`repr/scgm_large_s<seed>{,_backbone}_32/`).
+Test, conflicting images excluded (90). Mean ± std over seeds of the macro means; the geometry columns (R3, R4) are in the per-run directories.
+
+| encoder | kNN coarse | probe coarse | fine probe | Recall@1 | ACC oracle K | NMI oracle K | ACC K-hat | K-hat | ARI boot |
+|:--|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| frozen DINOv3-L | 0.964 | 0.966 | 0.961 | 0.923 | 0.892 | 0.800 | 0.778 | 5.8 | 0.891 |
+| SCGM-L (uses K; embedding) | 0.977 ± 0.001 | 0.977 ± 0.001 | 0.907 ± 0.002 | 0.854 ± 0.009 | 0.699 ± 0.024 | 0.552 ± 0.020 | 0.579 ± 0.042 | 8.3 | 0.873 ± 0.029 |
+| SCGM-L (uses K; backbone CLS) | **0.978 ± 0.001** | **0.979 ± 0.000** | **0.965 ± 0.000** | **0.935 ± 0.001** | 0.905 ± 0.006 | 0.828 ± 0.008 | 0.759 ± 0.023 | 7.8 | 0.891 ± 0.009 |
+| ksub `sub_var_coarse01`, batch 320 (head on frozen L) | 0.968 ± 0.001 | 0.951 ± 0.002 | 0.949 ± 0.001 | 0.928 ± 0.002 | **0.919 ± 0.001** | **0.840 ± 0.004** | **0.918 ± 0.002** | 5.0 | **0.990 ± 0.002** |
+
+- **SCGM-L backbone CLS is the first fine-tuned baseline above frozen DINOv3-L on subclasses** (ACC oracle K 0.905 vs 0.892), and it has the best
+  coarse and supervised fine numbers of the table (fine probe 0.965, Recall@1 0.935).
+- **ksub stays ahead on unsupervised subclass recovery:** ACC oracle K +0.014, and label-free ACC K-hat 0.918 vs 0.759 (SCGM's K-hat 7.8 overestimates
+  the true 5); ARI boot 0.990 vs 0.891. ksub only trains a head on frozen features; SCGM-L fine-tunes 4 backbone blocks.
+- **SCGM's own 128-d embedding (what the paper evaluates) again loses the subclasses** (ACC oracle K 0.699, seed std 0.024), as on DINOv3-B (0.670).

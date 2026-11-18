@@ -121,3 +121,23 @@ label-free rule to an embedding trained knowing K. Batch = P classes x m images 
   The cost is lower R3 separation (d0/d1 0.564 vs 0.415).
 - **Not better than frozen DINOv3-L when K is known:** ACC oracle K is level, and the fine probe is slightly lower (0.938-0.939 vs 0.950).
 - **The batch result is a test-set observation:** the batch size should be chosen on val before it is fixed.
+
+## SCGM-G on DINOv3-L (comparison with ksub and geosub)
+`configs/repr_scgm_large_maskcon_new.yaml`: the SCGM-G run above with only the backbone changed to DINOv3-L (last 4 blocks fine-tuned, same recipe and
+paper defaults, uses K = 196, not tuned), seeds 0-2; scored with `configs/eval_repr_maskcon_new_baselines.yaml`
+(`scgm_bodytype_new_large_s<seed>{,_backbone}_256/`). Test, conflicting images excluded (211). Mean ± std over seeds of the macro means (geosub: seed 0);
+the geometry columns (R3, R4) are in the per-run directories.
+
+| encoder | kNN coarse | probe coarse | fine probe | Recall@1 | ACC oracle K | NMI oracle K | ACC K-hat | K-hat | ARI boot |
+|:--|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| frozen DINOv3-L | 0.944 | 0.973 | **0.950** | **0.935** | **0.800** | 0.886 | 0.660 | 17.0 | 0.874 |
+| SCGM-L (uses K; embedding) | 0.980 ± 0.002 | **0.982 ± 0.001** | 0.879 ± 0.006 | 0.867 ± 0.004 | 0.645 ± 0.008 | 0.728 ± 0.004 | 0.552 ± 0.010 | 22.5 | 0.726 ± 0.004 |
+| SCGM-L (uses K; backbone CLS) | 0.949 ± 0.000 | 0.969 ± 0.001 | 0.947 ± 0.001 | 0.915 ± 0.001 | 0.742 ± 0.005 | 0.841 ± 0.002 | 0.661 ± 0.012 | 20.0 | 0.818 ± 0.008 |
+| geosub `geo_sub` (L) | 0.947 | 0.948 | 0.949 | 0.934 | 0.795 | 0.889 | 0.724 | 17.5 | 0.896 |
+| ksub `sub_var`, batch 1024 (head on frozen L) | 0.951 ± 0.000 | 0.498 ± 0.002 | 0.939 ± 0.000 | 0.914 ± 0.004 | 0.796 ± 0.004 | **0.890 ± 0.003** | **0.743 ± 0.003** | 18.5 | **0.973 ± 0.006** |
+| ksub `sub_var_coarse01`, batch 1024 (head on frozen L) | **0.985 ± 0.001** | 0.925 ± 0.008 | 0.938 ± 0.002 | 0.917 ± 0.001 | 0.788 ± 0.005 | 0.887 ± 0.001 | 0.734 ± 0.006 | 18.4 | 0.953 ± 0.004 |
+
+- **SCGM-L is below frozen DINOv3-L on subclasses**, as SCGM-B was below frozen DINOv3-B: ACC oracle K 0.742 (backbone CLS) and 0.645 (embedding)
+  vs 0.800; ACC K-hat 0.661 / 0.552 vs 0.660.
+- **ksub and geosub keep the subclasses that SCGM-L loses:** ACC oracle K 0.788-0.796 vs 0.742, ACC K-hat 0.724-0.743 vs 0.661, ARI boot
+  0.896-0.973 vs 0.818. Seed std of SCGM-L is <= 0.012, so the gaps are not seed noise.

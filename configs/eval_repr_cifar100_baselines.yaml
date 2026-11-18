@@ -3,8 +3,8 @@
 data_config: configs/data_cifar100.yaml
 labels: cifar100
 report_dir: repr
-encoders: [scgm_s0, scgm_s0_backbone]   # SCGM: its embedding and the backbone CLS
-# done (reports/cifar100/repr): supcon_s0, simclr_s0, supcon_simclr_s0, lejepa_s0, maskcon_s0, falcon_s0, george_s0, george_erm_s0
+encoders: [scgm_large_s0, scgm_large_s0_backbone, scgm_large_s1, scgm_large_s1_backbone, scgm_large_s2, scgm_large_s2_backbone]   # SCGM on DINOv3-L: its embedding and the backbone CLS
+# done: scgm_s0, scgm_s0_backbone (DINOv3-B); (reports/cifar100/repr): supcon_s0, simclr_s0, supcon_simclr_s0, lejepa_s0, maskcon_s0, falcon_s0, george_s0, george_erm_s0
 crop_sizes: [32]
 knn_k: 20
 n_boot: 1000

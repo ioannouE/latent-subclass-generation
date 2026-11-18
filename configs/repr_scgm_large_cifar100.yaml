@@ -1,0 +1,29 @@
+# SCGM-G on DINOv3-L, for the comparison with ksub (head on frozen DINOv3-L): copy of the scgm entry and recipe of
+# configs/repr_baselines_cifar100.yaml with only backbone (dinov3_base -> dinov3_large), tag and seeds changed. Not tuned.
+# Run: CONFIG=configs/repr_scgm_large_cifar100.yaml sbatch slurm/train_repr.sh; score with configs/eval_repr_cifar100_baselines.yaml.
+data_config: configs/data_cifar100.yaml
+labels: cifar100               # configs/labels.yaml
+tag: _large                    # run names scgm_large_s<seed>: the DINOv3-B run (scgm_s0) is not overwritten
+backbone: dinov3_large         # key of lsgen.features.encoders.ENCODERS
+crop: native_32                # the native 32 px images; the augmentation outputs the backbone's input size
+methods:
+  scgm:                         # SCGM-G, uses K: num_fine = total number of hidden subclasses (the 100 classes); the original's defaults (README, train_scgm_g.py)
+    kind: scgm
+    num_fine: 100
+    tau: 0.1                    # subclass temperature (variance)
+    alpha: 0.5                  # weight of the mixture likelihood terms
+    lmd: 25                     # Sinkhorn-Knopp sharpness
+    estep_every: 5              # epochs between E-steps
+seeds: [0, 1, 2]               # 3 seeds, as ksub
+trainable_blocks: 4            # last N transformer blocks (+ final norm) are fine-tuned, the rest stays frozen
+head: [2048, 128]              # projection head hidden / output dims
+epochs: 50
+batch_size: 256                # images per step (one view each for SCGM)
+lr_backbone: 2.0e-5
+lr_head: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 3
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # + random resized crop and horizontal flip
+eval_every: 10                 # log val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+num_workers: 8                 # = --cpus-per-task in slurm/train_repr.sh
+batch_size_embed: 128
