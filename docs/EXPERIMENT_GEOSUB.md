@@ -83,3 +83,28 @@ its k-means K-hat ACC is lower than frozen (0.603 vs 0.659); with L_supcon 0.614
 - No EMA teacher in L_sub (the backbone is frozen and the head small); the other view's assignment is the target.
 - n_proto = 52 (largest K_c + 2, as NHP), min_count = 10, tau and loss weights other than the L_supcon sweep are my choices, untuned.
 - The R2 K-hat rule (k-means, K <= 25) is unchanged; geosub's own K-hat has no such cap (Sedan has 50 classes).
+
+## `geo_sub` with n_proto 50, seeds 0-4, DINOv3-L, Stanford Cars `maskcon_new` and CIFAR-100 (test)
+`configs/geosub_{maskcon_large_p50,cifar100}.yaml`: `geo_sub` (L_geo + L_sub), n_proto fixed to 50 on both datasets (not derived from K_c; the earlier
+DINOv3-L run used 52 = largest K_c + 2), otherwise as `configs/geosub_maskcon_large.yaml`; on CIFAR-100 the views are cached from the native 32 px
+images with the baselines' augmentation. Not tuned: `geo_sub` is the earlier val choice, test scored once. R1-R5: `configs/eval_repr_{maskcon_geosub,cifar100_geosub}.yaml`;
+own clusters: `configs/eval_geosub_{maskcon_large,cifar100}_test.yaml`. Reports in `reports/repr_maskcon_new/` and `reports/cifar100/repr/`
+(`geosub_geo_sub_*_p50_s<seed>_{256,32,clusters_test}/`). Conflicting images excluded: Stanford Cars 211 (`maskcon_new` list), CIFAR-100 90.
+Trained and scored from uncommitted configs on top of `6957f1b` (`6957f1b-dirty`), committed unchanged afterwards. Mean ± std over seeds 0-4.
+
+| | kNN coarse | fine probe | ACC oracle K | ACC K-hat | ARI K-hat | K-hat | d1/d2 | var ratio | ARI boot | own ACC (prototypes) | own K-hat |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Cars frozen DINOv3-L | 0.944 | 0.950 | **0.800** | 0.660 | 0.641 | 17.0 | 0.877 | 0.429 | 0.874 | - | - |
+| Cars `geo_sub` | 0.945 ± 0.002 | 0.949 | 0.797 ± 0.004 | **0.709 ± 0.011** | **0.689 ± 0.008** | 18.0 | 0.886 | 0.416 | **0.894 ± 0.004** | 0.677 ± 0.016 | 21.2 (true 24.5) |
+| CIFAR frozen DINOv3-L | 0.964 | 0.961 | 0.892 | 0.778 | 0.706 | 5.8 | 0.921 | 0.773 | 0.891 | - | - |
+| CIFAR `geo_sub` | 0.965 ± 0.001 | 0.961 | 0.894 ± 0.002 | 0.782 ± 0.019 | 0.705 ± 0.018 | 5.6 | 0.929 | 0.752 | **0.911 ± 0.004** | 0.685 ± 0.017 | 5.0 (true 5) |
+
+- **n_proto 50 vs 52 changes nothing** (Cars seed 0: every R1-R5 number within 0.004 of the n_proto 52 run).
+- **Stanford Cars: k-means K-hat on z is +0.049 over frozen (5 seeds), but it is all one class.** Cab (18 classes): frozen K-hat 4, ACC 0.235;
+  `geo_sub` z K-hat 12, ACC 0.622. Over the other 7 body types both are 0.721. The single-seed "+0.02 without Cab" above does not hold.
+- **Stanford Cars: the prototypes are only +0.017 over frozen k-means K-hat** (0.677 ± 0.016 vs 0.660; the single-seed 0.713 above was a high seed) and
+  under-split (K-hat 21.2 vs 24.5, abs error 5.6).
+- **CIFAR-100: `geo_sub` z is level with frozen** (K-hat ACC +0.004 with std 0.019; oracle K +0.002). Only ARI boot rises (0.891 -> 0.911).
+- **CIFAR-100: the prototypes are well below frozen k-means K-hat** (0.685 vs 0.778), although their count is right on average (5.0, abs error 1.9).
+- Oracle-K ACC, fine probe and coarse kNN do not move on either dataset: geosub does not make the subclasses more separable. ksub (given K) is well
+  above both on oracle-K ACC (Cars re-cluster 0.810, CIFAR `sub_var_coarse01` 0.919, docs/EXPERIMENT_KSUB.md), but that is the other supervision tier.

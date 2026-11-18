@@ -1,10 +1,11 @@
-# DINOv3-L runs on test (configs/geosub_maskcon_large.yaml), otherwise identical to configs/eval_geosub_maskcon_test.yaml. Run:
+# DINOv3-L runs on test (configs/geosub_maskcon_large{,_p50}.yaml), otherwise identical to configs/eval_geosub_maskcon_test.yaml. Run:
 #   CONFIG=configs/eval_geosub_maskcon_large_test.yaml sbatch slurm/eval_geosub.sh
 data_config: configs/data.yaml
 labels: maskcon_new
 report_dir: repr_maskcon_new
 split: test
-runs: [geosub_geo_sub_bodytype_new_large_s0, geosub_full_bodytype_new_large_s0]   # reported, never used to choose
+runs: [geosub_geo_sub_bodytype_new_large_p50_s0, geosub_geo_sub_bodytype_new_large_p50_s1, geosub_geo_sub_bodytype_new_large_p50_s2, geosub_geo_sub_bodytype_new_large_p50_s3, geosub_geo_sub_bodytype_new_large_p50_s4]   # reported, never used to choose
+# done (reports/repr_maskcon_new): geosub_{geo_sub,full}_bodytype_new_large_s0 (n_proto 52)
 reference: dinov3_large_256    # k-means (R2 pipeline, oracle K and K-hat) on the frozen embedding of the same images: the like-for-like baseline
 subsample: 0.632              # CIs of the reference K-hat table, as configs/eval_representation.yaml
 n_boot: 1000

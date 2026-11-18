@@ -1,0 +1,13 @@
+# CIFAR-100: R1-R5 on test for geosub's z (configs/geosub_cifar100.yaml, after slurm/train_geosub.sh). Same settings as configs/eval_repr_cifar100.yaml;
+# frozen DINOv3-L, the reference row, is already in reports/cifar100/repr. Run: CONFIG=configs/eval_repr_cifar100_geosub.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100
+report_dir: repr                 # under reports_root = reports/cifar100, with the other representation methods
+encoders: [geosub_geo_sub_large_p50_s0, geosub_geo_sub_large_p50_s1, geosub_geo_sub_large_p50_s2, geosub_geo_sub_large_p50_s3, geosub_geo_sub_large_p50_s4]
+crop_sizes: [32]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16            # = --cpus-per-task in slurm/eval_representation.sh
+seed: 0
