@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 from PIL import Image
 
-from lsgen.eval.classifier import ece, fit_temperature
+from lsgen.eval.classifier import MEAN_STD, ece, eval_transform, fit_temperature
 from lsgen.features.extract import embed_images, write_csv
 
 
@@ -41,3 +41,11 @@ def test_temperature_scaling_fixes_overconfidence():
     t = fit_temperature(logits, y)
     assert t > 2
     assert ece((logits / t).softmax(1), y) < 0.2 * ece(logits.softmax(1), y)
+
+
+def test_evaluator_transform_is_identity_resize_at_native_size():
+    # the first Stanford Cars evaluators were scored on 128 px crops without a resize: eval_transform(128) must give the same input
+    from torchvision import transforms as T
+    im = Image.fromarray(np.random.default_rng(0).integers(0, 256, (128, 128, 3), dtype=np.uint8))
+    assert torch.equal(eval_transform(128)(im), T.Compose([T.ToTensor(), T.Normalize(*MEAN_STD)])(im))
+    assert eval_transform(224)(im.resize((32, 32))).shape == (3, 224, 224)

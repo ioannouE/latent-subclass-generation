@@ -1,8 +1,10 @@
 #!/bin/bash
 # Milestone 5: build the control sets and score each with the full panel (GPU). Submit from the repo root:
-#   sbatch slurm/eval_controls.sh
-# Needs slurm/extract_features.sh (all evaluators, incl. inception) and slurm/train_eval_classifier.sh first.
-# Then: python scripts/metric_validation.py (CPU) writes reports/metric_validation.{csv,md,png}.
+#   sbatch slurm/eval_controls.sh                               (Stanford Cars, make scheme)
+#   BENCH=_maskcon_new sbatch slurm/eval_controls.sh            (configs/controls_maskcon_new.yaml, configs/eval_generation_maskcon_new.yaml)
+#   BENCH=_cifar100 sbatch slurm/eval_controls.sh
+# Needs slurm/extract_features.sh (all evaluators, incl. inception), the episodes and slurm/train_eval_classifier.sh first.
+# Then (CPU): python scripts/metric_validation.py --config configs/eval_generation$BENCH.yaml
 #SBATCH --job-name=lsgen-controls
 #SBATCH --partition=rtx
 #SBATCH --nodes=1
@@ -19,8 +21,9 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-python scripts/make_controls.py --config configs/controls.yaml
-CONTROLS=/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/controls   # out_dir in configs/controls.yaml
-for dir in "$CONTROLS"/*_A "$CONTROLS"/*_B; do
-    python scripts/eval_generation.py --config configs/eval_generation.yaml --samples-dir "$dir" --use-case "${dir: -1}"
+BENCH=${BENCH:-}
+
+DIRS=$(python scripts/make_controls.py --config configs/controls$BENCH.yaml)   # builds the controls, prints their directories
+for dir in $DIRS; do
+    python scripts/eval_generation.py --config configs/eval_generation$BENCH.yaml --samples-dir "$dir" --use-case "${dir: -1}"
 done

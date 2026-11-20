@@ -1,0 +1,99 @@
+use_case,control,metric,better,value,lo,hi,floor,floor_lo,floor_hi,expected,worse_than_floor,verdict
+A,c2_oracle_split,G1 FID,lower,11.937825717254327,,,11.937825717254327,,,False,False,floor
+A,c1_copy_train,G1 FID,lower,6.63223403896626,,,11.937825717254327,,,False,False,same
+A,c3_coarse_only,G1 FID,lower,6.694952904558193,,,11.937825717254327,,,False,False,same
+A,c4_prototype_collapse,G1 FID,lower,156.1285722426611,,,11.937825717254327,,,False,True,also
+A,c5_majority_only,G1 FID,lower,21.3714583662528,,,11.937825717254327,,,False,True,also
+A,c6_degraded,G1 FID,lower,256.30936397582246,,,11.937825717254327,,,True,True,ok
+A,c2_oracle_split,G1 KID,lower,-4.887150479151003e-05,,,-4.887150479151003e-05,,,False,False,floor
+A,c1_copy_train,G1 KID,lower,7.134729752635849e-06,,,-4.887150479151003e-05,,,False,False,same
+A,c3_coarse_only,G1 KID,lower,-6.406964872156529e-06,,,-4.887150479151003e-05,,,False,False,same
+A,c4_prototype_collapse,G1 KID,lower,0.0040938979575984,,,-4.887150479151003e-05,,,False,True,also
+A,c5_majority_only,G1 KID,lower,0.0015529948705614,,,-4.887150479151003e-05,,,False,True,also
+A,c6_degraded,G1 KID,lower,0.3293169768725184,,,-4.887150479151003e-05,,,True,True,ok
+A,c2_oracle_split,G1 recall,higher,0.782922429344558,,,0.782922429344558,,,False,False,floor
+A,c1_copy_train,G1 recall,higher,0.7603926675348092,,,0.782922429344558,,,False,False,same
+A,c3_coarse_only,G1 recall,higher,0.7617950515876991,,,0.782922429344558,,,False,False,same
+A,c4_prototype_collapse,G1 recall,higher,0.0,,,0.782922429344558,,,True,True,ok
+A,c5_majority_only,G1 recall,higher,0.5258940198337173,,,0.782922429344558,,,False,True,also
+A,c6_degraded,G1 recall,higher,0.0013022137633977,,,0.782922429344558,,,False,True,also
+A,c2_oracle_split,G2 make acc,higher,0.9347156432180336,0.9275059369737012,0.9417229722114264,0.9347156432180336,0.9275059369737012,0.9417229722114264,False,False,floor
+A,c1_copy_train,G2 make acc,higher,0.9994995991983968,0.9989993987975953,0.9999,0.9347156432180336,0.9275059369737012,0.9417229722114264,False,False,same
+A,c3_coarse_only,G2 make acc,higher,0.999098384623498,0.9983981842226964,0.9996,0.9347156432180336,0.9275059369737012,0.9417229722114264,False,False,same
+A,c4_prototype_collapse,G2 make acc,higher,1.0,1.0,1.0,0.9347156432180336,0.9275059369737012,0.9417229722114264,False,False,same
+A,c5_majority_only,G2 make acc,higher,0.9982983943791196,0.9973969841691416,0.9990985947799214,0.9347156432180336,0.9275059369737012,0.9417229722114264,False,False,same
+A,c6_degraded,G2 make acc,higher,0.1582721938081796,0.1522655493277282,0.1638705949178455,0.9347156432180336,0.9275059369737012,0.9417229722114264,False,True,also
+A,c2_oracle_split,G2 prevalence TV,lower,0.0113144793595971,,,0.0113144793595971,,,False,False,floor
+A,c1_copy_train,G2 prevalence TV,lower,0.0003005108684764,,,0.0113144793595971,,,False,False,same
+A,c3_coarse_only,G2 prevalence TV,lower,0.0007011920264449,,,0.0113144793595971,,,False,False,same
+A,c4_prototype_collapse,G2 prevalence TV,lower,0.0,,,0.0113144793595971,,,False,False,same
+A,c5_majority_only,G2 prevalence TV,lower,0.0007011920264449,,,0.0113144793595971,,,False,False,same
+A,c6_degraded,G2 prevalence TV,lower,0.5679655414204147,,,0.0113144793595971,,,False,True,also
+A,c2_oracle_split,G3 TV,lower,0.0231714219617112,,,0.0231714219617112,,,False,False,floor
+A,c1_copy_train,G3 TV,lower,0.0322507194751278,,,0.0231714219617112,,,False,True,also
+A,c3_coarse_only,G3 TV,lower,0.0362602553027714,,,0.0231714219617112,,,True,True,ok
+A,c4_prototype_collapse,G3 TV,lower,0.0407850633622498,,,0.0231714219617112,,,False,True,also
+A,c5_majority_only,G3 TV,lower,0.7989563339006496,,,0.0231714219617112,,,True,True,ok
+A,c6_degraded,G3 TV,lower,0.392557863991929,,,0.0231714219617112,,,False,True,also
+A,c2_oracle_split,G3 KL,lower,0.0020722875327286,,,0.0020722875327286,,,False,False,floor
+A,c1_copy_train,G3 KL,lower,0.0030371460497632,,,0.0020722875327286,,,False,True,also
+A,c3_coarse_only,G3 KL,lower,0.0044075880545804,,,0.0020722875327286,,,True,True,ok
+A,c4_prototype_collapse,G3 KL,lower,0.0050483892452982,,,0.0020722875327286,,,False,True,also
+A,c5_majority_only,G3 KL,lower,3.333921852923615,,,0.0020722875327286,,,True,True,ok
+A,c6_degraded,G3 KL,lower,0.5263774827996434,,,0.0020722875327286,,,False,True,also
+A,c2_oracle_split,G4 covered,higher,1.0,,,1.0,,,False,False,floor
+A,c1_copy_train,G4 covered,higher,1.0,,,1.0,,,False,False,same
+A,c3_coarse_only,G4 covered,higher,1.0,,,1.0,,,False,False,same
+A,c4_prototype_collapse,G4 covered,higher,1.0,,,1.0,,,False,False,same
+A,c5_majority_only,G4 covered,higher,0.2,,,1.0,,,True,True,ok
+A,c6_degraded,G4 covered,higher,0.3,,,1.0,,,False,True,also
+A,c2_oracle_split,G4 rare covered,higher,1.0,,,1.0,,,False,False,floor
+A,c1_copy_train,G4 rare covered,higher,1.0,,,1.0,,,False,False,same
+A,c3_coarse_only,G4 rare covered,higher,1.0,,,1.0,,,False,False,same
+A,c4_prototype_collapse,G4 rare covered,higher,1.0,,,1.0,,,False,False,same
+A,c5_majority_only,G4 rare covered,higher,0.2,,,1.0,,,True,True,ok
+A,c6_degraded,G4 rare covered,higher,0.3,,,1.0,,,False,True,also
+A,c2_oracle_split,G5 excess KID,lower,-0.0041088079275705,-0.0104972679362525,0.0055450972270057,-0.0041088079275705,-0.0104972679362525,0.0055450972270057,False,False,floor
+A,c1_copy_train,G5 excess KID,lower,0.0040324640610846,0.0020194312258756,0.0103837004125289,-0.0041088079275705,-0.0104972679362525,0.0055450972270057,False,False,same
+A,c3_coarse_only,G5 excess KID,lower,0.0077596741920138,0.0037002721623133,0.0114890235153879,-0.0041088079275705,-0.0104972679362525,0.0055450972270057,False,False,same
+A,c4_prototype_collapse,G5 excess KID,lower,2.4953410238883382,2.4903614056333616,2.4963172489733667,-0.0041088079275705,-0.0104972679362525,0.0055450972270057,True,True,ok
+A,c5_majority_only,G5 excess KID,lower,0.0068149067296075,0.0055932113604959,0.0095761256934359,-0.0041088079275705,-0.0104972679362525,0.0055450972270057,False,True,also
+A,c6_degraded,G5 excess KID,lower,2.876024841738697,2.801392514883028,2.977600666514509,-0.0041088079275705,-0.0104972679362525,0.0055450972270057,False,True,also
+A,c2_oracle_split,G5 KID ratio (ill-conditioned),lower,7.64871871188531,,,7.64871871188531,,,False,False,floor
+A,c1_copy_train,G5 KID ratio (ill-conditioned),lower,-2.542706327297894,,,7.64871871188531,,,False,False,same
+A,c3_coarse_only,G5 KID ratio (ill-conditioned),lower,0.565232714337673,,,7.64871871188531,,,False,False,same
+A,c4_prototype_collapse,G5 KID ratio (ill-conditioned),lower,-153.20703963751848,,,7.64871871188531,,,False,False,same
+A,c5_majority_only,G5 KID ratio (ill-conditioned),lower,0.2061823407721757,,,7.64871871188531,,,False,False,same
+A,c6_degraded,G5 KID ratio (ill-conditioned),lower,-174.95826986621614,,,7.64871871188531,,,False,False,same
+A,c2_oracle_split,G5 coverage ratio,higher,1.0083614535847445,,,1.0083614535847445,,,False,False,floor
+A,c1_copy_train,G5 coverage ratio,higher,0.9790303947260108,,,1.0083614535847445,,,False,False,same
+A,c3_coarse_only,G5 coverage ratio,higher,0.9761578688458872,,,1.0083614535847445,,,False,False,same
+A,c4_prototype_collapse,G5 coverage ratio,higher,0.0652700375302976,,,1.0083614535847445,,,True,True,ok
+A,c5_majority_only,G5 coverage ratio,higher,0.9904381245321096,,,1.0083614535847445,,,False,False,same
+A,c6_degraded,G5 coverage ratio,higher,0.0115755693008179,,,1.0083614535847445,,,False,True,also
+A,c2_oracle_split,G7 copies,lower,0.7140568682418903,,,0.7140568682418903,,,False,False,floor
+A,c1_copy_train,G7 copies,lower,1.0,,,0.7140568682418903,,,True,True,ok
+A,c3_coarse_only,G7 copies,lower,1.0,,,0.7140568682418903,,,False,True,also
+A,c4_prototype_collapse,G7 copies,lower,1.0,,,0.7140568682418903,,,False,True,also
+A,c5_majority_only,G7 copies,lower,1.0,,,0.7140568682418903,,,False,True,also
+A,c6_degraded,G7 copies,lower,0.0033056195532405,,,0.7140568682418903,,,False,False,same
+B,c2_oracle_real,B1 hit rate,higher,0.999125,0.9984968749999996,0.9996250000000002,0.999125,0.9984968749999996,0.9996250000000002,False,False,floor
+B,c1b_copy_support,B1 hit rate,higher,0.85175,0.8399968750000001,0.8637531249999999,0.999125,0.9984968749999996,0.9996250000000002,False,True,also
+B,c1b_retrieve_nn,B1 hit rate,higher,0.9485,0.93975,0.957128125,0.999125,0.9984968749999996,0.9996250000000002,False,True,also
+B,c4_prototype_collapse,B1 hit rate,higher,1.0,1.0,1.0,0.999125,0.9984968749999996,0.9996250000000002,False,False,same
+B,c2_oracle_real,B2 KID vs T,lower,0.0029732038629457,-0.0017293728017072,0.0078805636415264,0.0029732038629457,-0.0017293728017072,0.0078805636415264,False,False,floor
+B,c1b_copy_support,B2 KID vs T,lower,0.4996449927583787,0.4846472257711203,0.5173617600191996,0.0029732038629457,-0.0017293728017072,0.0078805636415264,True,True,ok
+B,c1b_retrieve_nn,B2 KID vs T,lower,0.2882587396322019,0.2702420979306248,0.3073333937123625,0.0029732038629457,-0.0017293728017072,0.0078805636415264,True,True,ok
+B,c4_prototype_collapse,B2 KID vs T,lower,2.494181543554638,2.4464305361782013,2.5417564847343725,0.0029732038629457,-0.0017293728017072,0.0078805636415264,False,True,also
+B,c2_oracle_real,B2 coverage vs T,higher,0.3857357031234049,0.3786350573207959,0.3936775333263181,0.3857357031234049,0.3786350573207959,0.3936775333263181,False,False,floor
+B,c1b_copy_support,B2 coverage vs T,higher,0.2724090554188281,0.2640941564697006,0.2800965337370237,0.3857357031234049,0.3786350573207959,0.3936775333263181,False,True,also
+B,c1b_retrieve_nn,B2 coverage vs T,higher,0.4085538303997588,0.4009893322368094,0.4168511833519446,0.3857357031234049,0.3786350573207959,0.3936775333263181,False,False,same
+B,c4_prototype_collapse,B2 coverage vs T,higher,0.0603329355063825,0.0564362083973997,0.064650992482437,0.3857357031234049,0.3786350573207959,0.3936775333263181,False,True,also
+B,c2_oracle_real,B3 ratio to S,lower,1.0031412574052812,0.9993934838265182,1.0069432933837177,1.0031412574052812,0.9993934838265182,1.0069432933837177,False,False,floor
+B,c1b_copy_support,B3 ratio to S,lower,2.114146406888962,2.099629601281882,2.128154295730591,1.0031412574052812,0.9993934838265182,1.0069432933837177,True,True,ok
+B,c1b_retrieve_nn,B3 ratio to S,lower,1.1571613129377365,1.1481835931897162,1.1669435813844204,1.0031412574052812,0.9993934838265182,1.0069432933837177,True,True,ok
+B,c4_prototype_collapse,B3 ratio to S,lower,1.1083198648691177,1.0941911969065663,1.1225085314929482,1.0031412574052812,0.9993934838265182,1.0069432933837177,False,True,also
+B,c2_oracle_real,B4 diversity ratio,higher,1.0016523615787527,0.9946608007860896,1.0089748872219295,1.0016523615787527,0.9946608007860896,1.0089748872219295,False,False,floor
+B,c1b_copy_support,B4 diversity ratio,higher,0.8130864637333831,0.8046684156892494,0.8220020242962149,1.0016523615787527,0.9946608007860896,1.0089748872219295,False,True,also
+B,c1b_retrieve_nn,B4 diversity ratio,higher,0.7918597446642213,0.7825268660728899,0.8003287531475352,1.0016523615787527,0.9946608007860896,1.0089748872219295,False,True,also
+B,c4_prototype_collapse,B4 diversity ratio,higher,8.659690360636038e-09,-4.95455544042293e-08,7.07816484351061e-08,1.0016523615787527,0.9946608007860896,1.0089748872219295,True,True,ok

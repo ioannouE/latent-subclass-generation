@@ -4,8 +4,8 @@
 # ratio is ill-conditioned even for the floor (-1.9, CI [-61, 72]): excess KID takes its place in `expected` and the ratio stays as a
 # descriptive column; (2) the bootstrap CIs of G3 and of the count / coverage metrics of G4 and G5 were biased (the floor's point estimate lay
 # outside its own CI), so those metrics have no CI and are judged by `margin` like the other set-level metrics. Nothing else was changed.
-data_config: configs/data.yaml
-out: reports/metric_validation
+# Run with an eval config (scripts/metric_validation.py --config configs/eval_generation[_<benchmark>].yaml), which gives the data, label
+# scheme and results; these metrics and expected failures are shared by every benchmark and are not changed per benchmark.
 margin: 0.25                 # metrics without a CI (set-level) must be worse than C2 by this share of |C2| to count as moved
 b_set: single_test_k5        # use case B column of the heat-map (all sets are in the CSV)
 baseline: {A: c2_oracle_split, B: c2_oracle_real}   # real images scored against real images: the noise floor

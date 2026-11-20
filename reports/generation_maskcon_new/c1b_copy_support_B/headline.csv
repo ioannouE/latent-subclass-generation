@@ -1,0 +1,17 @@
+evaluates,metric,set,value,lo,hi,validated
+subclass identity,B1 hit rate,mixed_k10,,,,False
+"new images, not the support",B2 KID vs T,mixed_k10,0.4280469740885296,0.4176909005409733,0.4386446998328547,True
+independence from the support,B3 ratio to S,mixed_k10,3.5564045395453774,3.5414091352621715,3.57049457569917,True
+diversity,B4 diversity ratio,mixed_k10,0.9363774846681624,0.9305049860550784,0.9421963730540396,True
+subclass identity,B1 hit rate,single_test_k1,0.8685117067439265,0.8481324821685139,0.8874535814281503,False
+"new images, not the support",B2 KID vs T,single_test_k1,1.929161740123524,1.8829118194865957,1.9752331968736287,True
+independence from the support,B3 ratio to S,single_test_k1,7.433872727507946,7.119820432540337,7.781845291023614,True
+diversity,B4 diversity ratio,single_test_k1,0.319888328690178,0.3106511629711057,0.3292141248017327,True
+subclass identity,B1 hit rate,single_test_k10,0.850992336506884,0.8412249565478822,0.8612223357207328,False
+"new images, not the support",B2 KID vs T,single_test_k10,0.3123556084060361,0.304052270523465,0.3205528079454365,True
+independence from the support,B3 ratio to S,single_test_k10,3.1941744442255287,3.1692654875296062,3.218594696196959,True
+diversity,B4 diversity ratio,single_test_k10,1.0134833124686773,1.0029211437509495,1.0242200463469942,True
+subclass identity,B1 hit rate,single_test_k5,0.8475694141825607,0.835542554376,0.8592096711388467,False
+"new images, not the support",B2 KID vs T,single_test_k5,0.4831818621773977,0.4719896748568736,0.4943005212948322,True
+independence from the support,B3 ratio to S,single_test_k5,3.728132070658144,3.697141074850681,3.760765746492907,True
+diversity,B4 diversity ratio,single_test_k5,0.9407590854546818,0.9296536573949836,0.9542822245089584,True

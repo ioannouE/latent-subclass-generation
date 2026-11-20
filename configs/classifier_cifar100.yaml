@@ -1,0 +1,15 @@
+# G-0b (docs/EXPERIMENT_GENERATION.md): CIFAR-100 evaluator classifiers. As configs/classifier.yaml, except the 32 px images are upsampled to
+# 224 (ConvNeXt-T downsamples 32x: native 32 px would leave a 1x1 final map) and 15 epochs (45,000 train images, 6x Stanford Cars).
+# Output: <CIFAR derived_root>/evaluators/{fine,make}/model.pt, reports/cifar100/evaluator_{fine,make}.json.
+data_config: configs/data_cifar100.yaml
+labels: cifar100                # heads fine = 100 classes, make = 20 superclasses
+heads: [fine, make]
+crop: native_32
+input_size: 224                 # bicubic upsampling, the same for real and generated images
+arch: convnext_tiny.fb_in1k     # ImageNet init
+epochs: 15
+batch_size: 128
+lr: 2.0e-4
+weight_decay: 0.05
+num_workers: 8                  # = --cpus-per-task in slurm/train_eval_classifier.sh
+seed: 0

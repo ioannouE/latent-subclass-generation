@@ -1,0 +1,134 @@
+{
+ "git_hash": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+ "created_utc": "2026-11-20T14:32:49+00:00",
+ "config": {
+  "data_config": "configs/data_cifar100.yaml",
+  "seed": 0,
+  "labels": "cifar100",
+  "near_dup_files": [
+   "duplicates_all.csv"
+  ],
+  "near_dup_min_sim": 0.75,
+  "single": {
+   "ks": [
+    1,
+    5,
+    10
+   ],
+   "n_episodes": 5,
+   "min_target": 10,
+   "support_sources": [
+    "test",
+    "train"
+   ]
+  },
+  "mixed": {
+   "k": 10,
+   "ratios": [
+    0.2,
+    0.5,
+    0.8
+   ],
+   "n_episodes": 5,
+   "min_target": 10,
+   "max_pairs_per_make": 10
+  },
+  "max_redraws": 100
+ },
+ "config_path": "configs/episodes_cifar100.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "1cf015739e9b592dcee9dfbf0050118bced8343b8aa77ea080a6f27d1c394038",
+ "inputs_sha256": {
+  "duplicates_all.csv": "8071eafc61dd33eac6d5fa3d603c45816d544d68d4d445720a57c3707f9a0f15",
+  "exclude.txt": "2d8951e1952d5f0deddc5fc46e5f3cdbdd9701080806ee2e0ac065cad677cc8a"
+ },
+ "files": {
+  "single_test_k1.json": "6353bb9d4ad365c88f4f054aede4ce7da49b569af2250b798a818914f6b298ae",
+  "single_test_k5.json": "7f2ee2efe677a3ea3d788126a77a0a7b4b9f3baad1952f13fcdd9525807bbb4c",
+  "single_test_k10.json": "358c4461aeb1cbc253d41d923db3f8b2b16176e59fa605b30aef89811b7fe784",
+  "single_train_k1.json": "cb89d50b2329f72c8a67b86d5e9893f8a9d3a077d885a5655f513da4d8432af4",
+  "single_train_k5.json": "12125f3a9b9184183d2f566d256b9f90466ad622aea9349400f0a60da88a2846",
+  "single_train_k10.json": "6134c597f675f74479f08acee9f6cd9c70d4e4fc959c1f2151c4b3b394dcf290",
+  "mixed_k10.json": "c3a4b5cce3261ba8bdc90379cab33322e353002029f0bee610506d8603e538aa"
+ },
+ "summary": {
+  "single_test_k1.json": {
+   "episodes": 500,
+   "eligible_classes": 100,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 12,
+   "target_size_min_median": [
+    96,
+    99
+   ]
+  },
+  "single_test_k5.json": {
+   "episodes": 500,
+   "eligible_classes": 100,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 53,
+   "target_size_min_median": [
+    92,
+    95
+   ]
+  },
+  "single_test_k10.json": {
+   "episodes": 500,
+   "eligible_classes": 100,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 76,
+   "target_size_min_median": [
+    87,
+    90
+   ]
+  },
+  "single_train_k1.json": {
+   "episodes": 500,
+   "eligible_classes": 100,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 10,
+   "target_size_min_median": [
+    97,
+    100
+   ]
+  },
+  "single_train_k5.json": {
+   "episodes": 500,
+   "eligible_classes": 100,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 52,
+   "target_size_min_median": [
+    97,
+    100
+   ]
+  },
+  "single_train_k10.json": {
+   "episodes": 500,
+   "eligible_classes": 100,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 92,
+   "target_size_min_median": [
+    97,
+    100
+   ]
+  },
+  "mixed_k10.json": {
+   "episodes": 3000,
+   "makes": 20,
+   "pairs": 200,
+   "skipped_pair_ratios": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 560,
+   "target_size_min_median": [
+    185,
+    190
+   ]
+  }
+ }
+}

@@ -6,6 +6,7 @@
 !/data/duplicates_all.csv
 !/data/maskcon_coarse.csv
 !/data/episodes/
+!/data/episodes_maskcon_new/
 !/data/splits/
 !/data/manifests/
 !/data/cifar100/

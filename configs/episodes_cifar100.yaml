@@ -1,0 +1,22 @@
+# G-0b (docs/EXPERIMENT_GENERATION.md): CIFAR-100 use-case-B episodes (100 classes, 5 per superclass). As configs/episodes.yaml, except the near-
+# duplicate table: CIFAR-100 has one all-pairs table, which also keeps audit pairs below the 0.75 threshold. Output: data/cifar100/episodes/.
+data_config: configs/data_cifar100.yaml
+seed: 0
+labels: cifar100                    # label scheme (configs/labels.yaml); output <data_root>/episodes[_<labels>]/, committed
+near_dup_files: [duplicates_all.csv]   # in data_root: known near-duplicate pairs (first two columns), kept out of S x T
+near_dup_min_sim: 0.75                  # = duplicates.sscd_threshold in configs/data_cifar100.yaml (or exact copies)
+
+single:
+  ks: [1, 5, 10]
+  n_episodes: 5          # per eligible fine class and k
+  min_target: 10         # eligible if >= k + min_target test images (after exclusions)
+  support_sources: [test, train]   # "train": S from the train split (not val), T = all test images of the class
+
+mixed:
+  k: 10
+  ratios: [0.2, 0.5, 0.8]          # share of subclass a in S
+  n_episodes: 5                    # per (pair, ratio)
+  min_target: 10                   # per subclass, after removing its support
+  max_pairs_per_make: 10           # all pairs if fewer; else a seeded sample
+
+max_redraws: 100                   # redraw S to avoid near-duplicate pairs between S and T

@@ -1,0 +1,21 @@
+# G-0b (docs/EXPERIMENT_GENERATION.md): generation metrics under the maskcon_new scheme (coarse = 8 body types, subclass = 196 classes; G2 "make"
+# accuracy is body-type accuracy). Copy of configs/eval_generation.yaml with only `labels` changed. Output: reports/generation_maskcon_new/.
+data_config: configs/data.yaml
+labels: maskcon_new          # label scheme (configs/labels.yaml): its evaluators, episodes and exclusion list; output <reports_root>/generation[_<labels>]/
+validation_config: configs/metric_validation.yaml   # its `headline` metrics are written to headline.csv
+use_case: A                  # A | B
+samples_dir: outputs/samples/example
+crop: bbox15
+crop_size: 128               # reference embeddings are the cached crops of this size
+tau_target: 0.9              # G4: tau = smallest confidence at which the calibrated fine classifier has this val accuracy
+min_samples: 5               # G4: samples needed to call a fine class covered
+copy_threshold: 0.5          # G7
+prdc_k: 5                    # G1 neighbourhood size
+coverage_k: 3                # G4/G5/B2 neighbourhood size (small sets)
+n_episodes_images: 16        # B: expected generated images per episode
+subsample: 0.632              # G4/G5 CIs of KID: draws without replacement of this fraction of a make (resampling duplicates biases it)
+n_boot: 1000
+n_jobs: 16                   # = --cpus-per-task in slurm/eval_generation.sh
+batch_size: 128
+num_workers: 8
+seed: 0

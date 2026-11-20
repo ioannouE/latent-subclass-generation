@@ -1,0 +1,10 @@
+group,metric,mean,lo,hi,n
+1,make_acc,1.0,1.0,1.0,2026
+3,make_acc,1.0,1.0,1.0,1176
+2,make_acc,1.0,1.0,1.0,1488
+7,make_acc,1.0,1.0,1.0,527
+6,make_acc,1.0,1.0,1.0,241
+4,make_acc,1.0,1.0,1.0,1167
+5,make_acc,1.0,1.0,1.0,571
+0,make_acc,1.0,1.0,1.0,744
+macro,make_acc,1.0,1.0,1.0,8

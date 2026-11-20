@@ -1,0 +1,135 @@
+{
+ "git_hash": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+ "created_utc": "2026-11-20T14:32:43+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "seed": 0,
+  "labels": "maskcon_new",
+  "near_dup_files": [
+   "duplicates.csv",
+   "duplicates_within_test.csv"
+  ],
+  "single": {
+   "ks": [
+    1,
+    5,
+    10
+   ],
+   "n_episodes": 5,
+   "min_target": 10,
+   "support_sources": [
+    "test",
+    "train"
+   ]
+  },
+  "mixed": {
+   "k": 10,
+   "ratios": [
+    0.2,
+    0.5,
+    0.8
+   ],
+   "n_episodes": 5,
+   "min_target": 10,
+   "max_pairs_per_make": 10
+  },
+  "max_redraws": 100
+ },
+ "config_path": "configs/episodes_maskcon_new.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "inputs_sha256": {
+  "duplicates.csv": "fcae1f324c2f32fa5ab2e2e882e9da44941936a78b10f11532b610c0a58e8597",
+  "duplicates_within_test.csv": "3a66b8ca922cbf9e4a8a53a0d0454489e67418a5159ddc4e07ddcbd01335d025",
+  "exclude_maskcon_new.txt": "c5dd81d81780573fea30468de3cc9a355cc3efd0291b334e64bb228ff8cbcfa2"
+ },
+ "files": {
+  "single_test_k1.json": "ea5316bf9ee99cd3ae8e5379732970a727c7293e83a389ead89ef4e66ba419bf",
+  "single_test_k5.json": "726226e8e4b546d2a0aeeeee0ac7864d500fd8ad31091f5771982093af75d19b",
+  "single_test_k10.json": "68fbdeda8e02326bd98e5dfe446b7c1d15c4364ea6113156b0b5bf230bac817c",
+  "single_train_k1.json": "980258086ed524f0acce1db65a0f4cb9d9f9ad0ca903737a29b54f361992aaf4",
+  "single_train_k5.json": "22889265302f43d2a1c19116c1c729a765c52adec03c37d105771a285420ea58",
+  "single_train_k10.json": "82ca50c2e2166a44e2032ad2d8ddd2a93304dd519a7a9d736a88a0d4d97bb50a",
+  "mixed_k10.json": "dad003bc7caf79ddfcd0e1f225ee9179f081d37fc730079bbb90ff4d10ffc991"
+ },
+ "summary": {
+  "single_test_k1.json": {
+   "episodes": 980,
+   "eligible_classes": 196,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 13,
+   "target_size_min_median": [
+    23,
+    40
+   ]
+  },
+  "single_test_k5.json": {
+   "episodes": 980,
+   "eligible_classes": 196,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 46,
+   "target_size_min_median": [
+    19,
+    36
+   ]
+  },
+  "single_test_k10.json": {
+   "episodes": 980,
+   "eligible_classes": 196,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 70,
+   "target_size_min_median": [
+    14,
+    31
+   ]
+  },
+  "single_train_k1.json": {
+   "episodes": 980,
+   "eligible_classes": 196,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 12,
+   "target_size_min_median": [
+    24,
+    41
+   ]
+  },
+  "single_train_k5.json": {
+   "episodes": 980,
+   "eligible_classes": 196,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 41,
+   "target_size_min_median": [
+    24,
+    41
+   ]
+  },
+  "single_train_k10.json": {
+   "episodes": 980,
+   "eligible_classes": 196,
+   "skipped_classes": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 85,
+   "target_size_min_median": [
+    24,
+    41
+   ]
+  },
+  "mixed_k10.json": {
+   "episodes": 1200,
+   "makes": 8,
+   "pairs": 80,
+   "skipped_pair_ratios": 0,
+   "with_near_dup_S_T": 0,
+   "redrawn": 87,
+   "target_size_min_median": [
+    58,
+    72
+   ]
+  }
+ }
+}

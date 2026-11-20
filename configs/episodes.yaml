@@ -1,7 +1,8 @@
 # Milestone 2: use-case-B episodes (frozen before any method runs).
 data_config: configs/data.yaml   # raw/derived/data roots come from here
 seed: 0
-out_dir: data/episodes           # relative to repo, committed
+labels: make                     # label scheme (configs/labels.yaml); output <data_root>/episodes[_<labels>]/, committed
+near_dup_files: [duplicates.csv, duplicates_within_test.csv]   # in data_root: known near-duplicate pairs (first two columns), kept out of S x T
 
 single:
   ks: [1, 5, 10]

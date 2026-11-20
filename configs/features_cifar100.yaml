@@ -2,7 +2,7 @@
 # Copy of configs/features.yaml with only data_config / crop / encoders / crop_sizes changed.
 data_config: configs/data_cifar100.yaml
 crop: native                     # <derived_root>/native_32/{id}.png
-encoders: [dinov3_base, dinov3_large, clip_l, sscd]
+encoders: [dinov3_base, dinov3_large, clip_l, sscd, inception]   # inception: G1 evaluator (FID/KID), added for G-0b; cached ones are skipped
 crop_sizes: [32]
 splits: [train, val, test]       # conflicting images (data/cifar100/splits/exclude.txt) are dropped
 batch_size: 128

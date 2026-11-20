@@ -19,6 +19,12 @@ def scheme(name):
     return SCHEMES[name]
 
 
+def suffix(name, dcfg):
+    """'' for the data config's own scheme, else '_<name>': outputs of another scheme on the same images (maskcon_new on Stanford Cars:
+    evaluators, episodes, controls, generation results) sit next to the default ones instead of replacing them."""
+    return "" if name == dcfg.get("labels", "make") else f"_{name}"
+
+
 def coarse_classes(data_root, scheme_name="make"):
     """DataFrame indexed by the coarse label (make_id): coarse_name and K_c, the number of hidden subclasses of the class (all splits).
     K_c is the only fine-label information a "uses K" method is given."""

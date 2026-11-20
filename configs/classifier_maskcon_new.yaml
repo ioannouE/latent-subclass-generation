@@ -1,0 +1,14 @@
+# G-0b (docs/EXPERIMENT_GENERATION.md): evaluator classifiers for the maskcon_new scheme. Copy of configs/classifier.yaml with only `labels` changed.
+# Output: <derived_root>/evaluators_maskcon_new/{fine,make}/model.pt, reports/evaluator_maskcon_new_{fine,make}.json.
+data_config: configs/data.yaml
+labels: maskcon_new             # heads fine = 196 official classes, make = 8 body types
+heads: [fine, make]
+crop: bbox15_128
+input_size: 128                 # = the crop: no resize
+arch: convnext_tiny.fb_in1k     # ImageNet init
+epochs: 30
+batch_size: 128
+lr: 2.0e-4
+weight_decay: 0.05
+num_workers: 8                  # = --cpus-per-task in slurm/train_eval_classifier.sh
+seed: 0

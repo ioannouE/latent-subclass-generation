@@ -22,6 +22,13 @@ log = logging.getLogger(__name__)
 FAMILIES = {"single_test": 0, "single_train": 1, "mixed": 2}
 
 
+def pools(meta, split, exclude):
+    """{fine_id: sorted ids} of a split. meta: id-indexed with `split` and `fine_id` (of the label scheme); exclude: the scheme's
+    conflicting images, never in S or T."""
+    m = meta[(meta.split == split) & ~meta.index.isin(list(exclude))]
+    return {int(g): sorted(ids) for g, ids in m.groupby("fine_id").groups.items()}
+
+
 def episode_seed(base_seed, family, k, *keys):
     return int(np.random.SeedSequence([base_seed, FAMILIES[family], k, *keys]).generate_state(1)[0])
 

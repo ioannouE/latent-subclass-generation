@@ -1,0 +1,49 @@
+{
+ "git_hash": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+ "created_utc": "2026-11-20T16:35:02+00:00",
+ "config": {
+  "data_config": "configs/data_cifar100.yaml",
+  "labels": "cifar100",
+  "validation_config": "configs/metric_validation.yaml",
+  "use_case": "B",
+  "samples_dir": "/nvme/h/eioannou/data_p315/CIFAR100/lsgen_derived/controls/c2_oracle_real_B",
+  "crop": "native",
+  "crop_size": 32,
+  "tau_target": 0.9,
+  "min_samples": 5,
+  "copy_threshold": 0.5,
+  "prdc_k": 5,
+  "coverage_k": 3,
+  "n_episodes_images": 16,
+  "subsample": 0.632,
+  "n_boot": 1000,
+  "n_jobs": 16,
+  "batch_size": 128,
+  "num_workers": 8,
+  "seed": 0
+ },
+ "config_path": "configs/eval_generation_cifar100.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "1cf015739e9b592dcee9dfbf0050118bced8343b8aa77ea080a6f27d1c394038",
+ "excluded_conflicting_images": {
+  "train": 68,
+  "val": 5,
+  "test": 17
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "episodes": 4500,
+  "by_set": 1092
+ },
+ "table_git_hash": {
+  "episodes": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+  "by_set": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty"
+ },
+ "method": {
+  "name": "c2_oracle_real",
+  "uses": [],
+  "git_hash": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+  "seed": 0
+ },
+ "same_family_warnings": []
+}

@@ -1,7 +1,9 @@
 """Build the control sets of docs/PLAN.md A5 (CPU, minutes): use case A: C1 copy-train, C2 oracle split, C3 coarse-only,
 C4 prototype collapse, C5 majority-only, C6 degraded; use case B: C1b copy-support, C1b retrieve-NN, C2 real images of
-the subclass, C4 prototype collapse. Score them with slurm/eval_controls.sh.
+the subclass, C4 prototype collapse. Score them with slurm/eval_controls.sh, which also runs this script.
     python scripts/make_controls.py --config configs/controls.yaml
+Output: <derived_root>/controls[_<labels>]/<control>_<A|B>/ (suffix only for a scheme other than the data config's own,
+lsgen.data.labels.suffix); the directories are printed on stdout, one per line, for slurm/eval_controls.sh.
 """
 import argparse
 import json
@@ -13,6 +15,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
+from lsgen.data.labels import load_labels, suffix
 from lsgen.data.splits import load_split
 from lsgen.eval import controls as C
 from lsgen.features.extract import read_csv
@@ -23,12 +26,13 @@ log = logging.getLogger("make_controls")
 
 class Builder:
     def __init__(self, cfg, dcfg):
-        self.cfg, self.derived = cfg, Path(dcfg["derived_root"])
-        self.splits_dir, self.episodes_dir = Path(dcfg["data_root"]) / "splits", Path(dcfg["data_root"]) / "episodes"
-        self.images = self.derived / f"bbox15_{cfg['crop_size']}"
-        self.meta = pd.read_parquet(self.derived / "metadata.parquet", columns=["id", "make_id", "fine_id"]).set_index("id")
+        labels, sfx = cfg.get("labels", "make"), suffix(cfg.get("labels", "make"), dcfg)
+        self.cfg, self.derived, self.out = cfg, Path(dcfg["derived_root"]), Path(dcfg["derived_root"]) / f"controls{sfx}"
+        self.splits_dir, self.episodes_dir = Path(dcfg["data_root"]) / "splits", Path(dcfg["data_root"]) / f"episodes{sfx}"
+        self.images = self.derived / f"{cfg.get('crop', 'bbox15')}_{cfg['crop_size']}"
+        self.meta = load_labels(self.derived, dcfg["data_root"], labels)[["make_id", "fine_id"]]
         self.make_of_fine = self.meta.groupby("fine_id").make_id.first().sort_index().to_numpy()
-        self.ids = {s: load_split(self.splits_dir, s) for s in ("train", "test", "test_A")}
+        self.ids = {s: load_split(self.splits_dir, s, labels=labels) for s in ("train", "test", "test_A")}
         self.feats = {}
         for s in ("train", "test"):
             files, x = read_csv(self.derived / "features" / f"{cfg['features']}_{cfg['crop_size']}" / f"{s}.csv")
@@ -39,7 +43,7 @@ class Builder:
 
     def write(self, name, case, items, uses=(), **method):
         """items: [(columns of samples.csv, source image id, transform or None)]. Unmodified images are symlinked."""
-        out = self.derived / self.cfg["out_dir"] / f"{name}_{case}"
+        out = self.out / f"{name}_{case}"
         shutil.rmtree(out, ignore_errors=True)
         out.mkdir(parents=True)
         rows = []
@@ -53,6 +57,7 @@ class Builder:
         pd.DataFrame(rows).to_csv(out / "samples.csv", index=False)
         (out / "method.json").write_text(json.dumps({"name": name, "uses": list(uses), "git_hash": git_hash(), "seed": self.cfg["seed"], **method}, indent=1))
         log.info("%s_%s: %d images", name, case, len(rows))
+        print(out)
 
     # ---- use case A
     def use_case_a(self):

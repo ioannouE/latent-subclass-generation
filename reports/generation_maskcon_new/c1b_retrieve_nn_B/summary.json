@@ -1,0 +1,51 @@
+{
+ "git_hash": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+ "created_utc": "2026-11-20T16:29:47+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon_new",
+  "validation_config": "configs/metric_validation.yaml",
+  "use_case": "B",
+  "samples_dir": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/controls_maskcon_new/c1b_retrieve_nn_B",
+  "crop": "bbox15",
+  "crop_size": 128,
+  "tau_target": 0.9,
+  "min_samples": 5,
+  "copy_threshold": 0.5,
+  "prdc_k": 5,
+  "coverage_k": 3,
+  "n_episodes_images": 16,
+  "subsample": 0.632,
+  "n_boot": 1000,
+  "n_jobs": 16,
+  "batch_size": 128,
+  "num_workers": 8,
+  "seed": 0
+ },
+ "config_path": "configs/eval_generation_maskcon_new.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 98,
+  "val": 12,
+  "test": 101
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "episodes": 4140,
+  "by_set": 468
+ },
+ "table_git_hash": {
+  "episodes": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+  "by_set": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty"
+ },
+ "method": {
+  "name": "c1b_retrieve_nn",
+  "uses": [
+   "dinov3_base"
+  ],
+  "git_hash": "1bfc31214bdc3f7253e40ff5b3fc71dde43f0dfc-dirty",
+  "seed": 0
+ },
+ "same_family_warnings": []
+}

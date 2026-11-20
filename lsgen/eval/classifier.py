@@ -5,6 +5,14 @@ import timm
 import torch
 import torch.nn.functional as F
 from PIL import Image
+from torchvision import transforms as T
+
+MEAN_STD = ((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+
+
+def eval_transform(size):
+    """Evaluation input: bicubic resize to the classifier's input size (a no-op for the 128 px Stanford Cars crops), ImageNet normalisation."""
+    return T.Compose([T.Resize((size, size), interpolation=T.InterpolationMode.BICUBIC), T.ToTensor(), T.Normalize(*MEAN_STD)])
 
 
 class LabelledImages(torch.utils.data.Dataset):
@@ -79,11 +87,12 @@ def ece(probs, labels, n_bins=15):
 
 
 def load_classifier(path, device):
-    """Evaluator checkpoint written by scripts/train_eval_classifier.py -> (model, temperature)."""
+    """Evaluator checkpoint written by scripts/train_eval_classifier.py -> (model, temperature, input transform).
+    Checkpoints without `input_size` are the first Stanford Cars evaluators, trained on 128 px crops."""
     ck = torch.load(path, map_location="cpu")
     model = timm.create_model(ck["arch"], pretrained=False, num_classes=ck["n_classes"])
     model.load_state_dict(ck["state_dict"])
-    return model.to(device).eval(), ck["temperature"]
+    return model.to(device).eval(), ck["temperature"], eval_transform(ck.get("input_size", 128))
 
 
 @torch.no_grad()

@@ -1,0 +1,10 @@
+# G-0b (docs/EXPERIMENT_GENERATION.md): CIFAR-100 control sets. Copy of configs/controls.yaml with data_config / labels / crop changed.
+# Output: <CIFAR derived_root>/controls/.
+data_config: configs/data_cifar100.yaml
+labels: cifar100                # label scheme (configs/labels.yaml); output <derived_root>/controls[_<labels>]/, episodes from <data_root>/episodes[_<labels>]/
+crop: native
+crop_size: 32
+features: dinov3_base          # embeddings for the C4 medoids and C1b retrieve-NN (cached by scripts/extract_features.py)
+episode_sets: [single_test_k1, single_test_k5, single_test_k10, mixed_k10]   # use case B (support and target from test)
+n_episodes_images: 16          # images per episode, as in configs/eval_generation.yaml
+seed: 0

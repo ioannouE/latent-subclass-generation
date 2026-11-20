@@ -1,0 +1,10 @@
+# G-0b (docs/EXPERIMENT_GENERATION.md): control sets for the maskcon_new scheme. Copy of configs/controls.yaml with only `labels` changed.
+# Output: <derived_root>/controls_maskcon_new/.
+data_config: configs/data.yaml
+labels: maskcon_new                # label scheme (configs/labels.yaml); output <derived_root>/controls[_<labels>]/, episodes from <data_root>/episodes[_<labels>]/
+crop: bbox15
+crop_size: 128
+features: dinov3_base          # embeddings for the C4 medoids and C1b retrieve-NN (cached by scripts/extract_features.py)
+episode_sets: [single_test_k1, single_test_k5, single_test_k10, mixed_k10]   # use case B (support and target from test)
+n_episodes_images: 16          # images per episode, as in configs/eval_generation.yaml
+seed: 0

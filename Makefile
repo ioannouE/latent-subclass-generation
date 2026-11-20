@@ -27,7 +27,7 @@ controls:
 
 # CPU, seconds: controls x metrics table and heat-map from the control results
 metric-validation:
-	python scripts/metric_validation.py --config configs/metric_validation.yaml
+	python scripts/metric_validation.py --config configs/eval_generation.yaml
 
 # CPU, seconds: the metric-validation table (exits 1 if a control missed a metric), then reports/report.md
 report: metric-validation

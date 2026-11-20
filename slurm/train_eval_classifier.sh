@@ -1,7 +1,9 @@
 #!/bin/bash
-# Milestone 3: train the evaluator classifiers (subclass make-model 189, make 49; evaluation only). Submit from the repo root:
-#   sbatch slurm/train_eval_classifier.sh
-# Settings are in configs/classifier.yaml. Run after slurm/prepare_data.sh.
+# Milestone 3: train the evaluator classifiers (hidden subclass and coarse class; evaluation only). Submit from the repo root:
+#   sbatch slurm/train_eval_classifier.sh                                          (Stanford Cars, make scheme)
+#   CONFIG=configs/classifier_maskcon_new.yaml sbatch slurm/train_eval_classifier.sh
+#   CONFIG=configs/classifier_cifar100.yaml sbatch slurm/train_eval_classifier.sh
+# Settings are in the config. Run after slurm/prepare_data.sh.
 #SBATCH --job-name=lsgen-classifier
 #SBATCH --partition=rtx           # any GPU partition works (a100, rtx, a5000, ...)
 #SBATCH --nodes=1
@@ -18,4 +20,6 @@ set -euo pipefail
 cd /nvme/h/eioannou/code/latent-subclass-generation
 source activate diffusion
 
-python scripts/train_eval_classifier.py --config configs/classifier.yaml
+CONFIG=${CONFIG:-configs/classifier.yaml}
+
+python scripts/train_eval_classifier.py --config $CONFIG

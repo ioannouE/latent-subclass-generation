@@ -1,7 +1,8 @@
 """Controls x metrics (docs/PLAN.md A5, Milestone 5; CPU, seconds). Needs the control results of slurm/eval_controls.sh.
-Writes <out>.csv (one row per control and metric), <out>.md and <out>.png (heat-map). Exits with 1 if a control does not
-fail a metric it must fail: stop and report, do not tune.
-    python scripts/metric_validation.py --config configs/metric_validation.yaml
+The metrics and expected failures are those of the eval config's `validation_config` (one frozen list for every benchmark); the data,
+label scheme and result directory are the eval config's. Writes <reports_root>/metric_validation[_<labels>].csv (one row per control and
+metric), .md and .png (heat-map). Exits with 1 if a control does not fail a metric it must fail: stop and report, do not tune.
+    python scripts/metric_validation.py --config configs/eval_generation.yaml
 """
 import argparse
 import json
@@ -13,6 +14,7 @@ import matplotlib
 import numpy as np
 import pandas as pd
 
+from lsgen.data.labels import suffix
 from lsgen.eval.report import exclusion_note
 from lsgen.eval.validation import read_metric, verdict, worse_than
 from lsgen.utils import REPO_ROOT, git_hash, load_config, setup_logging
@@ -65,20 +67,23 @@ def heatmap(df, path, b_set):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs/metric_validation.yaml")
-    cfg = load_config(ap.parse_args().config)
+    ap.add_argument("--config", default="configs/eval_generation.yaml", help="the eval config the controls were scored with")
+    ecfg = load_config(ap.parse_args().config)
+    cfg = load_config(REPO_ROOT / ecfg["validation_config"])
     setup_logging()
-    dcfg = load_config(REPO_ROOT / cfg["data_config"])
-    runs_dir, out = Path(dcfg["reports_root"]) / "generation", REPO_ROOT / cfg["out"]
+    dcfg = load_config(REPO_ROOT / ecfg["data_config"])
+    labels = ecfg.get("labels", "make")
+    sfx, splits_dir = suffix(labels, dcfg), Path(dcfg["data_root"]) / "splits"
+    runs_dir, out = Path(dcfg["reports_root"]) / f"generation{sfx}", Path(dcfg["reports_root"]) / f"metric_validation{sfx}"
     df = collect(cfg, runs_dir)
     df.to_csv(out.with_suffix(".csv"), index=False)
     heatmap(df, out.with_suffix(".png"), cfg["b_set"])
     missed = df[df.verdict == "MISSED"]
-    floor = df[df.verdict == "floor"].pivot(index="metric", columns="use_case", values="value")
+    removed = exclusion_note(splits_dir, labels=labels)
     out.with_suffix(".md").write_text(
         f"# Metric validation (controls x metrics)\n\nProvenance: git `{git_hash()}`, seed {json.loads((runs_dir / (cfg['baseline']['A'] + '_A') / 'summary.json').read_text())['seed']}, "
-        f"config `{cfg['_config_path']}`. {exclusion_note(Path(dcfg['data_root']) / 'splits')['note']}: "
-        f"{exclusion_note(Path(dcfg['data_root']) / 'splits')['excluded_conflicting_images']} (train / val / test).\n\n"
+        f"config `{cfg['_config_path']}`, eval config `{ecfg['_config_path']}`, label scheme `{labels}`. {removed['note']}: "
+        f"{removed['excluded_conflicting_images']} (train / val / test).\n\n"
         f"Floor = {cfg['baseline']['A']} (A), {cfg['baseline']['B']} (B, set {cfg['b_set']}). Verdicts: ok = expected and clearly worse than the floor; "
         f"MISSED = expected, not worse; also = worse though not expected; same = unchanged.\n\n"
         f"## Expected failures that were missed: {len(missed)}\n\n{missed[['use_case', 'control', 'metric', 'value', 'floor']].to_markdown(index=False) if len(missed) else 'none'}\n\n"

@@ -1,7 +1,8 @@
 """Score generated images (docs/METRICS.md): use case A (G1-G7) or B (B1-B6), per configs/eval_generation.yaml. GPU:
     sbatch slurm/eval_generation.sh
 Refuses to run if the method declares an encoder that is also an evaluator (lsgen/eval/evaluators.py).
-Output: <reports_root>/generation/<method name>_<use case>/*.csv + summary.json. Reference = test (and train for G4/G5/G7);
+Output: <reports_root>/generation[_<labels>]/<method name>_<use case>/*.csv + summary.json (suffix only for a label scheme other than the data
+config's own, lsgen.data.labels.suffix; the evaluators and episodes of that scheme are used). Reference = test (and train for G4/G5/G7);
 method.json may set "reference_split": "test_B" (control C2 scores test_A against test_B).
 """
 import argparse
@@ -13,8 +14,8 @@ import numpy as np
 import pandas as pd
 import torch
 from PIL import Image
-from torchvision import transforms as T
 
+from lsgen.data.labels import load_labels, suffix
 from lsgen.data.splits import load_split
 from lsgen.eval import memorization, support, synthesis
 from lsgen.eval.classifier import calibrated_probs, load_classifier
@@ -30,17 +31,18 @@ log = logging.getLogger("eval_generation")
 # Metrics of the G4 / G5 table that depend on the number of samples (counts, nearest-neighbour coverage) or are ill-conditioned (ratio):
 # resampling biases them (duplicates), so they are point estimates. KID and excess KID are unbiased at any n and keep subsample CIs.
 NO_CI_G4_G5 = ["frac_covered", "frac_rare_covered", "frac_common_covered", "coverage", "coverage_ratio", "kid_ratio"]
-CLASSIFIER_TF = T.Compose([T.ToTensor(), T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])  # as in training
 
 
 class Context:
     """Reference embeddings (cached), labels, and the evaluators needed to embed generated images."""
 
     def __init__(self, cfg, dcfg, device):
-        self.cfg, self.device = cfg, device
-        self.derived, self.splits_dir = Path(dcfg["derived_root"]), Path(dcfg["data_root"]) / "splits"
-        self.sscd = self.derived / "weights" / Path(dcfg["duplicates"]["sscd_url"]).name
-        self.meta = pd.read_parquet(self.derived / "metadata.parquet", columns=["id", "make_id", "fine_id"]).set_index("id")
+        self.cfg, self.device, self.scheme = cfg, device, cfg.get("labels", "make")
+        self.derived, self.splits_dir, self.suffix = Path(dcfg["derived_root"]), Path(dcfg["data_root"]) / "splits", suffix(self.scheme, dcfg)
+        self.images = self.derived / f"{cfg.get('crop', 'bbox15')}_{cfg['crop_size']}"
+        self.episodes_dir = Path(dcfg["data_root"]) / f"episodes{self.suffix}"
+        self.sscd = Path(dcfg["duplicates"].get("sscd_weights_dir", self.derived / "weights")) / Path(dcfg["duplicates"]["sscd_url"]).name
+        self.meta = load_labels(self.derived, dcfg["data_root"], self.scheme)[["make_id", "fine_id"]]
         self.make_of_fine = self.meta.groupby("fine_id").make_id.first().sort_index().to_numpy()
         self.dataset_hash = json.loads((self.splits_dir.parent / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
 
@@ -48,7 +50,7 @@ class Context:
         """(ids, embeddings) of a split (test_A / test_B: its half of test), from the cache written by scripts/extract_features.py."""
         files, x = read_csv(self.derived / "features" / f"{space}_{self.cfg['crop_size']}" / f"{split.split('_')[0]}.csv")
         ids = np.array([f[:-4] for f in files])
-        keep = np.isin(ids, load_split(self.splits_dir, split))
+        keep = np.isin(ids, load_split(self.splits_dir, split, labels=self.scheme))
         return list(ids[keep]), x[keep]
 
     def labels(self, ids, col):
@@ -62,8 +64,8 @@ class Context:
         return x
 
     def probs(self, label, paths):
-        model, temperature = load_classifier(self.derived / "evaluators" / label / "model.pt", self.device)
-        return calibrated_probs(model, temperature, paths, CLASSIFIER_TF, self.device, self.cfg["batch_size"], self.cfg["num_workers"])
+        model, temperature, transform = load_classifier(self.derived / f"evaluators{self.suffix}" / label / "model.pt", self.device)
+        return calibrated_probs(model, temperature, paths, transform, self.device, self.cfg["batch_size"], self.cfg["num_workers"])
 
 
 def subsample(x, n, seed):
@@ -97,8 +99,8 @@ def run_a(ctx, samples, paths, test="test"):
     test_fine_counts = np.bincount(test_fine, minlength=len(ctx.make_of_fine))
     t["g3"] = point_table(synthesis.g3_metric(fine_probs, req, ctx.make_of_fine, test_fine_counts), groups)  # histogram distances: no valid CI
 
-    val_ids = load_split(ctx.splits_dir, "val")
-    val_probs = ctx.probs("fine", [ctx.derived / f"bbox15_{cfg['crop_size']}" / f"{i}.png" for i in val_ids])
+    val_ids = load_split(ctx.splits_dir, "val", labels=ctx.scheme)
+    val_probs = ctx.probs("fine", [ctx.images / f"{i}.png" for i in val_ids])
     tau = synthesis.choose_tau(val_probs, ctx.labels(val_ids, "fine_id"), cfg["tau_target"])
     rare = synthesis.rare_classes(np.bincount(train_fine, minlength=len(ctx.make_of_fine)))
     cf = synthesis.ClassFidelity(feats["clip_l"], fine_probs, req, ctx.make_of_fine, tau, ref["clip_l", test], test_fine,
@@ -124,7 +126,7 @@ def run_a(ctx, samples, paths, test="test"):
     null = memorization.nearest_similarity(ref["sscd", test], ref["sscd", "train"])[0]
     t["g7"] = pd.DataFrame([memorization.copy_summary(sim, null, cfg["copy_threshold"]) | {"tau": tau, "n": len(sim)}])
     t["g7_samples"] = pd.DataFrame({"filename": samples.filename, "sscd_sim": sim, "nn_train_id": np.array(train_ids)[nn]})
-    train_paths = [ctx.derived / f"bbox15_{cfg['crop_size']}" / f"{i}.png" for i in train_ids]
+    train_paths = [ctx.images / f"{i}.png" for i in train_ids]
     return t, lambda out: memorization.nn_grid(paths, train_paths, sim, nn, out / "g7_nn_grid.png")
 
 
@@ -137,7 +139,7 @@ def load_episodes(episodes_dir):
 
 def run_b(ctx, samples, paths):
     cfg, seed = ctx.cfg, ctx.cfg["seed"]
-    episodes = load_episodes(ctx.splits_dir.parent / "episodes")
+    episodes = load_episodes(ctx.episodes_dir)
     clip, sscd, fine_probs = ctx.embed("clip_l", paths), ctx.embed("sscd", paths), ctx.probs("fine", paths)
     ref = {s: {i: v for sp in ("train", "test") for i, v in zip(*ctx.reference(s, sp))} for s in ("clip_l", "sscd")}
     rows = []
@@ -192,7 +194,7 @@ def main():
         tables, extra_output = run_a(ctx, samples, paths, method.get("reference_split", "test"))
     else:
         tables, extra_output = run_b(ctx, samples, paths)
-    out = Path(dcfg["reports_root"]) / "generation" / f"{method['name']}_{cfg['use_case']}"
+    out = Path(dcfg["reports_root"]) / f"generation{ctx.suffix}" / f"{method['name']}_{cfg['use_case']}"
     write_results(out, tables, cfg, cfg["seed"], ctx.dataset_hash, ctx.splits_dir, method=method, same_family_warnings=warnings)
     headline_table(out, load_config(REPO_ROOT / cfg["validation_config"]), cfg["use_case"]).to_csv(out / "headline.csv", index=False)
     if extra_output:
