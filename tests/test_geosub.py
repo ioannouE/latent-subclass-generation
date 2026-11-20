@@ -62,7 +62,8 @@ def test_geosub_loss_weights_and_gradients():
     model = model_for(f, coarse)
     f2 = F.normalize(f + 0.05 * torch.randn_like(f), dim=1)
     loss, terms = geosub_loss(model, f, f2, coarse, {"geo": 1.0, "sub": 1.0}, 0.1, 0.1, 0.04, 0.1, 0.1)
-    assert set(terms) == {"geo", "sub"} and torch.isclose(loss, terms["geo"] + terms["sub"])
+    assert set(terms) == {"geo", "supcon", "sub", "var", "consist", "drift"} and torch.isclose(loss, terms["geo"] + terms["sub"])
+    assert not terms["supcon"].requires_grad and not terms["var"].requires_grad  # weight 0: logged only
     loss.backward()
     assert model.prototypes.grad.abs().sum() > 0 and all(torch.isfinite(p.grad).all() for p in model.parameters())
 
@@ -84,3 +85,16 @@ def test_assignment_metric():
     assert np.isclose(m["acc"], 4 / 6) and m["flip_ari"] == 1.0
     flipped = np.array([5, 7, 5, 7, 5, 7])  # mirror images land elsewhere
     assert assignment_metric(fine, assign, flipped)(np.arange(6))["flip_ari"] < 0.5
+
+
+def test_unused_prototypes_are_never_assigned_and_losses_stay_finite():
+    f, coarse = features()
+    n_valid = torch.tensor([1, 2, 4])  # class c uses its first n_valid[c] of 4 prototypes
+    model = GeoSub(f.shape[1], 32, init_prototypes(f, coarse, 3, 4, torch.Generator().manual_seed(0)), n_valid=n_valid)
+    a = model.assign(model(f), coarse)
+    assert (a < n_valid[coarse]).all()
+    cos = model.cosine(model(f), coarse)
+    loss = sub_loss(cos, cos.flip(0), coarse)
+    loss.backward()
+    assert torch.isfinite(loss) and torch.isfinite(model.prototypes.grad).all()
+    assert (model.prototypes.grad[0, 1:] == 0).all()  # masked prototypes get no gradient

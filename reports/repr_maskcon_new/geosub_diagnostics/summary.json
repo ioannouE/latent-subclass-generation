@@ -1,0 +1,48 @@
+{
+ "git_hash": "1862299774c62c59037631a8482aa74625b608a5-dirty",
+ "created_utc": "2026-11-19T12:56:48+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon_new",
+  "report_dir": "repr_maskcon_new",
+  "backbone": "dinov3_large_256",
+  "runs": {
+   "random_p50": "geosub_geo_sub_bodytype_new_large_p50",
+   "K": "geosub_geo_sub_K_bodytype_new_large",
+   "km50": "geosub_geo_sub_km50_bodytype_new_large",
+   "km50_g03": "geosub_geo_sub_km50_g03_bodytype_new_large",
+   "km50_g01": "geosub_geo_sub_km50_g01_bodytype_new_large",
+   "km50_g01_v1": "geosub_geo_sub_km50_g01_v1_bodytype_new_large",
+   "km50_g0_v1": "geosub_geo_sub_km50_g0_v1_bodytype_new_large",
+   "km50_s03": "geosub_geo_sub_km50_s03_bodytype_new_large",
+   "km50_s01": "geosub_geo_sub_km50_s01_bodytype_new_large",
+   "km50_v03": "geosub_geo_sub_km50_v03_bodytype_new_large",
+   "km50_v1": "geosub_geo_sub_km50_v1_bodytype_new_large",
+   "km50_v3": "geosub_geo_sub_km50_v3_bodytype_new_large",
+   "km50_u03": "geosub_geo_sub_km50_u03_bodytype_new_large",
+   "km50_u1": "geosub_geo_sub_km50_u1_bodytype_new_large"
+  },
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "knn_k": 10,
+  "tsne": {
+   "km50": [
+    "Sedan",
+    "Cab"
+   ],
+   "km50_g0_v1": [
+    "Sedan"
+   ]
+  },
+  "n_jobs": 8
+ },
+ "config_path": "configs/diagnose_geosub_maskcon.yaml",
+ "seed": null,
+ "dataset_manifest_hash": null,
+ "exclude": "conflicting images dropped by load_split"
+}

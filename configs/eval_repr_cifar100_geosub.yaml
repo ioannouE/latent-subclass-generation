@@ -3,7 +3,9 @@
 data_config: configs/data_cifar100.yaml
 labels: cifar100
 report_dir: repr                 # under reports_root = reports/cifar100, with the other representation methods
-encoders: [geosub_geo_sub_large_p50_s0, geosub_geo_sub_large_p50_s1, geosub_geo_sub_large_p50_s2, geosub_geo_sub_large_p50_s3, geosub_geo_sub_large_p50_s4]
+encoders: [geosub_geo_sub_km50_g0_v1_large_s0, geosub_geo_sub_km50_g0_v1_large_s1, geosub_geo_sub_km50_g0_v1_large_s2, geosub_geo_sub_km50_g0_v1_large_s3, geosub_geo_sub_km50_g0_v1_large_s4, geosub_geo_sub_km50_g05_s05_v05_large_s0, geosub_geo_sub_km50_g05_s05_v05_large_s1, geosub_geo_sub_km50_g05_s05_v05_large_s2, geosub_geo_sub_km50_g05_s05_v05_large_s3, geosub_geo_sub_km50_g05_s05_v05_large_s4, geosub_geo_sub_km50_g05_s0_v1_large_s0, geosub_geo_sub_km50_g05_s0_v1_large_s1, geosub_geo_sub_km50_g05_s0_v1_large_s2, geosub_geo_sub_km50_g05_s0_v1_large_s3, geosub_geo_sub_km50_g05_s0_v1_large_s4, geosub_geo_sub_km50_g05_s05_v1_large_s0, geosub_geo_sub_km50_g05_s05_v1_large_s1, geosub_geo_sub_km50_g05_s05_v1_large_s2, geosub_geo_sub_km50_g05_s05_v1_large_s3, geosub_geo_sub_km50_g05_s05_v1_large_s4]   # loss-weight variants (configs/geosub_*_weights.yaml); test: reported, never used to choose
+# done: geosub_geo_sub_K_large_s0-4, geosub_geo_sub_km50_large_s0-4, geosub_geo_sub_km50_u03_large_s0-4, geosub_geo_sub_km50_u1_large_s0-4
+# done: geosub_geo_sub_large_p50_s0-4
 crop_sizes: [32]
 knn_k: 20
 n_boot: 1000

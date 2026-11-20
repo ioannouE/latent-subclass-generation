@@ -1,0 +1,34 @@
+# geosub prototype fixes (docs/EXPERIMENT_GEOSUB.md, why geo_sub fails), Stanford Cars maskcon_new, frozen DINOv3-L: configs/geosub_maskcon_large_p50.yaml
+# with k-means-initialised prototypes (proto_init) and, per method, the L_sub usage weight or the known K_c (geosub-K). Chosen on val only
+# (configs/eval_geosub_maskcon_large.yaml, against geo_sub p50 = random init); test is scored once afterwards.
+# Run: CONFIG=configs/geosub_maskcon_large_kmeans.yaml sbatch slurm/train_geosub.sh
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large       # run names geosub_<method>_bodytype_new_large_s<seed>
+backbone: dinov3_large         # frozen; clean features cached (slurm/extract_features.sh); views / mirror images already cached
+crop: bbox15_256
+methods:
+  geo_sub_km50: {geo: 1.0, sub: 1.0}                      # k-means init, usage 0.1 (as geo_sub)
+  geo_sub_km50_u03: {geo: 1.0, sub: 1.0, usage: 0.3}      # stronger anti-collapse
+  geo_sub_km50_u1: {geo: 1.0, sub: 1.0, usage: 1.0}
+  geo_sub_K: {geo: 1.0, sub: 1.0, known_k: true}          # geosub-K (uses K): K_c k-means prototypes per class, all active
+seeds: [0, 1, 2, 3, 4]
+views: 8                       # cached random augmentations per train image; two different ones per image and step
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # as configs/repr_baselines_maskcon.yaml (+ crop and flip)
+hidden: 2048                   # width of g
+proto_init: kmeans             # prototypes start at k-means centroids (n_init 10, run seed) of each class's frozen train features
+n_proto: 50                    # prototypes per coarse class: fixed, the same on every dataset (does not use K_c)
+min_count: 10                  # a prototype is active (counts towards K-hat) if it is the nearest of >= 10 train images; fixed before any run
+tau_geo: 0.1                   # L_geo softmax temperature
+tau_student: 0.1               # L_sub assignment temperatures (sharpened targets, as configs/repr_nhp_maskcon.yaml)
+tau_teacher: 0.04
+usage: 0.1                     # weak anti-collapse inside L_sub: entropy of each class's mean assignment (no equipartition)
+temperature: 0.1               # L_supcon
+epochs: 100
+batch_size: 512
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+num_workers: 8                 # = --cpus-per-task in slurm/train_geosub.sh (feature caching)
+batch_size_embed: 128

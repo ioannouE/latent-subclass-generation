@@ -1,0 +1,13 @@
+# CIFAR-100: geosub's own prototype clusters on val, to choose among the prototype fixes (configs/geosub_cifar100_kmeans.yaml) and random init
+# (configs/geosub_cifar100.yaml); otherwise as configs/eval_geosub_cifar100_test.yaml. Run: CONFIG=configs/eval_geosub_cifar100_val.yaml sbatch slurm/eval_geosub.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100
+report_dir: repr
+split: val
+runs: [geosub_geo_sub_km50_g0_v1_large_s0, geosub_geo_sub_km50_g0_v1_large_s1, geosub_geo_sub_km50_g0_v1_large_s2, geosub_geo_sub_km50_g0_v1_large_s3, geosub_geo_sub_km50_g0_v1_large_s4, geosub_geo_sub_km50_g05_s05_v05_large_s0, geosub_geo_sub_km50_g05_s05_v05_large_s1, geosub_geo_sub_km50_g05_s05_v05_large_s2, geosub_geo_sub_km50_g05_s05_v05_large_s3, geosub_geo_sub_km50_g05_s05_v05_large_s4, geosub_geo_sub_km50_g05_s0_v1_large_s0, geosub_geo_sub_km50_g05_s0_v1_large_s1, geosub_geo_sub_km50_g05_s0_v1_large_s2, geosub_geo_sub_km50_g05_s0_v1_large_s3, geosub_geo_sub_km50_g05_s0_v1_large_s4, geosub_geo_sub_km50_g05_s05_v1_large_s0, geosub_geo_sub_km50_g05_s05_v1_large_s1, geosub_geo_sub_km50_g05_s05_v1_large_s2, geosub_geo_sub_km50_g05_s05_v1_large_s3, geosub_geo_sub_km50_g05_s05_v1_large_s4]   # loss-weight variants (configs/geosub_*_weights.yaml); test: reported, never used to choose
+# done: geosub_geo_sub_K_large_s0-4, geosub_geo_sub_km50_large_s0-4, geosub_geo_sub_km50_u03_large_s0-4, geosub_geo_sub_km50_u1_large_s0-4, geosub_geo_sub_large_p50_s0-4
+reference: dinov3_large_32     # k-means (R2 pipeline, oracle K and K-hat) on the frozen embedding of the same images: the like-for-like baseline
+subsample: 0.632
+n_boot: 1000
+n_jobs: 12          # = --cpus-per-task in slurm/eval_geosub.sh
+seed: 0

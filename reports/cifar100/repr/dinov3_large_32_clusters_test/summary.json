@@ -1,17 +1,32 @@
 {
- "git_hash": "6957f1b632fbf619fb07a809f99a1267cf36ad03-dirty",
- "created_utc": "2026-11-18T16:24:20+00:00",
+ "git_hash": "1862299774c62c59037631a8482aa74625b608a5-dirty",
+ "created_utc": "2026-11-19T15:04:01+00:00",
  "config": {
   "data_config": "configs/data_cifar100.yaml",
   "labels": "cifar100",
   "report_dir": "repr",
   "split": "test",
   "runs": [
-   "geosub_geo_sub_large_p50_s0",
-   "geosub_geo_sub_large_p50_s1",
-   "geosub_geo_sub_large_p50_s2",
-   "geosub_geo_sub_large_p50_s3",
-   "geosub_geo_sub_large_p50_s4"
+   "geosub_geo_sub_km50_large_s0",
+   "geosub_geo_sub_km50_large_s1",
+   "geosub_geo_sub_km50_large_s2",
+   "geosub_geo_sub_km50_large_s3",
+   "geosub_geo_sub_km50_large_s4",
+   "geosub_geo_sub_km50_u03_large_s0",
+   "geosub_geo_sub_km50_u03_large_s1",
+   "geosub_geo_sub_km50_u03_large_s2",
+   "geosub_geo_sub_km50_u03_large_s3",
+   "geosub_geo_sub_km50_u03_large_s4",
+   "geosub_geo_sub_km50_u1_large_s0",
+   "geosub_geo_sub_km50_u1_large_s1",
+   "geosub_geo_sub_km50_u1_large_s2",
+   "geosub_geo_sub_km50_u1_large_s3",
+   "geosub_geo_sub_km50_u1_large_s4",
+   "geosub_geo_sub_K_large_s0",
+   "geosub_geo_sub_K_large_s1",
+   "geosub_geo_sub_K_large_s2",
+   "geosub_geo_sub_K_large_s3",
+   "geosub_geo_sub_K_large_s4"
   ],
   "reference": "dinov3_large_32",
   "subsample": 0.632,
@@ -33,8 +48,8 @@
   "reference_khat": 84
  },
  "table_git_hash": {
-  "reference_oracle": "6957f1b632fbf619fb07a809f99a1267cf36ad03-dirty",
-  "reference_khat": "6957f1b632fbf619fb07a809f99a1267cf36ad03-dirty"
+  "reference_oracle": "1862299774c62c59037631a8482aa74625b608a5-dirty",
+  "reference_khat": "1862299774c62c59037631a8482aa74625b608a5-dirty"
  },
  "reference": "dinov3_large_32",
  "split": "test",

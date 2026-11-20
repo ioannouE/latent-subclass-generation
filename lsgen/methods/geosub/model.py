@@ -18,19 +18,25 @@ def init_prototypes(f, coarse, n_coarse, n_proto, generator):
 
 
 class GeoSub(nn.Module):
-    def __init__(self, dim, hidden, prototypes):
+    def __init__(self, dim, hidden, prototypes, n_valid=None):
+        """prototypes (n_coarse, P, d); n_valid (n_coarse,): class c uses only its first n_valid[c] prototypes (default: all P)."""
         super().__init__()
         self.g = nn.Sequential(nn.Linear(dim, hidden), nn.ReLU(), nn.Linear(hidden, dim))
         nn.init.zeros_(self.g[2].weight)
         nn.init.zeros_(self.g[2].bias)
         self.prototypes = nn.Parameter(prototypes.clone())
+        n_coarse, n_proto = prototypes.shape[:2]
+        n_valid = torch.full((n_coarse,), n_proto) if n_valid is None else torch.as_tensor(n_valid)
+        self.register_buffer("valid", torch.arange(n_proto)[None] < n_valid[:, None])
 
     def forward(self, f):
         return F.normalize(f + self.g(f), dim=1)
 
     def cosine(self, z, coarse):
-        """(B, P) cosine similarity of each embedding to the prototypes of its own coarse class."""
-        return torch.einsum("bd,bpd->bp", z, F.normalize(self.prototypes[coarse], dim=2))
+        """(B, P) cosine similarity of each embedding to the prototypes of its own coarse class; -1e4 for the unused ones (finite, so that
+        their softmax weight is exactly 0 and 0 * log p stays 0 in the losses)."""
+        cos = torch.einsum("bd,bpd->bp", z, F.normalize(self.prototypes[coarse], dim=2))
+        return cos.masked_fill(~self.valid[coarse], -1e4)
 
     @torch.no_grad()
     def assign(self, z, coarse, active=None):

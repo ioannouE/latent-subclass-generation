@@ -1,0 +1,32 @@
+# geosub loss weights on CIFAR-100, frozen DINOv3-L: configs/geosub_cifar100_kmeans.yaml (k-means-initialised prototypes, usage 0.1) with only
+# the loss weights changed, as configs/geosub_maskcon_large_weights.yaml. Run: CONFIG=configs/geosub_cifar100_weights.yaml sbatch slurm/train_geosub.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100               # configs/labels.yaml: also picks the exclusion list
+tag: _large                    # run names geosub_<method>_large_s<seed>
+backbone: dinov3_large         # frozen; clean features cached (slurm/extract_features.sh)
+crop: native_32                # the native 32 px images; the augmentation outputs the backbone's input size
+methods:
+  geo_sub_km50_g0_v1: {geo: 0.0, sub: 1.0, var: 1.0}         # no L_geo; L_var against collapse
+  geo_sub_km50_g05_s05_v05: {geo: 0.5, sub: 0.5, var: 0.5}   # (AdamW: same ratios as geo 1, sub 1, var 1)
+  geo_sub_km50_g05_s0_v1: {geo: 0.5, sub: 0.0, var: 1.0}     # no L_sub: the prototypes get no gradient and stay at their k-means init
+  geo_sub_km50_g05_s05_v1: {geo: 0.5, sub: 0.5, var: 1.0}
+seeds: [0, 1, 2, 3, 4]
+views: 8                       # cached random augmentations per train image; two different ones per image and step
+aug: {scale_min: 0.4, color_jitter: 0.4, jitter_p: 0.8, grayscale_p: 0.2}   # as configs/repr_baselines_cifar100.yaml (+ crop and flip)
+hidden: 2048                   # width of g
+proto_init: kmeans             # prototypes start at k-means centroids (n_init 10, run seed) of each class's frozen train features
+n_proto: 50                    # prototypes per coarse class: fixed, the same on every dataset (does not use K_c = 5)
+min_count: 10                  # a prototype is active (counts towards K-hat) if it is the nearest of >= 10 train images; fixed before any run
+tau_geo: 0.1                   # L_geo softmax temperature
+tau_student: 0.1               # L_sub assignment temperatures
+tau_teacher: 0.04
+usage: 0.1                     # weak anti-collapse inside L_sub: entropy of each class's mean assignment (no equipartition)
+temperature: 0.1               # L_supcon
+epochs: 100
+batch_size: 512
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+num_workers: 8                 # = --cpus-per-task in slurm/train_geosub.sh (feature caching)
+batch_size_embed: 128

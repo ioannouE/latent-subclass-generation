@@ -4,7 +4,9 @@ data_config: configs/data_cifar100.yaml
 labels: cifar100
 report_dir: repr
 split: test
-runs: [geosub_geo_sub_large_p50_s0, geosub_geo_sub_large_p50_s1, geosub_geo_sub_large_p50_s2, geosub_geo_sub_large_p50_s3, geosub_geo_sub_large_p50_s4]   # reported, never used to choose
+runs: [geosub_geo_sub_km50_g0_v1_large_s0, geosub_geo_sub_km50_g0_v1_large_s1, geosub_geo_sub_km50_g0_v1_large_s2, geosub_geo_sub_km50_g0_v1_large_s3, geosub_geo_sub_km50_g0_v1_large_s4, geosub_geo_sub_km50_g05_s05_v05_large_s0, geosub_geo_sub_km50_g05_s05_v05_large_s1, geosub_geo_sub_km50_g05_s05_v05_large_s2, geosub_geo_sub_km50_g05_s05_v05_large_s3, geosub_geo_sub_km50_g05_s05_v05_large_s4, geosub_geo_sub_km50_g05_s0_v1_large_s0, geosub_geo_sub_km50_g05_s0_v1_large_s1, geosub_geo_sub_km50_g05_s0_v1_large_s2, geosub_geo_sub_km50_g05_s0_v1_large_s3, geosub_geo_sub_km50_g05_s0_v1_large_s4, geosub_geo_sub_km50_g05_s05_v1_large_s0, geosub_geo_sub_km50_g05_s05_v1_large_s1, geosub_geo_sub_km50_g05_s05_v1_large_s2, geosub_geo_sub_km50_g05_s05_v1_large_s3, geosub_geo_sub_km50_g05_s05_v1_large_s4]   # loss-weight variants (configs/geosub_*_weights.yaml); test: reported, never used to choose
+# done: geosub_geo_sub_K_large_s0-4, geosub_geo_sub_km50_large_s0-4, geosub_geo_sub_km50_u03_large_s0-4, geosub_geo_sub_km50_u1_large_s0-4
+# done: geosub_geo_sub_large_p50_s0-4 (random init)
 reference: dinov3_large_32     # k-means (R2 pipeline, oracle K and K-hat) on the frozen embedding of the same images: the like-for-like baseline
 subsample: 0.632
 n_boot: 1000

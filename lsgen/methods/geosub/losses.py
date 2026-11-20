@@ -35,12 +35,18 @@ def var_loss(z, f, coarse):
 
 
 def geosub_loss(model, f1, f2, coarse, weights, tau_geo, tau_student, tau_teacher, usage, temperature):
-    """Weighted sum of the terms with a non-zero weight (weights: {term: w}); also returns the unweighted terms for logging."""
+    """Weighted sum of the terms with a non-zero weight (weights: {term: w}). Also returns, for logging, every term unweighted (those
+    with weight 0 without gradient), the swapped-prediction part of L_sub alone (`consist`) and 1 - mean cos(z, f) (`drift`)."""
     z1, z2 = model(f1), model(f2)
     terms = {
         "geo": lambda: (geo_loss(z1, f1, tau_geo) + geo_loss(z2, f2, tau_geo)) / 2,
         "supcon": lambda: supcon_loss(torch.cat([z1, z2]), coarse.repeat(2), temperature),
         "sub": lambda: sub_loss(model.cosine(z1, coarse), model.cosine(z2, coarse), coarse, tau_student, tau_teacher, usage),
-        "var": lambda: (var_loss(z1, f1, coarse) + var_loss(z2, f2, coarse)) / 2}
-    terms = {k: terms[k]() for k in TERMS if weights.get(k, 0)}
-    return sum(weights[k] * v for k, v in terms.items()), terms
+        "var": lambda: (var_loss(z1, f1, coarse) + var_loss(z2, f2, coarse)) / 2,
+        "consist": lambda: sub_loss(model.cosine(z1, coarse), model.cosine(z2, coarse), coarse, tau_student, tau_teacher, usage=0),
+        "drift": lambda: 1 - (z1 * f1).sum(1).mean()}
+    out = {}
+    for k, term in terms.items():
+        with torch.set_grad_enabled(torch.is_grad_enabled() and bool(weights.get(k, 0))):
+            out[k] = term()
+    return sum(weights[k] * out[k] for k in TERMS if weights.get(k, 0)), out

@@ -1,6 +1,8 @@
 """geosub (lsgen/methods/geosub): residual head z = norm(f + g(f)) and subprototypes per coarse class on frozen backbone features f,
 trained with L_geo (distil the frozen similarities), L_supcon (coarse classes), L_sub (augmentation-consistent prototype assignment)
-and L_var (within-class variance floor). Coarse labels only (configs/geosub_maskcon.yaml: `labels` picks the scheme). Needs a GPU:
+and L_var (within-class variance floor). Coarse labels only (configs/geosub_maskcon.yaml: `labels` picks the scheme), plus K_c per class
+for a method with `known_k` (uses K: K_c prototypes per class, no K-hat). Prototypes start at random train features or, with
+`proto_init: kmeans`, at k-means centroids of each class. Needs a GPU:
     sbatch slurm/train_geosub.sh
 The backbone is frozen, so its features are cached once (skipped when present) and every run trains on them in minutes:
     <derived_root>/features/<backbone>_<size>/{train,val,test}.csv        clean crops (scripts/extract_features.py, must exist)
@@ -22,13 +24,14 @@ import pandas as pd
 import torch
 from torchvision.transforms import functional as TF
 
-from lsgen.data.labels import load_labels, scheme
+from lsgen.data.labels import coarse_classes, load_labels, scheme
 from lsgen.data.splits import load_split
 from lsgen.eval.representation import knn_accuracy, l2norm
 from lsgen.features.encoders import Embedder
 from lsgen.features.extract import embed_images, read_csv, write_csv
-from lsgen.methods.geosub.losses import geosub_loss
+from lsgen.methods.geosub.losses import TERMS, geosub_loss
 from lsgen.methods.geosub.model import GeoSub, active_prototypes, init_prototypes
+from lsgen.methods.repr.ksub.model import init_prototypes as kmeans_prototypes
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging, sha256_file, write_json
 from train_repr import augmentation, lr_factor
 
@@ -67,13 +70,20 @@ def cache_features(cfg, derived, ids, device, manifest):
         log.info("cached %s: %s", path, emb.shape)
 
 
-def train(cfg, weights, seed, views, f_train, coarse, device, val=None):
+def train(cfg, weights, seed, views, f_train, coarse, device, val=None, k_c=None):
     """Train the head and prototypes on cached features. views: (V, N, D) augmented train features, f_train (N, D) clean ones,
-    coarse (N,). Each image gets two different random views per step. val = (features, coarse labels) for the monitoring kNN only."""
+    coarse (N,). Each image gets two different random views per step. val = (features, coarse labels) for the monitoring kNN only.
+    k_c (n_coarse,): known number of subclasses per class (uses K): class c gets k_c[c] prototypes, all of them active (no K-hat)."""
     torch.manual_seed(seed)
     gen = torch.Generator().manual_seed(seed)
-    n_coarse, n_proto = int(coarse.max()) + 1, cfg["n_proto"]
-    model = GeoSub(views.shape[2], cfg["hidden"], init_prototypes(f_train, coarse, n_coarse, n_proto, gen)).to(device)
+    n_coarse = int(coarse.max()) + 1
+    k = [cfg["n_proto"]] * n_coarse if k_c is None else k_c.tolist()
+    if cfg.get("proto_init", "random") == "kmeans":  # k-means (n_init 10) on the frozen train features of each class
+        protos = kmeans_prototypes(f_train, coarse, k, seed)
+    else:  # random train features of each class
+        protos = init_prototypes(f_train, coarse, n_coarse, max(k), gen)
+    model = GeoSub(views.shape[2], cfg["hidden"], protos, n_valid=k).to(device)
+    n_proto = max(k)
     views, f_train, coarse = views.to(device), f_train.to(device), coarse.to(device)
     opt = torch.optim.AdamW(model.parameters(), cfg["lr"], weight_decay=cfg["weight_decay"])
     steps = len(coarse) // cfg["batch_size"]
@@ -92,7 +102,8 @@ def train(cfg, weights, seed, views, f_train, coarse, device, val=None):
             sched.step()
             logs.append({"loss": loss.item(), **{k: v.item() for k, v in terms.items()}})
         with torch.no_grad():
-            active = active_prototypes(model.assign(model(f_train), coarse), coarse, n_coarse, n_proto, cfg["min_count"])
+            active = model.valid if k_c is not None else active_prototypes(model.assign(model(f_train), coarse), coarse, n_coarse, n_proto,
+                                                                             cfg["min_count"])
         msg = " ".join(f"{k} {np.mean([t[k] for t in logs]):.4f}" for k in logs[0])
         msg = f"epoch {epoch + 1}/{cfg['epochs']} {msg} | K-hat/class {active.sum(1).float().mean():.2f} (max {int(active.sum(1).max())})"
         if val is not None and ((epoch + 1) % cfg["eval_every"] == 0 or epoch + 1 == cfg["epochs"]):
@@ -129,14 +140,19 @@ def main():
     views = torch.stack([load_features(derived / "features" / f"{name}_views" / f"view{v}.csv", ids["train"]) for v in range(cfg["views"])])
     coarse = {s: torch.from_numpy(coarse_of[ids[s]].to_numpy()) for s in ids}
 
-    for method, weights in cfg["methods"].items():
+    for method, spec in cfg["methods"].items():
         if args.methods and method not in args.methods:
             continue
+        # a method entry holds loss weights and may also set top-level settings for this method only (e.g. usage, known_k)
+        weights, mcfg = {k: v for k, v in spec.items() if k in TERMS}, {**cfg, **{k: v for k, v in spec.items() if k not in TERMS}}
+        k_c = None
+        if mcfg.get("known_k", False):  # uses K: the only fine-label information
+            k_c = torch.tensor(coarse_classes(dcfg["data_root"], cfg["labels"]).K_c.to_numpy())
         for seed in cfg["seeds"]:
             run = f"geosub_{method}{cfg.get('tag', '')}_s{seed}"
-            log.info("%s: weights %s, seed %d", run, weights, seed)
-            model, active, final_loss = train(cfg, weights, seed, views, feats["train"], coarse["train"], device,
-                                              val=(feats["val"], coarse["val"].numpy()))
+            log.info("%s: %s, seed %d", run, spec, seed)
+            model, active, final_loss = train(mcfg, weights, seed, views, feats["train"], coarse["train"], device,
+                                              val=(feats["val"], coarse["val"].numpy()), k_c=k_c)
             (derived / "repr_models").mkdir(exist_ok=True)
             torch.save({**model.state_dict(), "active": active.cpu()}, derived / "repr_models" / f"{run}.pt")
             clusters = []
@@ -151,8 +167,8 @@ def main():
                 write_csv(out / f"{split}.csv", [f"{i}.png" for i in split_ids], z.cpu().numpy())
                 write_json(out / f"{split}.json", {
                     **provenance(cfg, seed, dataset_hash), "encoder": run, "family": "geosub", "backbone": cfg["backbone"],
-                    "method": weights, "final_train_loss": final_loss, "crop": cfg["crop"], "split": split, "n": len(split_ids),
-                    "dim": z.shape[1], "khat": active.sum(1).tolist(), "labels": f"coarse only ({cfg['labels']} scheme)",
+                    "method": spec, "final_train_loss": final_loss, "crop": cfg["crop"], "split": split, "n": len(split_ids),
+                    "dim": z.shape[1], "khat": active.sum(1).tolist(), "labels": f"coarse ({cfg['labels']} scheme)" + (" + K_c per class: uses K" if k_c is not None else " only"),
                     "exclude_sha256": exclude_sha})
                 log.info("%s %s: %s", run, split, tuple(z.shape))
             (derived / "geosub_clusters").mkdir(exist_ok=True)
