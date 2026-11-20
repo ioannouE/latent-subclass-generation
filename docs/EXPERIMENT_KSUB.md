@@ -192,3 +192,108 @@ Conflicting images excluded: Stanford Cars 211 (`maskcon_new` list), CIFAR-100 9
   (ARI 1.0, above), so a fresh k-means each epoch only adds k-means noise.
 - **No single setting is best on both datasets** (re-cluster on Cars, EMA at the small batch on CIFAR-100). These are test numbers: the
   choice between EMA / re-cluster and the batch size still has to be made on val.
+
+## Unknown K: plug-in K-hat (`configs/ksub_{maskcon_new,cifar100}_khat.yaml`)
+First K-unknown baseline: the re-clustering variant above, unchanged, except that the true K_c is never read (`k: khat`). Per seed, a
+label-free K-hat per coarse class is estimated once on the frozen train features (`estimate_k`: R2's own K-hat estimator, silhouette sweep
+over K = 2..k_max with gap-statistic fallback, on per-class PCA-50) and used for the whole run, including every re-clustering. `k_max` = 60 on
+both datasets, fixed in advance; it lies above the largest K_c (50, Sedan), and R2's eval K-hat keeps its own cap of 25. `frozen` = k-means with
+K-hat on f. This measures how much of the known-K result survives a realistic K error. The K used per run is stored in `repr_models/<run>.pt` and
+the feature JSONs; `scripts/summarize_ksub.py` reports it per class with K err = mean |K - K_c|. ACC oracle K (R2) still scores z with
+the true K_c (evaluation only); ACC own is the run's own K-hat clustering. Conflicting images excluded as above (Cars 211, CIFAR-100 90).
+```
+CONFIG=configs/ksub_maskcon_new_khat.yaml METHODS="frozen sub_var" sbatch slurm/train_ksub.sh   # and METHODS=sub_var_coarse01; cifar100 alike
+CONFIG=configs/eval_repr_ksub_maskcon_new_khat.yaml sbatch slurm/eval_representation.sh
+python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_khat.yaml
+```
+
+## Diffusion-map re-clustering and loss-weight grid (`configs/ksub_maskcon_new_recluster_diff.yaml`, `configs/ksub_{maskcon_new,cifar100}_grid.yaml`)
+Both start from the known-K re-clustering variant (batch 256 / 320, reset every epoch), are trained on train and scored on test; settings fixed
+in advance. No setting is selected on test: every grid setting is reported (sensitivity table).
+- **Diffusion maps** (Stanford Cars only): the initial and re-clustered prototypes are the means of diffusion-map spectral clusters (K_c clusters on
+  the class's PCA-50, n_neighbors 15, t 1: R2's diffusion row) instead of k-means centroids. `frozen` = diffusion maps with K_c on f.
+- **Grid**: lambda_sub in {1, 2} x lambda_coarse in {0.1, 0.3} x var_floor in {0.25, 0.5, 0.75}, lambda_var = 1, k-means re-clustering.
+  `var_floor` is the level of L_var's hinge, relu(var_floor - tr Cov_r(z) / tr Cov_r(f)) per soft subclass: 1 (every earlier run) keeps each
+  pseudo-subclass at least as spread as in the frozen features; 0.5 lets it shrink to half its frozen variance. var_floor 1 with lambda_sub 1,
+  lambda_coarse 0.1 is `sub_var_coarse01` of `configs/ksub_{maskcon_new,cifar100}_recluster.yaml`.
+Conflicting images excluded as above (Cars 211, CIFAR-100 90).
+
+## Prototype refresh vs EMA momentum (`configs/ksub_maskcon_new_refresh.yaml`; val, DINOv3-L, seeds 0-2)
+Stanford Cars maskcon_new, batch 256, loss of `sub_var_coarse01`. Four arms, fixed in advance: `ema099` (EMA 0.99, no refresh: the original),
+`refresh1` / `refresh5` (prototypes reset to a fresh k-means on z every 1 / 5 epochs, EMA 0.99 in between), `ema095` (EMA 0.95, no refresh:
+can faster updates replace the refresh?). Per epoch and coarse class, the train ARI of the current assignments vs a fresh k-means on z,
+measured before that epoch's refresh (`ksub_ari/<run>.csv`; Sedan and SUV are the classes that lose most at batch 256). The arm is chosen on
+val subclass accuracy (ACC oracle K, ACC own; `split: val` / `eval_split: val`); test is not used. Conflicting images excluded (Cars 211).
+```
+CONFIG=configs/ksub_maskcon_new_refresh.yaml METHODS="frozen ema099" sbatch slurm/train_ksub.sh   # and METHODS=refresh1, refresh5, ema095
+CONFIG=configs/eval_repr_ksub_maskcon_new_refresh_val.yaml sbatch slurm/eval_representation.sh
+python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_refresh.yaml
+```
+
+Results (val, slurm jobs 433583-433586 train, 437628 R1-R5; git `1862299-dirty`; per-epoch ARI in
+`reports/ksub_maskcon_new_refresh_val/ari_per_epoch.csv`, summary `reports/ksub_maskcon_new_refresh_val/summary.md`). Mean ± std over seeds 0-2.
+
+| | ACC oracle K | ACC own | ARI boot | kNN coarse | Sedan ACC oracle / own | SUV ACC oracle / own | train ARI vs fresh, epoch 100 (Sedan / SUV) |
+|---|---|---|---|---|---|---|---|
+| frozen | 0.810 | 0.818 ± 0.002 | 0.772 | 0.954 | 0.761 / 0.766 | 0.886 / 0.872 | - |
+| ema099 | 0.683 ± 0.010 | 0.630 ± 0.011 | 0.668 ± 0.007 | 0.957 ± 0.002 | 0.496 / 0.363 | 0.528 / 0.452 | 0.38 / 0.43 |
+| refresh1 | **0.816 ± 0.003** | **0.831 ± 0.006** | **0.779 ± 0.003** | 0.966 ± 0.005 | 0.748 / 0.772 | 0.868 / 0.884 | 0.99 / 0.97 |
+| refresh5 | 0.767 ± 0.009 | 0.771 ± 0.002 | 0.725 ± 0.007 | 0.967 ± 0.002 | 0.633 / 0.693 | 0.707 / 0.767 | 0.57 / 0.72 |
+| ema095 | 0.669 ± 0.017 | 0.602 ± 0.009 | 0.650 ± 0.011 | 0.962 ± 0.004 | 0.499 / 0.332 | 0.510 / 0.416 | 0.37 / 0.42 |
+
+- **Refreshing every epoch is the val choice**; it is the only arm at or above frozen DINOv3-L (ACC oracle +0.006, ACC own +0.013). Sedan and SUV
+  recover to about frozen (0.75 / 0.87 vs 0.76 / 0.89); the gain is in Cab, Convertible, Coupe. Refreshing every 5 epochs recovers about 2/3 of the gap.
+- **Faster EMA does not replace the refresh:** EMA 0.95 is no better than 0.99 (ACC oracle 0.669 vs 0.683; ARI vs fresh k-means as low).
+  Without a refresh the assignments drift away from a fresh k-means on z from epoch ~10 (Sedan ARI 0.82 at epoch 10 -> 0.38 at 100).
+- **Agreement tracks accuracy:** over (arm, class) with K_c >= 13, Spearman rho between the final train ARI vs fresh k-means and val
+  ACC oracle K / ACC own is 0.89 / 0.90 (0.94 / 0.93 on the five classes with K_c >= 18).
+- In `refresh5` the ARI drops within the first epoch after a reset (Sedan 0.64 at cycle epoch 1, 0.60 at epoch 5): the drift is fast, so the
+  refresh interval has to be short.
+- Val is small (Sedan 205, SUV 149 images); differences between `refresh1` and frozen are within ~2 std.
+
+## Soft-assignment temperature tau_a (`configs/ksub_maskcon_new_tau.yaml`; val, DINOv3-L, seeds 0-2)
+On the val choice above (`refresh1`: batch 256, `sub_var_coarse01` loss, refresh every epoch, EMA 0.99), tau_a in {0.025, 0.05, 0.10}; tau,
+loss weights, momentum, batch and epochs fixed. 0.025: sharper r (fewer blended neighbours, but wrong assignments are reinforced and fewer
+positive pairs); 0.10: softer r (borderline images update prototypes, but subclasses overlap more). tau_a 0.05 reuses the `refresh1` runs
+(identical training; R1-R5 re-scored in the new report dir, should match). Primary: val ACC oracle K; secondary: ACC own; paired per-seed
+differences vs 0.05, per class for Sedan, SUV, Cab, Convertible, Coupe. Logged per epoch and class, before the refresh (an agreement measured after a reset
+mostly reflects the reset): train ARI vs a fresh k-means on z and the mean assignment entropy H(r_i) / log K_c (not available for the
+reused 0.05 runs). Conflicting images excluded (Cars 211).
+```
+CONFIG=configs/ksub_maskcon_new_tau.yaml METHODS=tau0025 sbatch slurm/train_ksub.sh   # and METHODS=tau010
+CONFIG=configs/eval_repr_ksub_maskcon_new_tau_val.yaml sbatch slurm/eval_representation.sh
+python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_tau.yaml
+```
+
+Results (val; slurm jobs 438523 / 438527 train, 439522 R1-R5; git `1862299-dirty`; summary `reports/ksub_maskcon_new_tau_val/summary.md`,
+per-epoch ARI / entropy `ari_per_epoch.csv` there). Re-scored tau_a 0.05 (`refresh1`) reproduces the earlier val numbers exactly.
+
+| tau_a | ACC oracle K | ACC own | ARI boot | kNN coarse | paired diff vs 0.05, ACC oracle K (s0 / s1 / s2) | paired diff, ACC own |
+|---|---|---|---|---|---|---|
+| frozen | 0.810 | 0.818 ± 0.002 | 0.772 | 0.954 | | |
+| 0.025 | **0.834 ± 0.013** | 0.824 ± 0.010 | **0.792 ± 0.005** | 0.962 ± 0.004 | +0.006 / +0.035 / +0.011 (mean +0.018) | -0.009 / +0.006 / -0.020 (-0.008) |
+| 0.05 | 0.816 ± 0.003 | **0.831 ± 0.006** | 0.779 ± 0.003 | 0.966 ± 0.005 | | |
+| 0.10 | 0.529 ± 0.009 | 0.527 ± 0.010 | 0.264 ± 0.010 | 0.930 ± 0.001 | -0.300 / -0.279 / -0.282 (-0.287) | -0.300 / -0.292 / -0.320 (-0.304) |
+
+Per class, ACC oracle K / ACC own (mean over seeds): Sedan 0.748 / 0.772 (0.05) -> 0.780 / 0.795 (0.025); SUV 0.868 / 0.884 -> 0.875 / 0.886;
+Cab 0.716 / 0.742 -> 0.756 / 0.751; Convertible 0.799 / 0.797 -> 0.805 / 0.759; Coupe 0.809 / 0.838 -> 0.840 / 0.801. ACC oracle K at 0.025 is
+above 0.05 in 12 of 15 (class, seed) pairs (SUV s0 -0.074, Convertible s1 / s2 -0.024 / -0.008).
+- **tau_a 0.10 collapses the subclass signal.** Assignment entropy / log K_c reaches 0.98 by epoch 5 and ~1.0 after: r is uniform over the
+  K_c prototypes, L_sub stays at 3.3 (0.9 at 0.025), and the classes spread out (d0/d1 0.83, d1/d2 0.38). Pre-refresh ARI vs fresh k-means
+  falls to 0.44-0.47 (mean of the five classes, epochs 20-80). Every class and seed loses 0.11-0.36 ACC oracle K.
+- **tau_a 0.025 is the val choice on the primary metric**, but the margin is small: +0.018 ACC oracle K, positive on all three seeds (+0.006 to +0.035),
+  while ACC own is -0.008 (two of three seeds negative); within ~1.5 std of 0.05. Assignments are almost hard (entropy / log K_c 0.01-0.02).
+- **Sharper assignments stay closer to a fresh k-means before each refresh:** pre-refresh ARI over epochs 20-100 is higher at 0.025 in all five
+  classes (Sedan 0.867 vs 0.832, Cab 0.953 vs 0.904; mean of five 0.926 vs 0.900 at epoch 60). Entropy at 0.05 was not logged (reused runs).
+
+## Coarse-loss weight at tau_a 0.025 (`configs/ksub_maskcon_new_coarse.yaml`; val, DINOv3-L, seeds 0-2)
+Can a weak L_coarse improve coarse separation without losing the gain from sharper assignments? lambda_coarse in {0, 0.03, 0.10} at tau_a 0.025,
+refresh every epoch, EMA 0.99, lambda_sub 1, lambda_var 1 (var_floor 1), batch 256, tau 0.1, 100 epochs; nothing else changes. lambda_coarse 0.10
+reuses the `tau0025` runs (identical; R1-R5 re-scored in the new report dir, should match). Primary: val ACC oracle K; alongside: R1 probe
+coarse (linear probe) and kNN coarse, R3 (d0/d1, d1/d2), ACC own; paired per-seed differences vs 0.10; pre-refresh ARI and entropy logged as before.
+Conflicting images excluded (Cars 211).
+```
+CONFIG=configs/ksub_maskcon_new_coarse.yaml METHODS=tau0025_c0 sbatch slurm/train_ksub.sh   # and METHODS=tau0025_c003
+CONFIG=configs/eval_repr_ksub_maskcon_new_coarse_val.yaml sbatch slurm/eval_representation.sh
+python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_coarse.yaml
+```

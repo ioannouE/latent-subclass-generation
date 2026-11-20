@@ -1,0 +1,30 @@
+# Coarse-loss weight lambda_coarse in {0, 0.03, 0.10} (docs/EXPERIMENT_KSUB.md) at the val choice of configs/ksub_maskcon_new_tau.yaml (tau_a 0.025,
+# batch 256, k-means refresh every epoch, EMA 0.99, lambda_sub 1, lambda_var 1); everything else fixed. lambda_coarse 0.10 = the existing tau0025
+# runs (same tag and settings): only tau0025_c0 and tau0025_c003 are trained. Chosen on val (ACC oracle K; probe coarse, R3, ACC own alongside); test not used.
+#   CONFIG=configs/ksub_maskcon_new_coarse.yaml METHODS=tau0025_c0 sbatch slurm/train_ksub.sh   (and METHODS=tau0025_c003; never tau0025 / frozen)
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_refresh  # = configs/ksub_maskcon_new_{refresh,tau}.yaml: run names ksub_<method>_bodytype_new_large_refresh_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+report_dir: ksub_maskcon_new_coarse_val  # under reports_root: R1-R5 on val (configs/eval_repr_ksub_maskcon_new_coarse_val.yaml) and scripts/summarize_ksub.py
+eval_split: val                # scripts/summarize_ksub.py: ACC own and R1-R5 on val
+methods:
+  frozen: {}                                                                      # existing run: k-means with K_c on f (z = f)
+  tau0025_c0: {sub: 1.0, var: 1.0, recluster_every: 1, tau_a: 0.025}
+  tau0025_c003: {coarse: 0.03, sub: 1.0, var: 1.0, recluster_every: 1, tau_a: 0.025}
+  tau0025: {coarse: 0.1, sub: 1.0, var: 1.0, recluster_every: 1, tau_a: 0.025}   # existing runs, lambda_coarse 0.10
+seeds: [0, 1, 2]
+classes_per_batch: 8           # P: every body type in every batch
+per_class: 32                  # m images per class: batch 256
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature (every trained arm sets 0.025)
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+ari_every: 1                   # epochs between assignment ARI / entropy logs (k-means on z per class: diagnostic only, adds time)

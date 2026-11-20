@@ -1,6 +1,7 @@
 """Representation metrics R1-R5 (docs/METRICS.md) for cached embeddings. CPU, hours at n_boot=1000:
     sbatch slurm/eval_representation.sh
-Output: <reports_root>/<report_dir>/<encoder>_<crop>/*.csv (default repr/; `labels` picks the label scheme, configs/labels.yaml) + summary.json. Fit/reference = train, scored on test.
+Output: <reports_root>/<report_dir>/<encoder>_<crop>/*.csv (default repr/; `labels` picks the label scheme, configs/labels.yaml) + summary.json. Fit/reference = train, scored on test
+(or on val with `split: val`, for choices made on val).
 Only the tables listed in the config under `tables` are (re)computed; the others are left as they are.
 R2 / R5 cluster with k-means unless the config has a `clustering` entry (Leiden or diffusion maps, lsgen/eval/clustering.py).
 """
@@ -106,10 +107,11 @@ def main():
     for enc in cfg["encoders"]:
         for size in cfg["crop_sizes"]:
             name = f"{enc}_{size}"
-            (xtr, mtr), (xte, mte) = (load(derived, name, s, meta, load_split(splits_dir, s, labels=cfg.get("labels", "make"))) for s in ("train", "test"))
-            log.info("%s: train %d, test %d", name, len(xtr), len(xte))
+            split = cfg.get("split", "test")
+            (xtr, mtr), (xte, mte) = (load(derived, name, s, meta, load_split(splits_dir, s, labels=cfg.get("labels", "make"))) for s in ("train", split))
+            log.info("%s: train %d, %s %d", name, len(xtr), split, len(xte))
             write_results(Path(dcfg["reports_root"]) / cfg.get("report_dir", "repr") / name, repr_tables(xtr, mtr, xte, mte, cfg), cfg, cfg["seed"],
-                          dataset_hash, splits_dir, encoder=name, n_train=len(xtr), n_test=len(xte))
+                          dataset_hash, splits_dir, encoder=name, split=split, n_train=len(xtr), n_test=len(xte))
 
 
 if __name__ == "__main__":

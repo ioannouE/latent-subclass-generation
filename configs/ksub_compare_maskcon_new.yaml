@@ -1,0 +1,17 @@
+# Per coarse class / per subclass comparison of the ksub runs on Stanford Cars maskcon_new (docs/EXPERIMENT_KSUB.md), test. Needs each
+# config's summarize_ksub.py output. Run (CPU, seconds): python scripts/compare_ksub_classes.py --config configs/ksub_compare_maskcon_new.yaml
+data_config: configs/data.yaml
+labels: maskcon_new
+out_dir: ksub_maskcon_new_compare
+runs:                                     # name: [ksub config, method]
+  frozen_K: [configs/ksub_maskcon_new_recluster.yaml, frozen]          # k-means with the true K_c on f
+  ema_sub_var: [configs/ksub_maskcon_new.yaml, sub_var]                # original ksub: known K, EMA prototypes, batch 256
+  ema_b1024_sub_var: [configs/ksub_maskcon_new_b1024.yaml, sub_var]       # known K, EMA prototypes, batch 1024
+  ema_b1024_sub_var_coarse01: [configs/ksub_maskcon_new_b1024.yaml, sub_var_coarse01]
+  recluster_sub_var: [configs/ksub_maskcon_new_recluster.yaml, sub_var]
+  recluster_sub_var_coarse01: [configs/ksub_maskcon_new_recluster.yaml, sub_var_coarse01]
+  frozen_khat: [configs/ksub_maskcon_new_khat.yaml, frozen]            # k-means with the label-free K-hat on f
+  khat_sub_var: [configs/ksub_maskcon_new_khat.yaml, sub_var]
+  khat_sub_var_coarse01: [configs/ksub_maskcon_new_khat.yaml, sub_var_coarse01]
+worst_run: khat_sub_var
+n_worst: 25

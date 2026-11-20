@@ -1,0 +1,31 @@
+# Soft-assignment temperature tau_a in {0.025, 0.05, 0.10} (docs/EXPERIMENT_KSUB.md) on the val choice of configs/ksub_maskcon_new_refresh.yaml
+# (refresh1: batch 256, sub_var_coarse01 loss, k-means refresh every epoch, EMA 0.99); everything else fixed. tau_a 0.05 = the existing refresh1
+# runs (same tag and settings): only tau0025 and tau010 are trained. Per epoch and class, before the refresh: train ARI vs a fresh k-means on z
+# and the assignment entropy / log K_c (<derived_root>/ksub_ari/<run>.csv; not logged for the earlier refresh1 runs). Chosen on val; test not used.
+#   CONFIG=configs/ksub_maskcon_new_tau.yaml METHODS=tau0025 sbatch slurm/train_ksub.sh   (and METHODS=tau010; never refresh1 / frozen)
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_refresh  # = configs/ksub_maskcon_new_refresh.yaml: run names ksub_<method>_bodytype_new_large_refresh_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+report_dir: ksub_maskcon_new_tau_val  # under reports_root: R1-R5 on val (configs/eval_repr_ksub_maskcon_new_tau_val.yaml) and scripts/summarize_ksub.py
+eval_split: val                # scripts/summarize_ksub.py: ACC own and R1-R5 on val
+methods:                       # tau_a per arm (default: the value below)
+  frozen: {}                   # existing run: k-means with K_c on f (z = f)
+  refresh1: {coarse: 0.1, sub: 1.0, var: 1.0, recluster_every: 1}                # existing runs, tau_a 0.05
+  tau0025: {coarse: 0.1, sub: 1.0, var: 1.0, recluster_every: 1, tau_a: 0.025}
+  tau010: {coarse: 0.1, sub: 1.0, var: 1.0, recluster_every: 1, tau_a: 0.10}
+seeds: [0, 1, 2]
+classes_per_batch: 8           # P: every body type in every batch
+per_class: 32                  # m images per class: batch 256
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+ari_every: 1                   # epochs between assignment ARI / entropy logs (k-means on z per class: diagnostic only, adds time)

@@ -1,0 +1,37 @@
+# Loss-weight grid on configs/ksub_maskcon_new_recluster.yaml (docs/EXPERIMENT_KSUB.md): identical (known K, k-means re-clustering every epoch),
+# over lambda_sub in {1, 2} x lambda_coarse in {0.1, 0.3} x var_floor in {0.25, 0.5, 0.75} (L_var: relu(var_floor - within-subclass spread
+# of z / of f); var_floor 1 is configs/ksub_maskcon_new_recluster.yaml). Trained on train, every setting scored on test and reported in full.
+# Run (2 methods per job): CONFIG=configs/ksub_maskcon_new_grid.yaml METHODS="sub1_c01_f025 sub1_c03_f025" sbatch slurm/train_ksub.sh, etc.
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_grid  # run names ksub_<method>_bodytype_new_large_grid_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+report_dir: ksub_maskcon_new_grid  # under reports_root: R1-R5 (configs/eval_repr_ksub_maskcon_new_grid.yaml) and scripts/summarize_ksub.py
+methods:                       # sub<lambda_sub>_c<lambda_coarse>_f<var_floor>; lambda_var = 1 throughout
+  sub1_c01_f025: {coarse: 0.1, sub: 1, var: 1.0, var_floor: 0.25}
+  sub1_c03_f025: {coarse: 0.3, sub: 1, var: 1.0, var_floor: 0.25}
+  sub2_c01_f025: {coarse: 0.1, sub: 2, var: 1.0, var_floor: 0.25}
+  sub2_c03_f025: {coarse: 0.3, sub: 2, var: 1.0, var_floor: 0.25}
+  sub1_c01_f05: {coarse: 0.1, sub: 1, var: 1.0, var_floor: 0.5}
+  sub1_c03_f05: {coarse: 0.3, sub: 1, var: 1.0, var_floor: 0.5}
+  sub2_c01_f05: {coarse: 0.1, sub: 2, var: 1.0, var_floor: 0.5}
+  sub2_c03_f05: {coarse: 0.3, sub: 2, var: 1.0, var_floor: 0.5}
+  sub1_c01_f075: {coarse: 0.1, sub: 1, var: 1.0, var_floor: 0.75}
+  sub1_c03_f075: {coarse: 0.3, sub: 1, var: 1.0, var_floor: 0.75}
+  sub2_c01_f075: {coarse: 0.1, sub: 2, var: 1.0, var_floor: 0.75}
+  sub2_c03_f075: {coarse: 0.3, sub: 2, var: 1.0, var_floor: 0.75}
+seeds: [0, 1, 2]
+classes_per_batch: 8           # P: every body type in every batch
+per_class: 32                  # m images per class: batch 256, as the make runs (8 x 16 would halve it)
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+recluster_every: 1             # epochs between prototype resets to a fresh k-means on z (n_init 10, run seed); EMA in between

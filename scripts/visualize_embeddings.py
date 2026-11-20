@@ -1,7 +1,7 @@
 """UMAP and t-SNE of the test embeddings of every encoder and representation method, coloured by coarse class and by subclass,
 for each label scheme in configs/visualize.yaml. CPU:
     sbatch slurm/visualize_embeddings.sh
-Output: reports/visualisations/<scheme>/<encoder>.png (global panel coloured by coarse class + one subclass panel per coarse class
+Output: reports/visualisations/<scheme or the scheme's out_dir>/<encoder>.png (global panel coloured by coarse class + one subclass panel per coarse class
 in `within`, rows UMAP / t-SNE) and overview_{umap,tsne}.png (all encoders, coloured by coarse class). Encoders in a scheme's
 `clusterings` get extra rows: the same projections coloured by that clustering's label-free clusters (R2 pipeline, lsgen/eval/clustering.py).
 """
@@ -103,7 +103,7 @@ def main():
     for scheme, scfg in cfg["schemes"].items():
         test_ids = load_split(Path(dcfg["data_root"]) / "splits", "test", labels=scheme)
         labels = load_labels(derived, dcfg["data_root"], scheme)
-        out = out_root / scheme
+        out = out_root / scfg.get("out_dir", scheme)
         out.mkdir(parents=True, exist_ok=True)
         overview, names, colors = {}, None, None
         fits = {enc: (c["algorithm"], fitter(**c)) for enc, c in scfg.get("clusterings", {}).items()}

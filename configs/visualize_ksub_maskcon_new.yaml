@@ -1,0 +1,16 @@
+# UMAP / t-SNE of the ksub runs on maskcon_new (seed 0; docs/EXPERIMENT_KSUB.md), subclasses drawn inside every body type. Run:
+#   CONFIG=configs/visualize_ksub_maskcon_new.yaml sbatch slurm/visualize_embeddings.sh
+data_config: configs/data.yaml
+frozen: [dinov3_large_256]
+umap_neighbors: 15
+tsne_perplexity: 30
+n_jobs: 16                       # = --cpus-per-task in slurm/visualize_embeddings.sh
+seed: 0
+schemes:
+  maskcon_new:
+    out_dir: maskcon_new_ksub      # not reports/visualisations/maskcon_new: keeps that folder's figures and overviews
+    methods: [ksub_sub_var_bodytype_new_large_s0_256, ksub_sub_var_bodytype_new_large_recluster_s0_256,
+              ksub_sub_var_coarse01_bodytype_new_large_recluster_s0_256, ksub_sub_var_bodytype_new_large_khat_s0_256,
+              ksub_sub_var_coarse01_bodytype_new_large_khat_s0_256]
+    top_coarse: 8
+    within: [Cab, Sedan, SUV, Convertible, Coupe, Hatchback, Wagon, Van]

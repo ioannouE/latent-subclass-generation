@@ -1,0 +1,25 @@
+# R1-R5 on test for every setting of configs/ksub_maskcon_new_grid.yaml; frozen = dinov3_large.
+# Run: CONFIG=configs/eval_repr_ksub_maskcon_new_grid.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: ksub_maskcon_new_grid
+encoders: [dinov3_large, ksub_sub1_c01_f025_bodytype_new_large_grid_s0, ksub_sub1_c01_f025_bodytype_new_large_grid_s1,
+           ksub_sub1_c01_f025_bodytype_new_large_grid_s2, ksub_sub1_c03_f025_bodytype_new_large_grid_s0, ksub_sub1_c03_f025_bodytype_new_large_grid_s1,
+           ksub_sub1_c03_f025_bodytype_new_large_grid_s2, ksub_sub2_c01_f025_bodytype_new_large_grid_s0, ksub_sub2_c01_f025_bodytype_new_large_grid_s1,
+           ksub_sub2_c01_f025_bodytype_new_large_grid_s2, ksub_sub2_c03_f025_bodytype_new_large_grid_s0, ksub_sub2_c03_f025_bodytype_new_large_grid_s1,
+           ksub_sub2_c03_f025_bodytype_new_large_grid_s2, ksub_sub1_c01_f05_bodytype_new_large_grid_s0, ksub_sub1_c01_f05_bodytype_new_large_grid_s1,
+           ksub_sub1_c01_f05_bodytype_new_large_grid_s2, ksub_sub1_c03_f05_bodytype_new_large_grid_s0, ksub_sub1_c03_f05_bodytype_new_large_grid_s1,
+           ksub_sub1_c03_f05_bodytype_new_large_grid_s2, ksub_sub2_c01_f05_bodytype_new_large_grid_s0, ksub_sub2_c01_f05_bodytype_new_large_grid_s1,
+           ksub_sub2_c01_f05_bodytype_new_large_grid_s2, ksub_sub2_c03_f05_bodytype_new_large_grid_s0, ksub_sub2_c03_f05_bodytype_new_large_grid_s1,
+           ksub_sub2_c03_f05_bodytype_new_large_grid_s2, ksub_sub1_c01_f075_bodytype_new_large_grid_s0, ksub_sub1_c01_f075_bodytype_new_large_grid_s1,
+           ksub_sub1_c01_f075_bodytype_new_large_grid_s2, ksub_sub1_c03_f075_bodytype_new_large_grid_s0, ksub_sub1_c03_f075_bodytype_new_large_grid_s1,
+           ksub_sub1_c03_f075_bodytype_new_large_grid_s2, ksub_sub2_c01_f075_bodytype_new_large_grid_s0, ksub_sub2_c01_f075_bodytype_new_large_grid_s1,
+           ksub_sub2_c01_f075_bodytype_new_large_grid_s2, ksub_sub2_c03_f075_bodytype_new_large_grid_s0, ksub_sub2_c03_f075_bodytype_new_large_grid_s1,
+           ksub_sub2_c03_f075_bodytype_new_large_grid_s2]
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16            # = --cpus-per-task in slurm/eval_representation.sh
+seed: 0

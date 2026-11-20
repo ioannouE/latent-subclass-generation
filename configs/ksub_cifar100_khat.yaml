@@ -1,0 +1,30 @@
+# Plug-in K-hat variant of configs/ksub_cifar100_recluster.yaml (docs/EXPERIMENT_KSUB.md, unknown K): identical (re-clustering every epoch), except that K_c is not
+# given: a label-free K-hat per coarse class is estimated per seed on the frozen train features (estimate_k: R2's silhouette sweep with gap
+# fallback on per-class PCA-50) and used for the whole run. k_max fixed in advance, not tuned.
+# Run: CONFIG=configs/ksub_cifar100_khat.yaml METHODS="frozen sub_var" sbatch slurm/train_ksub.sh; CONFIG=configs/ksub_cifar100_khat.yaml METHODS=sub_var_coarse01 sbatch slurm/train_ksub.sh
+data_config: configs/data_cifar100.yaml
+labels: cifar100               # configs/labels.yaml: also picks the exclusion list
+tag: _large_khat              # run names ksub_<method>_large_khat_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: native_32
+report_dir: ksub_khat          # under reports_root: R1-R5 (configs/eval_repr_ksub_cifar100_khat.yaml) and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                   # reference: no training, k-means with K-hat on f (z = f)
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}
+seeds: [0, 1, 2]
+classes_per_batch: 20          # P: every superclass in every batch
+per_class: 16                  # m images per class: batch 320
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+recluster_every: 1             # epochs between prototype resets to a fresh k-means on z (n_init 10, run seed); EMA in between
+k: khat                        # oracle (default): true K_c per class, "uses K"; khat: label-free K-hat (estimate_k), coarse labels only
+k_max: 60                      # K-hat search range 2..k_max, same on both datasets (R2's eval estimator keeps its own K_MAX = 25)

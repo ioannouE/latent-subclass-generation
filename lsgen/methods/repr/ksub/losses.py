@@ -36,21 +36,21 @@ def trace_cov(x, a):
     return a.T @ (x * x).sum(1) / w - (mean * mean).sum(1)
 
 
-def var_loss(z, f, coarse, r):
-    """Within-subclass variance floor: per (class, prototype) group with sum_i r_ig >= 2, relu(1 - tr Cov_r(z) / tr Cov_r(f)) with the
-    same images and weights, averaged over groups. Zero while z keeps at least the frozen spread of every soft subclass."""
+def var_loss(z, f, coarse, r, floor=1.0):
+    """Within-subclass variance floor: per (class, prototype) group with sum_i r_ig >= 2, relu(floor - tr Cov_r(z) / tr Cov_r(f)) with the
+    same images and weights, averaged over groups. Zero while z keeps at least `floor` times the frozen spread of every soft subclass."""
     a = group_weights(r, coarse, int(coarse.max()) + 1)
     a = a[:, a.sum(0) >= 2]
     if not a.shape[1]:
         return z.new_zeros(())
-    return F.relu(1 - trace_cov(z, a) / trace_cov(f, a).clamp_min(1e-8)).mean()
+    return F.relu(floor - trace_cov(z, a) / trace_cov(f, a).clamp_min(1e-8)).mean()
 
 
 def ksub_loss(z, f, coarse, r, weights, tau=0.1, temperature=0.1):
-    """L = sum of w * term over the terms with a non-zero weight (weights: {term: w}); also returns the unweighted terms for logging.
-    L_coarse is SupCon on the coarse labels at `temperature`, L_sub uses `tau`."""
+    """L = sum of w * term over the terms with a non-zero weight (weights: {term: w}, plus an optional var_floor for L_var, default 1);
+    also returns the unweighted terms for logging. L_coarse is SupCon on the coarse labels at `temperature`, L_sub uses `tau`."""
     terms = {"coarse": lambda: supcon_loss(z, coarse, temperature),
              "sub": lambda: sub_loss(z, coarse, r, tau),
-             "var": lambda: var_loss(z, f, coarse, r)}
+             "var": lambda: var_loss(z, f, coarse, r, weights.get("var_floor", 1.0))}
     terms = {k: terms[k]() for k in TERMS if weights.get(k, 0)}
     return sum(weights[k] * v for k, v in terms.items()), terms

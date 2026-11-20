@@ -1,0 +1,30 @@
+# Diffusion-map variant of configs/ksub_maskcon_new_recluster.yaml (docs/EXPERIMENT_KSUB.md): identical (known K, batch 256, re-clustering every
+# epoch), except that the prototypes (initial and every reset) are the cluster means of diffusion-map spectral clustering instead of k-means
+# centroids. Parameters as R2's diffusion row, fixed in advance, not tuned. Trained on train, scored on test.
+# Run: CONFIG=configs/ksub_maskcon_new_recluster_diff.yaml METHODS="frozen sub_var" sbatch slurm/train_ksub.sh (and METHODS=sub_var_coarse01)
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_recluster_diff  # run names ksub_<method>_bodytype_new_large_recluster_diff_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+report_dir: ksub_maskcon_new_recluster_diff  # under reports_root: R1-R5 (configs/eval_repr_ksub_maskcon_new_recluster_diff.yaml) and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                   # reference: no training, diffusion maps with K_c on f (z = f)
+  sub_var: {sub: 1.0, var: 1.0}
+  sub_var_coarse01: {coarse: 0.1, sub: 1.0, var: 1.0}
+seeds: [0, 1, 2]
+classes_per_batch: 8           # P: every body type in every batch
+per_class: 32                  # m images per class: batch 256, as the make runs (8 x 16 would halve it)
+hidden: 2048                   # width of g, as geosub
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100                    # optimiser and schedule as configs/geosub_maskcon.yaml
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
+recluster_every: 1             # epochs between prototype resets to a fresh clustering of z (run seed); EMA in between
+clustering: {algorithm: diffusion, n_neighbors: 15, t: 1}  # initial and re-clustered prototypes: diffusion maps with K_c on the class's
+                               # PCA-50, as R2's diffusion row (configs/eval_repr_maskcon_new_diffusion.yaml); prototype = cluster mean

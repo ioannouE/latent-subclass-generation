@@ -1,0 +1,18 @@
+# R1-R5 on val (fit on train) for the refresh / EMA arms of configs/ksub_maskcon_new_refresh.yaml; frozen = dinov3_large. Val only: the arm is chosen here.
+# Run: CONFIG=configs/eval_repr_ksub_maskcon_new_refresh_val.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+report_dir: ksub_maskcon_new_refresh_val  # = report_dir in configs/ksub_maskcon_new_refresh.yaml
+split: val
+encoders: [dinov3_large,
+           ksub_ema099_bodytype_new_large_refresh_s0, ksub_ema099_bodytype_new_large_refresh_s1, ksub_ema099_bodytype_new_large_refresh_s2,
+           ksub_refresh1_bodytype_new_large_refresh_s0, ksub_refresh1_bodytype_new_large_refresh_s1, ksub_refresh1_bodytype_new_large_refresh_s2,
+           ksub_refresh5_bodytype_new_large_refresh_s0, ksub_refresh5_bodytype_new_large_refresh_s1, ksub_refresh5_bodytype_new_large_refresh_s2,
+           ksub_ema095_bodytype_new_large_refresh_s0, ksub_ema095_bodytype_new_large_refresh_s1, ksub_ema095_bodytype_new_large_refresh_s2]
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16            # = --cpus-per-task in slurm/eval_representation.sh
+seed: 0
