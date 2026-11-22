@@ -11,6 +11,7 @@ tau_target: 0.9              # G4: tau = smallest confidence at which the calibr
 min_samples: 5               # G4: samples needed to call a fine class covered
 copy_threshold: 0.5          # G7
 prdc_k: 5                    # G1 neighbourhood size
+viz: {max_points: 5000, umap_neighbors: 15, tsne_perplexity: 30}   # figures (lsgen/eval/sample_plots.py), descriptive only
 coverage_k: 3                # G4/G5/B2 neighbourhood size (small sets)
 n_episodes_images: 16        # B: expected generated images per episode
 subsample: 0.632              # G4/G5 CIs of KID: draws without replacement of this fraction of a make (resampling duplicates biases it)

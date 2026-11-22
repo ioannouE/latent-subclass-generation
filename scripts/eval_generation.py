@@ -1,9 +1,10 @@
 """Score generated images (docs/METRICS.md): use case A (G1-G7) or B (B1-B6), per configs/eval_generation.yaml. GPU:
     sbatch slurm/eval_generation.sh
 Refuses to run if the method declares an encoder that is also an evaluator (lsgen/eval/evaluators.py).
-Output: <reports_root>/generation[_<labels>]/<method name>_<use case>/*.csv + summary.json (suffix only for a label scheme other than the data
-config's own, lsgen.data.labels.suffix; the evaluators and episodes of that scheme are used). Reference = test (and train for G4/G5/G7);
-method.json may set "reference_split": "test_B" (control C2 scores test_A against test_B).
+Output: <reports_root>/generation[_<labels>]/<method name>_<use case>/*.csv + summary.json, and for use case A the figures g7_nn_grid.png and
+samples / nearest_real / embedding.png (lsgen/eval/sample_plots.py). Suffix only for a label scheme other than the data config's own
+(lsgen.data.labels.suffix; the evaluators and episodes of that scheme are used). Reference = test (and train for G4/G5/G7); method.json may
+set "reference_split": "test_B" (control C2 scores test_A against test_B) or "val" (G-0c pilot: tuning never sees test).
 """
 import argparse
 import json
@@ -17,7 +18,7 @@ from PIL import Image
 
 from lsgen.data.labels import load_labels, suffix
 from lsgen.data.splits import load_split
-from lsgen.eval import memorization, support, synthesis
+from lsgen.eval import memorization, sample_plots, support, synthesis
 from lsgen.eval.classifier import calibrated_probs, load_classifier
 from lsgen.eval.evaluators import check_disjoint, read_method
 from lsgen.eval.report import write_results
@@ -42,7 +43,7 @@ class Context:
         self.images = self.derived / f"{cfg.get('crop', 'bbox15')}_{cfg['crop_size']}"
         self.episodes_dir = Path(dcfg["data_root"]) / f"episodes{self.suffix}"
         self.sscd = Path(dcfg["duplicates"].get("sscd_weights_dir", self.derived / "weights")) / Path(dcfg["duplicates"]["sscd_url"]).name
-        self.meta = load_labels(self.derived, dcfg["data_root"], self.scheme)[["make_id", "fine_id"]]
+        self.meta = load_labels(self.derived, dcfg["data_root"], self.scheme)[["make_id", "fine_id", "coarse_name", "fine_name"]]
         self.make_of_fine = self.meta.groupby("fine_id").make_id.first().sort_index().to_numpy()
         self.dataset_hash = json.loads((self.splits_dir.parent / "manifests" / "raw_manifest.json").read_text())["manifest_hash"]
 
@@ -127,7 +128,18 @@ def run_a(ctx, samples, paths, test="test"):
     t["g7"] = pd.DataFrame([memorization.copy_summary(sim, null, cfg["copy_threshold"]) | {"tau": tau, "n": len(sim)}])
     t["g7_samples"] = pd.DataFrame({"filename": samples.filename, "sscd_sim": sim, "nn_train_id": np.array(train_ids)[nn]})
     train_paths = [ctx.images / f"{i}.png" for i in train_ids]
-    return t, lambda out: memorization.nn_grid(paths, train_paths, sim, nn, out / "g7_nn_grid.png")
+    clip_sim, clip_nn = memorization.nearest_similarity(feats["clip_l"], ref["clip_l", "train"])
+    fine_name = ctx.meta.groupby("fine_id").fine_name.first()
+    coarse_names = ctx.meta.groupby("make_id").coarse_name.first().to_dict()
+    gen_caption, real_caption = fine_name.loc[fine_probs.argmax(1)].to_numpy(), fine_name.loc[train_fine].to_numpy()
+
+    def figures(out):
+        memorization.nn_grid(paths, train_paths, sim, nn, out / "g7_nn_grid.png")
+        sample_plots.sample_grid(paths, req, coarse_names, out / "samples.png")
+        sample_plots.nearest_real_grid(paths, train_paths, clip_nn, clip_sim, gen_caption, real_caption, out / "nearest_real.png", seed=seed)
+        sample_plots.embedding_map(ref["clip_l", test], test_make, feats["clip_l"], req, coarse_names, cfg["viz"] | {"n_jobs": cfg["n_jobs"]},
+                                   out / "embedding.png", seed)
+    return t, figures
 
 
 def load_episodes(episodes_dir):
@@ -185,6 +197,9 @@ def main():
         raise RuntimeError("generation evaluation needs a GPU: sbatch slurm/eval_generation.sh")
     ctx = Context(cfg, dcfg, torch.device("cuda"))
     samples = pd.read_csv(samples_dir / "samples.csv")
+    cond = method.get("conditioning")
+    if isinstance(cond, dict) and cond["kind"] == "oracle":  # the fine-label oracle's cluster is the requested fine class: E1
+        samples["fine_id"] = samples.cluster
     paths = [samples_dir / f for f in samples.filename]
     with Image.open(paths[0]) as im:
         if im.size != (cfg["crop_size"],) * 2:

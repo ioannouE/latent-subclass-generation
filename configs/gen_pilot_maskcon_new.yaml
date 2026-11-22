@@ -1,0 +1,44 @@
+# G-0c (docs/EXPERIMENT_GENERATION.md): pilot of the controlled latent diffusion generator on Stanford Cars, maskcon_new (coarse = 8 body
+# types), conditioned on the coarse class only. Every set is scored against val (configs/eval_generation_maskcon_new.yaml); test is not used.
+data_config: configs/data.yaml
+labels: maskcon_new
+crop: bbox15
+image_size: 128
+num_workers: 8                 # = --cpus-per-task in the slurm scripts
+seed: 0
+
+autoencoders:                  # candidates, both 128 px -> 16 x 16 x 4; compared on val reconstructions (scripts/reconstruct_val.py)
+  sd_vae: {kind: sd_vae, weights: stabilityai/sd-vae-ft-ema, uses: [sd_vae]}
+  own: {kind: own, uses: [own_ae, lpips_alex]}    # scripts/train_autoencoder.py
+
+own_ae:                        # MONAI AutoencoderKL on train: L1 + LPIPS + KL, patch adversarial loss after adv_start
+  arch: {channels: [64, 128, 256, 256], num_res_blocks: 2, attention_levels: [false, false, false, false], latent_channels: 4}
+  disc: {channels: 64, num_layers_d: 3}
+  steps: 100000
+  batch_size: 32
+  lr: 1.0e-4
+  perceptual_net: alex         # LPIPS
+  perceptual_weight: 1.0
+  kl_weight: 1.0e-6
+  adv_weight: 0.01
+  adv_start: 30000
+  log_every: 2000
+
+ldm:
+  name: pilot_coarse_sd_vae    # output directory and set names
+  autoencoder: sd_vae          # a key of `autoencoders`, chosen from the reconstruction comparison
+  arch: {channels: [128, 256, 512], attention_levels: [false, true, true], num_res_blocks: 2, num_head_channels: [0, 64, 64]}
+  scheduler: {num_train_timesteps: 1000, schedule: scaled_linear_beta, beta_start: 0.0015, beta_end: 0.0195}
+  p_uncond: 0.1                # classifier-free guidance: label dropout
+  batch_size: 128
+  lr: 1.0e-4
+  ema_decay: 0.9999
+  steps: 200000
+  checkpoints: [10000, 25000, 50000, 100000, 150000, 200000]   # multiples of log_every
+  log_every: 1000
+
+sampling:
+  n: 5000                      # use case A, coarse labels in train prevalence
+  ddim_steps: [25, 50, 100, 250]
+  guidance: 1.5                # eps_u + w (eps_c - eps_u); 1 = no guidance
+  batch_size: 250

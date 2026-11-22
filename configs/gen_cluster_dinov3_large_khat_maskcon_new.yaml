@@ -1,0 +1,38 @@
+# Generation ladder (docs/EXPERIMENT_GENERATION.md), rung `cluster_dinov3_large_khat`: coarse class + cluster id from frozen DINOv3-L k-means within each class, label-free K-hat per class (estimate_k, k_max 60): coarse labels only.
+# A copy of configs/gen_coarse_maskcon_new.yaml that changes only the conditioning label. Scored once on test.
+# Run: RUNG=cluster_dinov3_large_khat BENCH=_maskcon_new sbatch slurm/generate.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+crop: bbox15
+image_size: 128
+num_workers: 8                 # = --cpus-per-task in slurm/generate.sh
+seed: 0
+seeds: [0, 1, 2]               # one run per seed: <ldm.name>_s<seed>
+
+autoencoders:
+  sd_vae: {kind: sd_vae, weights: stabilityai/sd-vae-ft-ema, uses: [sd_vae]}   # G-0c rule 1
+
+ldm:
+  name: cluster_dinov3_large_khat
+  autoencoder: sd_vae
+  arch: {channels: [128, 256, 512], attention_levels: [false, true, true], num_res_blocks: 2, num_head_channels: [0, 64, 64]}
+  scheduler: {num_train_timesteps: 1000, schedule: scaled_linear_beta, beta_start: 0.0015, beta_end: 0.0195}
+  p_uncond: 0.1
+  batch_size: 128
+  lr: 1.0e-4
+  ema_decay: 0.9999
+  steps: 50000                # G-0c rule 2 (~0.40 GPU-h)
+  checkpoints: [50000]
+  log_every: 1000
+
+conditioning:                  # one label per (coarse, cluster) pair (lsgen.methods.gen.ldm.condition_labels)
+  kind: cluster
+  labels: ksub_clusters/ksub_frozen_bodytype_new_large_khat_s{seed}.csv   # scripts/train_ksub.py frozen run, seed = generator seed
+  uses: [dinov3_large]
+
+sampling:
+  n: 8000                     # use case A, labels in train prevalence (~ test size)
+  ddim_steps: [25]             # G-0c rule 3
+  guidance: 1.5                # not tuned (fixed before the pilot)
+  batch_size: 250
+  reference_split: test

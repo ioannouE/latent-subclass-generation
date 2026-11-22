@@ -1,0 +1,11 @@
+evaluates,metric,set,value,lo,hi,validated
+realism,G1 FID,,41.35450160735829,,,True
+realism,G1 KID,,0.0158739151023596,,,True
+coverage of the real distribution,G1 recall,,0.6089663760896638,,,True
+subclass prevalence,G3 TV,,0.2237984917866452,,,True
+subclass prevalence,G3 KL,,0.1702312911099943,,,True
+subclass coverage,G4 covered,,0.8087267378215653,,,True
+subclass coverage,G4 rare covered,,0.6945684523809523,,,True
+within-subclass variation,G5 excess KID,,2.626036705399997,2.569937840300521,2.740233640130837,True
+within-subclass variation,G5 coverage ratio,,0.3729227059784523,,,True
+copying of training images,G7 copies,,0.3912,,,True

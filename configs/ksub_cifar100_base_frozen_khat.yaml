@@ -1,0 +1,15 @@
+# Frozen DINOv3-B clusters for the cluster rungs of the generation ladder (docs/EXPERIMENT_GENERATION.md): k-means only, no training,
+# label-free K-hat per class (estimate_k), one clustering per seed; the DINOv3-L clusters are the existing frozen runs of configs/ksub_cifar100*.yaml.
+# Run: CONFIG=configs/ksub_cifar100_base_frozen_khat.yaml sbatch slurm/train_ksub.sh
+# Output: <derived_root>/ksub_clusters/ksub_frozen_base_khat_s<seed>.csv
+data_config: configs/data_cifar100.yaml
+labels: cifar100
+tag: _base_khat
+backbone: dinov3_base          # frozen; features cached by slurm/extract_features.sh
+crop: native_32
+methods:
+  frozen: {}                   # k-means on f (z = f)
+seeds: [0, 1, 2]
+hidden: 2048                   # unused without training (head built, not trained)
+k: khat
+k_max: 60                      # as the DINOv3-L K-hat runs

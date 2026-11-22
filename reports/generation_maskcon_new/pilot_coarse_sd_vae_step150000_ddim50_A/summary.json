@@ -1,0 +1,71 @@
+{
+ "git_hash": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+ "created_utc": "2026-11-21T03:00:06+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "maskcon_new",
+  "validation_config": "configs/metric_validation.yaml",
+  "use_case": "A",
+  "samples_dir": "/nvme/h/eioannou/data_p315/Stanford_Cars/lsgen_derived/generation_maskcon_new/pilot_coarse_sd_vae/step150000_ddim50",
+  "crop": "bbox15",
+  "crop_size": 128,
+  "tau_target": 0.9,
+  "min_samples": 5,
+  "copy_threshold": 0.5,
+  "prdc_k": 5,
+  "coverage_k": 3,
+  "n_episodes_images": 16,
+  "subsample": 0.632,
+  "n_boot": 1000,
+  "n_jobs": 16,
+  "batch_size": 128,
+  "num_workers": 8,
+  "seed": 0
+ },
+ "config_path": "configs/eval_generation_maskcon_new.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 98,
+  "val": 12,
+  "test": 101
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "g1": 1,
+  "g2_make_acc": 9,
+  "g2_prevalence": 1,
+  "g3": 18,
+  "g4_g5": 72,
+  "g4_g5_per_class": 196,
+  "g7": 1,
+  "g7_samples": 5000
+ },
+ "table_git_hash": {
+  "g1": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g2_make_acc": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g2_prevalence": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g3": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g4_g5": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g4_g5_per_class": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g7": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g7_samples": "3349bdea58938af7465de8f1872e12690cd24a72-dirty"
+ },
+ "method": {
+  "name": "pilot_coarse_sd_vae_step150000_ddim50",
+  "uses": [
+   "sd_vae"
+  ],
+  "reference_split": "val",
+  "conditioning": "coarse",
+  "autoencoder": "sd_vae",
+  "step": 150000,
+  "train_hours": 1.205189180440373,
+  "ddim_steps": 50,
+  "guidance": 1.5,
+  "sampling_seconds": 55.43860173225403,
+  "git_hash": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "seed": 0
+ },
+ "same_family_warnings": []
+}

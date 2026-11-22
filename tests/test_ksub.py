@@ -71,8 +71,8 @@ def test_var_floor_scales_the_hinge():
 
 def test_init_prototypes_with_fit_are_cluster_means():
     f, coarse, _ = batch()
-    first_half = lambda z, k, seed: (np.arange(len(z)) >= len(z) // 2).astype(int)  # noqa: E731  stand-in clustering: 2 clusters
-    mu = init_prototypes(f, coarse, [2, 2, 1], seed=0, fit=first_half)
+    halves = lambda z, k, seed: np.arange(len(z)) * k // len(z)  # noqa: E731  stand-in clustering: k contiguous blocks
+    mu = init_prototypes(f, coarse, [2, 2, 1], seed=0, fit=halves)
     x = f[coarse == 0]
     assert torch.allclose(mu[0, 1], F.normalize(x[len(x) // 2:].mean(0), dim=0), atol=1e-6)
     assert torch.equal(mu[2, 1], torch.zeros(f.shape[1]))  # padding for the K_c = 1 class

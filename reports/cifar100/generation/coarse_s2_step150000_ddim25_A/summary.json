@@ -1,0 +1,76 @@
+{
+ "git_hash": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+ "created_utc": "2026-11-21T15:29:16+00:00",
+ "config": {
+  "data_config": "configs/data_cifar100.yaml",
+  "labels": "cifar100",
+  "validation_config": "configs/metric_validation.yaml",
+  "use_case": "A",
+  "samples_dir": "/nvme/h/eioannou/data_p315/CIFAR100/lsgen_derived/generation/coarse_s2/step150000_ddim25",
+  "crop": "native",
+  "crop_size": 32,
+  "tau_target": 0.9,
+  "min_samples": 5,
+  "copy_threshold": 0.5,
+  "prdc_k": 5,
+  "viz": {
+   "max_points": 5000,
+   "umap_neighbors": 15,
+   "tsne_perplexity": 30
+  },
+  "coverage_k": 3,
+  "n_episodes_images": 16,
+  "subsample": 0.632,
+  "n_boot": 1000,
+  "n_jobs": 16,
+  "batch_size": 128,
+  "num_workers": 8,
+  "seed": 0
+ },
+ "config_path": "configs/eval_generation_cifar100.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "1cf015739e9b592dcee9dfbf0050118bced8343b8aa77ea080a6f27d1c394038",
+ "excluded_conflicting_images": {
+  "train": 68,
+  "val": 5,
+  "test": 17
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "g1": 1,
+  "g2_make_acc": 21,
+  "g2_prevalence": 1,
+  "g3": 42,
+  "g4_g5": 168,
+  "g4_g5_per_class": 100,
+  "g7": 1,
+  "g7_samples": 10000
+ },
+ "table_git_hash": {
+  "g1": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g2_make_acc": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g2_prevalence": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g3": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g4_g5": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g4_g5_per_class": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g7": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "g7_samples": "3349bdea58938af7465de8f1872e12690cd24a72-dirty"
+ },
+ "method": {
+  "name": "coarse_s2_step150000_ddim25",
+  "uses": [
+   "sd_vae"
+  ],
+  "reference_split": "test",
+  "conditioning": "coarse",
+  "autoencoder": "sd_vae",
+  "step": 150000,
+  "train_hours": 1.1652009196413888,
+  "ddim_steps": 25,
+  "guidance": 1.5,
+  "sampling_seconds": 20.09661054611206,
+  "git_hash": "3349bdea58938af7465de8f1872e12690cd24a72-dirty",
+  "seed": 2
+ },
+ "same_family_warnings": []
+}

@@ -1,0 +1,33 @@
+# Generation ladder, rung 1 (docs/EXPERIMENT_GENERATION.md): the controlled latent diffusion generator conditioned on the coarse class only,
+# CIFAR-100 (coarse = 20 superclasses). Autoencoder, budget and DDIM steps fixed by the G-0c pilot on val (configs/gen_pilot_cifar100.yaml);
+# every later rung copies this file and changes only the conditioning. Scored once on test (configs/eval_generation_cifar100.yaml).
+data_config: configs/data_cifar100.yaml
+labels: cifar100
+crop: native
+image_size: 32
+num_workers: 8                 # = --cpus-per-task in slurm/generate.sh
+seed: 0
+seeds: [0, 1, 2]               # one run per seed: <ldm.name>_s<seed>
+
+autoencoders:
+  sd_vae: {kind: sd_vae, weights: stabilityai/sd-vae-ft-ema, input_size: 64, uses: [sd_vae]}   # G-0c rule 1
+
+ldm:
+  name: coarse
+  autoencoder: sd_vae
+  arch: {channels: [128, 256, 512], attention_levels: [false, true, true], num_res_blocks: 2, num_head_channels: [0, 64, 64]}
+  scheduler: {num_train_timesteps: 1000, schedule: scaled_linear_beta, beta_start: 0.0015, beta_end: 0.0195}
+  p_uncond: 0.1
+  batch_size: 128
+  lr: 1.0e-4
+  ema_decay: 0.9999
+  steps: 150000                # G-0c rule 2 (~1.19 GPU-h)
+  checkpoints: [150000]
+  log_every: 1000
+
+sampling:
+  n: 10000                      # use case A, coarse labels in train prevalence (~ test size)
+  ddim_steps: [25]             # G-0c rule 3
+  guidance: 1.5                # not tuned (fixed before the pilot)
+  batch_size: 250
+  reference_split: test
