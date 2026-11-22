@@ -108,3 +108,73 @@ Trained and scored from uncommitted configs on top of `6957f1b` (`6957f1b-dirty`
 - **CIFAR-100: the prototypes are well below frozen k-means K-hat** (0.685 vs 0.778), although their count is right on average (5.0, abs error 1.9).
 - Oracle-K ACC, fine probe and coarse kNN do not move on either dataset: geosub does not make the subclasses more separable. ksub (given K) is well
   above both on oracle-K ACC (Cars re-cluster 0.810, CIFAR `sub_var_coarse01` 0.919, docs/EXPERIMENT_KSUB.md), but that is the other supervision tier.
+
+## Prototype initialisation, usage, known K, loss weights and a training diagnostic (DINOv3-L, seeds 0-4)
+Configs: `configs/geosub_{maskcon_large,cifar100}_kmeans.yaml` (prototype fixes), `configs/geosub_maskcon_large_weights.yaml` (loss weights, Cars only),
+`configs/diagnose_geosub_maskcon.yaml` (`scripts/diagnose_geosub.py`). Everything as the n_proto 50 runs above except what is named. `km50` = prototypes
+start at k-means centroids (n_init 10, run seed) of each class's frozen train features instead of random train features; `K` = geosub-K, K_c k-means
+prototypes per class, all active (**uses K**). Weights `g`/`s`/`v` = L_geo / L_sub / L_var (default 1 / 1 / 0), `u` = usage (default 0.1). Chosen on
+val (own-cluster ACC; within one seed std of the incumbent keeps the incumbent); test scored afterwards for every variant as an ablation, not used to
+choose. Own clusters: `configs/eval_geosub_{maskcon_large,cifar100}{,_val,_test}.yaml`; R1-R5: `configs/eval_repr_{maskcon,cifar100}_geosub.yaml`.
+Reports: `reports/repr_maskcon_new/` and `reports/cifar100/repr/` (`geosub_geo_sub_<variant>_*_s<seed>_{256,32,clusters_val,clusters_test}/`),
+`reports/repr_maskcon_new/geosub_diagnostics/`. Conflicting images excluded: Stanford Cars 211, CIFAR-100 90. Code and configs committed in `1bfc312`.
+
+**Own prototype clusters** (Hungarian ACC, macro over coarse classes, mean ± std over seeds; K-hat counted on train, true 24.5 Cars / 5 CIFAR):
+
+| | Cars val | Cars test | Cars K-hat | CIFAR val | CIFAR test | CIFAR K-hat |
+|---|---|---|---|---|---|---|
+| frozen DINOv3-L k-means, label-free K-hat | 0.686 | 0.660 | 16.1 / 17.0 | 0.679 | **0.778** | 8.5 / 5.8 |
+| random init (`geo_sub` p50, above) | 0.705 ± 0.015 | 0.677 ± 0.016 | 21.2 | **0.683 ± 0.017** | 0.685 ± 0.017 | 5.0 |
+| **`km50`** | **0.794 ± 0.008** | **0.759 ± 0.009** | 28.7 | 0.602 ± 0.019 | 0.602 ± 0.016 | 5.8 |
+| `km50` u 0.3 / u 1 | 0.780 / 0.703 | 0.744 / 0.665 | 29.8 / 34.7 | 0.558 / 0.205 | 0.548 / 0.192 | 22.6 / 49.5 |
+| `km50` g 0.3 / g 0.1 / g 0.1 + v 1 | 0.796 / 0.795 / 0.795 | 0.757 / 0.757 / 0.758 | 28.8-29.0 | - | - | - |
+| `km50` g 0 + v 1 | 0.762 ± 0.004 | 0.731 ± 0.006 | 28.9 | - | - | - |
+| `km50` s 0.3 / s 0.1 | 0.794 / 0.793 | 0.760 / 0.760 | 28.8 | - | - | - |
+| `km50` v 0.3 / v 1 / v 3 | 0.794 / 0.795 / 0.794 | 0.759 / 0.759 / 0.759 | 28.6-28.7 | - | - | - |
+| `K` (uses K) | 0.813 ± 0.004 | 0.793 ± 0.004 | 24.5 | 0.840 ± 0.004 | 0.841 ± 0.003 | 5 |
+| frozen DINOv3-L k-means, oracle K (uses K) | 0.810 | **0.800** | - | 0.893 | **0.892** | - |
+
+**R1-R5 of z on test** (k-means on the embedding, as for every baseline; 5 seeds):
+
+| | kNN / probe coarse | fine probe | ACC oracle K | ACC K-hat | ARI K-hat | K-hat | d0/d1 | var ratio | ARI boot |
+|---|---|---|---|---|---|---|---|---|---|
+| Cars frozen DINOv3-L | 0.944 / 0.973 | 0.950 | 0.800 | 0.660 | 0.641 | 17.0 | 0.415 | 0.429 | 0.874 |
+| Cars `km50` | 0.943 / 0.952 | 0.950 | 0.809 | 0.706 | 0.685 | 18.6 | 0.419 | 0.433 | 0.896 |
+| Cars `km50` g 0.1 | 0.934 / 0.867 | 0.948 | 0.808 | 0.680 | 0.657 | 21.2 | 0.407 | 0.421 | 0.914 |
+| Cars `km50` g 0 + v 1 | 0.879 / 0.779 | 0.942 | 0.742 | 0.636 | 0.534 | 24.0 | 0.387 | 0.400 | 0.849 |
+| Cars `K` (uses K) | 0.948 / 0.946 | 0.950 | 0.807 | 0.721 | 0.701 | 17.7 | 0.410 | 0.424 | 0.902 |
+| CIFAR frozen DINOv3-L | 0.964 / 0.966 | 0.961 | 0.892 | 0.778 | 0.706 | 5.8 | 0.733 | 0.773 | 0.891 |
+| CIFAR `km50` / u 0.3 / u 1 | 0.965 / 0.961 | 0.961-0.962 | 0.892-0.897 | 0.760 / 0.700 / 0.757 | 0.688 / 0.633 / 0.686 | 6.0-8.1 | 0.71-0.75 | 0.75-0.79 | 0.89-0.90 |
+| CIFAR `K` (uses K) | 0.965 / 0.955 | 0.960 | 0.897 | **0.835** | **0.754** | 4.9 | 0.717 | 0.758 | **0.934** |
+
+**Training diagnostic** (Cars, `scripts/diagnose_geosub.py`, train split; the run's own starting prototypes rebuilt from its config and seed, pruned
+with the same min_count rule, no training):
+
+| | ACC untrained start | ACC trained | trained prototypes on frozen f | images that changed prototype | K-hat start -> end | 1 - cos(z, f) | kNN@10 fine purity z (f 0.906) |
+|---|---|---|---|---|---|---|---|
+| random init | 0.608 | 0.667 | 0.666 | 33% | 29.7 -> 21.2 | 0.25 | 0.905 |
+| `km50` | 0.686 | 0.758 | 0.762 | 12% | 33.0 -> 28.7 | 0.11 | 0.904 |
+| `km50` g 0 + v 1 | 0.686 | 0.718 | 0.736 | 14% | 33.0 -> 28.9 | 0.34 | 0.877 |
+| `km50` u 1 | 0.686 | 0.652 | 0.657 | 11% | 33.0 -> 34.7 | 0.02 | 0.904 |
+| `K` (uses K) | 0.791 | 0.793 | 0.793 | 2% | 24.5 fixed | 0.02 | 0.906 |
+
+Training logs (every term logged at every weight, `consist` = swapped-prediction part of L_sub): K-hat is fixed by epoch 4-5 of 100 in every run,
+inside warmup; `consist` falls from 0.54 to 0.06 (0.004 without L_geo); L_var is 0 throughout (peak 8e-4) at every weight, also without L_geo.
+
+- **Stanford Cars, label-free: `km50` is the val choice and the best label-free clustering so far** (test 0.759 vs 0.660 for frozen k-means K-hat,
+  within 0.04 of oracle K). Val and test rank every variant the same way.
+- **The gain is the prototype count, not the representation.** Trained prototypes on frozen f score as the full model, kNN fine purity and oracle-K ACC
+  of z equal frozen; the gain over the untrained start comes with pruning the over-split k-means start (33 -> 28.7 per class: the sharp teacher moves
+  images from small prototypes to large ones until they fall below min_count). With the count fixed (`K`) training moves 2% of the images and adds 0.002.
+- **The loss weights do not matter once L_geo > 0** (Cars, all within one seed std). The L_geo weight only sets how far z drifts; without L_geo z
+  collapses onto the prototypes (coarse probe 0.973 -> 0.779, own ACC -0.03). L_var is never active. A larger usage weight stops the pruning and hurts.
+- **CIFAR-100: the fixes fail.** k-means initialisation does not stop the collapse (46 -> 5.6 prototypes per class by epoch 5; people, aquatic and
+  small mammals, trees and large natural scenes collapse to 1-2); usage 0.3 / 1 over-split. Given K, training moves away from its k-means start and ends
+  below frozen oracle-K k-means (0.841 vs 0.892). k-means with the label-free K-hat on `K`'s z is above frozen (0.835 vs 0.778), but that z was trained with K.
+- **Remaining errors are pairs frozen DINOv3 merges** (Rolls-Royce Ghost / Phantom, Silverado 1500 cab variants, Audi TTS / TT RS, Dodge / Mercedes
+  Sprinter): L_geo keeps z on that geometry and augmentation consistency carries no trim, cab or model-year information. A signal beyond augmentation
+  (e.g. nearest-neighbour consistency) would be needed for the embedding itself to learn.
+- Pending: g / s / v = 0.5 / 0.5 / 0.5, 0.5 / 0 / 1 (no L_sub: prototypes stay at their k-means start), 0.5 / 0.5 / 1 on both datasets and 0 / 1 / 1 on
+  CIFAR-100 (`configs/geosub_{maskcon_large,cifar100}_weights.yaml`).
+- Not varied for geosub: tau_geo, tau_student / tau_teacher, min_count, lr, batch size, epochs. Diffusion-map clustering, re-clustering frequency,
+  EMA vs refresh and tau_a are ksub settings (docs/EXPERIMENT_KSUB.md).
