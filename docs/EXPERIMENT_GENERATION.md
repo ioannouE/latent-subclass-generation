@@ -125,8 +125,8 @@ reference images, and the generated set alone), and `g7_nn_grid.png` (the 64 sam
 | Rung | Conditioning | Status |
 |---|---|---|
 | coarse | coarse class only (lower bound) | done, 21 Nov 2026 (below) |
-| cluster_dinov3_{large,base} | coarse + cluster id: frozen DINOv3-L / -B k-means within each class, true K_c ("uses K") | DINOv3-L done 22 Nov 2026; DINOv3-B to run |
-| cluster_dinov3_{large,base}_khat | the same with the label-free K-hat per class (coarse labels only) | DINOv3-L done 22 Nov 2026; DINOv3-B to run |
+| cluster_dinov3_{large,base} | coarse + cluster id: frozen DINOv3-L / -B k-means within each class, true K_c ("uses K") | done 22 Nov 2026 |
+| cluster_dinov3_{large,base}_khat | the same with the label-free K-hat per class (coarse labels only) | done 22 Nov 2026 |
 | oracle | fine class (upper bound; uses fine labels) | done 22 Nov 2026 |
 | next | coarse + cluster id from the ksub encoders; then geosub; support tokens (IP-Adapter-style) for use case B | to do |
 
@@ -154,21 +154,28 @@ own region of CLIP-L space, apart from the real images (`embedding.png`), and it
 prototype-collapse control (excess KID 3.09 vs 2.09): subclass metrics on Cars measure conditioning on top of a large realism gap. On
 CIFAR-100 the generated set overlaps the real one, and G5 is clearly better than C4 (0.94 vs 2.50).
 
-### DINOv3-L cluster and oracle rungs (22 Nov 2026, test, 3 seeds; conflicting images excluded)
+### Frozen DINOv3 cluster and oracle rungs (22 Nov 2026, test, 3 seeds; conflicting images excluded)
 
 Mean over seeds (sd in `reports/generation_maskcon_new/<rung>.md`, `reports/cifar100/generation/<rung>.md`).
 
 | | rung | labels | FID | recall | G3 TV | G4 covered | G4 rare | G5 excess KID | G6 purity | G7 copies (real) | E1 fine acc (real val) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Cars | coarse | 8 | 22.5 | 0.42 | 0.265 | 0.68 | 0.58 | 3.09 | | 0.031 (0.130) | |
+| Cars | DINOv3-B K-hat | 228 | 21.2 | 0.48 | 0.143 | 0.95 | 0.93 | 2.81 | 0.62 | 0.165 | |
+| Cars | DINOv3-B true K | 196 | 20.9 | 0.48 | 0.151 | 0.94 | 0.93 | 2.83 | 0.61 | 0.154 | |
 | Cars | DINOv3-L K-hat | 201 | 21.1 | 0.48 | 0.149 | 0.95 | 0.89 | 2.81 | 0.62 | 0.152 | |
 | Cars | DINOv3-L true K | 196 | 21.2 | 0.48 | 0.148 | 0.95 | 0.91 | 2.80 | 0.63 | 0.162 | |
 | Cars | oracle | 196 | 21.2 | 0.49 | 0.130 | 0.97 | 0.94 | 2.82 | 0.70 | 0.164 | 0.54 (0.85) |
 | CIFAR-100 | coarse | 20 | 28.8 | 0.57 | 0.134 | 0.98 | | 0.94 | | 0.54 (0.72) | |
+| CIFAR-100 | DINOv3-B K-hat | 111 | 27.1 | 0.60 | 0.077 | 1.00 | | 0.88 | 0.75 | 0.56 | |
+| CIFAR-100 | DINOv3-B true K | 100 | 27.2 | 0.61 | 0.079 | 1.00 | | 0.87 | 0.78 | 0.55 | |
 | CIFAR-100 | DINOv3-L K-hat | 143 | 27.2 | 0.60 | 0.077 | 1.00 | | 0.88 | 0.75 | 0.56 | |
 | CIFAR-100 | DINOv3-L true K | 100 | 27.3 | 0.60 | 0.080 | 1.00 | | 0.88 | 0.79 | 0.55 | |
 | CIFAR-100 | oracle | 100 | 27.4 | 0.60 | 0.076 | 1.00 | | 0.88 | 0.80 | 0.55 | 0.64 (0.89) |
 
+- DINOv3-B and DINOv3-L, true K and K-hat, give the same generation: every metric within ~0.01 (seed sd up to 0.008), on both
+  benchmarks, although the two encoders' K-hat differs (labels, mean over seeds: Cars 228 B / 201 L, CIFAR-100 111 B / 143 L). The
+  finer Cars split of DINOv3-B leaves fewer real subclasses unmatched in G6 (0.75 vs 2.4 of 196) at slightly higher copying (G7 0.165).
 - Any subclass label helps a lot over coarse-only (Cars G3 TV halves, G4 coverage 0.68 -> 0.95), and frozen DINOv3-L clusters, even with
   K-hat, are almost as good as the fine labels: the cluster-to-oracle gap is small (Cars G3 TV 0.148 vs 0.130, G6 purity 0.63 vs 0.70;
   none on CIFAR-100).
