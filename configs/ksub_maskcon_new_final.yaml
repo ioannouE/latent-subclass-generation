@@ -1,0 +1,16 @@
+# Final Stanford Cars ksub configuration, scored once on test (docs/EXPERIMENT_KSUB.md, "Final Cars configuration on test"). Every choice was made on
+# val: refresh every epoch (configs/ksub_maskcon_new_refresh.yaml), tau_a 0.025 (configs/ksub_maskcon_new_tau.yaml), lambda_coarse from
+# configs/ksub_maskcon_new_coarse.yaml. No training: the runs already exist and their test embeddings were written at training time.
+# Val winner of the lambda_coarse sweep (reports/ksub_maskcon_new_coarse_val/summary.md): tau0025 (0.10); the three arms tie on val ACC oracle K,
+# tau0025 keeps the coarse structure (probe coarse 0.958 vs 0.341 / 0.563).
+#   python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_final.yaml   (after configs/eval_repr_ksub_maskcon_new_final_test.yaml)
+data_config: configs/data.yaml
+labels: maskcon_new            # configs/labels.yaml: also picks the exclusion list
+tag: _bodytype_new_large_refresh  # = configs/ksub_maskcon_new_{refresh,tau,coarse}.yaml
+backbone: dinov3_large
+crop: bbox15_256
+report_dir: ksub_maskcon_new_final  # under reports_root: R1-R5 on test and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                                                      # existing run: k-means with K_c on f (z = f)
+  tau0025: {coarse: 0.1, sub: 1.0, var: 1.0, recluster_every: 1, tau_a: 0.025}   # val winner of the lambda_coarse sweep
+seeds: [0, 1, 2]

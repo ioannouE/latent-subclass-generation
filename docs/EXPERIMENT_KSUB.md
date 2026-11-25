@@ -207,6 +207,28 @@ CONFIG=configs/eval_repr_ksub_maskcon_new_khat.yaml sbatch slurm/eval_representa
 python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_khat.yaml
 ```
 
+Results (test; git `1862299-dirty`; summaries `reports/ksub_maskcon_new_khat/summary.md`, `reports/cifar100/ksub_khat/summary.md`, per class
+`per_class.csv` there). K-hat depends only on the seed's frozen train features, so every method of a seed uses the same K. Conflicting images
+excluded (Cars 211, CIFAR-100 90).
+
+| | ACC oracle K: K-hat run / known-K re-cluster | ACC own: K-hat run / known-K re-cluster | ARI boot: K-hat / known K | kNN coarse | K err |
+|---|---|---|---|---|---|
+| Cars frozen DINOv3-L | 0.800 / 0.800 | 0.719 / 0.792 | 0.874 / 0.874 | 0.944 | 5.4 |
+| Cars `sub_var` | 0.764 / **0.810** | 0.717 / **0.810** | 0.870 / 0.941 | 0.931 | 5.4 |
+| Cars `sub_var_coarse01` | 0.767 / **0.810** | 0.721 / **0.811** | 0.861 / 0.927 | 0.978 | 5.4 |
+| CIFAR frozen DINOv3-L | 0.892 / 0.892 | 0.720 / 0.902 | 0.891 / 0.891 | 0.964 | 3.05 |
+| CIFAR `sub_var` | 0.847 / **0.909** | 0.718 / **0.910** | 0.910 / 0.992 | 0.955 | 3.05 |
+| CIFAR `sub_var_coarse01` | 0.850 / **0.911** | 0.725 / **0.911** | 0.912 / 0.991 | 0.965 | 3.05 |
+
+- **With an estimated K the gain over frozen is gone on both datasets.** ACC oracle K (z scored with the true K_c) falls below frozen
+  DINOv3-L (Cars -0.03, CIFAR-100 -0.04), and the runs' own K-hat clustering is no better than k-means with K-hat on f (ACC own 0.72 throughout).
+- **Underestimating K is what hurts; overestimating is roughly harmless.** Training with too few prototypes merges subclasses in z:
+  Cab (K-hat 6.7 vs K_c 18) 0.718 -> 0.526 ACC oracle K (`sub_var_coarse01` vs frozen), Wagon (5 vs 6) 0.846 -> 0.798; CIFAR-100
+  aquatic_mammals and trees (K-hat 2 vs 5) 0.830 -> 0.421 and 0.603 -> 0.439, small_mammals (3) 0.844 -> 0.609. Classes with K-hat > K_c
+  are level or better (Sedan 47 vs 50: 0.732 -> 0.762; CIFAR insects 12.7: 0.920 -> 0.970, large_man-made_outdoor_things 7: 0.910 -> 0.966).
+- On Cab the K-hat clusters follow the car make rather than the subclass (`reports/ksub_maskcon_new_compare/summary.md`).
+- So an unknown-K ksub needs a K estimate that errs high, or an assignment that can split clusters during training; K-hat on frozen features is not enough.
+
 ## Diffusion-map re-clustering and loss-weight grid (`configs/ksub_maskcon_new_recluster_diff.yaml`, `configs/ksub_{maskcon_new,cifar100}_grid.yaml`)
 Both start from the known-K re-clustering variant (batch 256 / 320, reset every epoch), are trained on train and scored on test; settings fixed
 in advance. No setting is selected on test: every grid setting is reported (sensitivity table).
@@ -217,6 +239,51 @@ in advance. No setting is selected on test: every grid setting is reported (sens
   pseudo-subclass at least as spread as in the frozen features; 0.5 lets it shrink to half its frozen variance. var_floor 1 with lambda_sub 1,
   lambda_coarse 0.1 is `sub_var_coarse01` of `configs/ksub_{maskcon_new,cifar100}_recluster.yaml`.
 Conflicting images excluded as above (Cars 211, CIFAR-100 90).
+
+Results (test; git `1862299-dirty`; slurm jobs 432307 / 432308 / 432309 (diffusion), 432293-432305 and 432299 / 432306 (grid); summaries
+`reports/ksub_maskcon_new_recluster_diff/summary.md`, `reports/ksub_maskcon_new_grid/summary.md`, `reports/cifar100/ksub_grid/summary.md`).
+
+**Diffusion maps vs k-means (Stanford Cars).**
+
+| | ACC oracle K | NMI | d0/d1 | d1/d2 | var ratio | ARI boot | ACC own |
+|---|---|---|---|---|---|---|---|
+| frozen DINOv3-L (own: k-means / diffusion) | 0.800 | 0.886 | 0.415 | 0.877 | 0.429 | 0.874 | 0.792 / **0.829** |
+| `sub_var`, k-means / diffusion | 0.810 / 0.811 | 0.890 / 0.888 | 0.401 / 0.403 | 1.032 / 1.032 | 0.415 / 0.417 | 0.941 / **0.954** | 0.810 / 0.820 |
+| `sub_var_coarse01`, k-means / diffusion | 0.810 / **0.819** | 0.886 / **0.892** | 0.480 / 0.479 | 0.927 / 0.925 | 0.495 / 0.494 | 0.927 / 0.950 | 0.811 / 0.825 |
+
+- **Diffusion re-clustering is a small, consistent gain:** +0.009 ACC oracle K for `sub_var_coarse01` (seed std 0.007-0.008), ARI boot
+  +0.013 / +0.023; R3 / R4 are unchanged. Per class it helps Hatchback (0.92-0.96 -> 0.995) and SUV (0.85-0.87 -> 0.88-0.91) and hurts Coupe
+  (0.79-0.80 -> 0.75-0.76).
+- **Diffusion maps on the frozen features alone give the best own assignment** (ACC own 0.829, above every trained run): on Cars the clustering
+  algorithm matters about as much as the trained head. Not run on CIFAR-100.
+
+**Loss-weight grid** (mean over seeds 0-2; reference var_floor 1 = `sub_var_coarse01` re-cluster above: Cars 0.810 / d0/d1 0.480 / d1/d2 0.927 / var
+ratio 0.495 / ARI boot 0.927, CIFAR-100 0.911 / 0.685 / 0.996 / 0.730 / 0.991; frozen Cars 0.800, CIFAR-100 0.892).
+
+| setting | Cars ACC oracle K | Cars d0/d1 | Cars d1/d2 | Cars var ratio | Cars ARI boot | CIFAR ACC oracle K | CIFAR d0/d1 | CIFAR d1/d2 | CIFAR ARI boot |
+|---|---|---|---|---|---|---|---|---|---|
+| sub1_c01_f025 | 0.760 | 0.265 | 0.629 | 0.278 | 0.861 | 0.845 | 0.494 | 0.576 | 0.973 |
+| sub1_c03_f025 | 0.682 | 0.355 | 0.477 | 0.369 | 0.796 | 0.656 | 0.671 | 0.413 | 0.855 |
+| sub2_c01_f025 | 0.787 | 0.229 | 0.742 | 0.239 | 0.890 | 0.851 | 0.449 | 0.637 | 0.975 |
+| sub2_c03_f025 | 0.714 | 0.304 | 0.553 | 0.316 | 0.831 | 0.835 | 0.528 | 0.527 | 0.938 |
+| sub1_c01_f05 | 0.808 | 0.369 | 0.761 | 0.384 | 0.924 | 0.885 | 0.595 | 0.748 | 0.969 |
+| sub1_c03_f05 | 0.743 | 0.460 | 0.600 | 0.476 | 0.844 | 0.837 | 0.677 | 0.619 | 0.917 |
+| sub2_c01_f05 | 0.814 | 0.321 | 0.874 | 0.335 | 0.931 | 0.883 | 0.545 | 0.813 | 0.968 |
+| sub2_c03_f05 | 0.773 | 0.389 | 0.669 | 0.404 | 0.880 | 0.878 | 0.608 | 0.687 | 0.967 |
+| sub1_c01_f075 | 0.817 | 0.430 | 0.853 | 0.444 | 0.932 | 0.906 | 0.647 | 0.888 | 0.989 |
+| sub1_c03_f075 | 0.779 | 0.521 | 0.687 | 0.536 | 0.879 | 0.886 | 0.709 | 0.735 | 0.961 |
+| sub2_c01_f075 | 0.811 | 0.382 | 0.949 | 0.396 | 0.929 | 0.902 | 0.600 | 0.957 | 0.988 |
+| sub2_c03_f075 | 0.797 | 0.449 | 0.753 | 0.464 | 0.904 | 0.900 | 0.654 | 0.788 | 0.980 |
+
+Seed std of ACC oracle K <= 0.013 (Cars) and <= 0.015 (CIFAR-100).
+- **No setting improves on var_floor 1.** Cars: the best settings (sub1_c01_f075 0.817, sub2_c01_f05 0.814) are within one seed std of
+  0.810. CIFAR-100: every setting is below 0.911 (best 0.906), and all var_floor 0.25 / 0.5 settings are below frozen.
+- **A lower var_floor trades R3 for R2 and R4.** d0/d1 falls (Cars 0.48 -> 0.23, CIFAR-100 0.69 -> 0.45): subclasses get tighter relative to their
+  neighbours. But the within-subclass variation (var ratio) and ACC oracle K fall with it: the head squeezes images towards prototypes
+  that are partly wrong.
+- **lambda_coarse 0.3 is worse than 0.1 in every cell** (Cars -0.02 to -0.08, CIFAR-100 up to -0.19), less so at higher floors.
+- **lambda_sub 2 helps only at low floors** (Cars f025 0.760 -> 0.787); at f075 it is level or lower but gives the best d1/d2 (0.95 on both datasets).
+- Sensitivity only: these are test numbers, and the defaults (var_floor 1, lambda_sub 1, lambda_coarse 0.1) stay as they were.
 
 ## Prototype refresh vs EMA momentum (`configs/ksub_maskcon_new_refresh.yaml`; val, DINOv3-L, seeds 0-2)
 Stanford Cars maskcon_new, batch 256, loss of `sub_var_coarse01`. Four arms, fixed in advance: `ema099` (EMA 0.99, no refresh: the original),
@@ -297,3 +364,49 @@ CONFIG=configs/ksub_maskcon_new_coarse.yaml METHODS=tau0025_c0 sbatch slurm/trai
 CONFIG=configs/eval_repr_ksub_maskcon_new_coarse_val.yaml sbatch slurm/eval_representation.sh
 python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_coarse.yaml
 ```
+
+Choice rule, fixed before the val results: highest mean val ACC oracle K; if two arms are within one seed std of each other, the one with the
+higher val probe coarse.
+
+Results (val; slurm job 461649 R1-R5; git `2b82f53-dirty`; summary `reports/ksub_maskcon_new_coarse_val/summary.md`). Re-scored lambda_coarse 0.10
+(`tau0025`) reproduces `reports/ksub_maskcon_new_tau_val/` exactly. Mean ± std over seeds 0-2.
+
+| lambda_coarse | ACC oracle K | ACC own | NMI | ARI boot | probe coarse | kNN coarse | d0/d1 | d1/d2 | var ratio |
+|---|---|---|---|---|---|---|---|---|---|
+| frozen | 0.810 | 0.818 ± 0.002 | 0.910 | 0.772 | **0.974** | 0.954 | 0.409 | 0.880 | 0.421 |
+| 0 (`tau0025_c0`) | **0.837 ± 0.011** | **0.837 ± 0.008** | **0.918** | **0.834 ± 0.005** | 0.341 ± 0.007 | 0.923 | 0.405 | 1.032 | 0.417 |
+| 0.03 (`tau0025_c003`) | 0.831 ± 0.012 | 0.834 ± 0.006 | 0.916 | 0.824 ± 0.009 | 0.563 ± 0.019 | 0.953 | 0.429 | 1.023 | 0.442 |
+| 0.10 (`tau0025`) | 0.834 ± 0.013 | 0.824 ± 0.010 | 0.914 | 0.792 ± 0.005 | 0.958 ± 0.003 | **0.962** | 0.480 | **0.940** | 0.491 |
+
+- **The three arms tie on subclass accuracy:** ACC oracle K 0.831-0.837, all within one seed std (0.011-0.013) of each other; all are
+  about +0.02-0.03 above frozen DINOv3-L.
+- **By the rule, lambda_coarse 0.10 (`tau0025`) is the val choice:** among the tied arms it alone keeps the coarse structure (probe coarse 0.958 vs
+  0.341 / 0.563; d1/d2 0.94 vs 1.03: without L_coarse the body types are no further apart than their subclasses).
+- Dropping L_coarse gives slightly more stable clusters (ARI boot 0.834 vs 0.792) and ACC own (+0.013), not a higher ACC oracle K.
+
+## Final Cars configuration on test (`configs/ksub_maskcon_new_final.yaml`; test, DINOv3-L, seeds 0-2)
+The configuration chosen on val by the three sweeps above (refresh every epoch, tau_a 0.025, lambda_coarse from the coarse-loss sweep), scored once on test
+against frozen DINOv3-L. No new training: the runs above already wrote their test embeddings. The val winner is lambda_coarse 0.10 (`tau0025`):
+the final configuration is batch 256, k-means refresh every epoch, EMA 0.99, tau_a 0.025, lambda_coarse 0.1, lambda_sub 1, lambda_var 1 (var_floor 1).
+The test reference for the earlier val choice (`refresh1`, tau_a 0.05) is `sub_var_coarse01` of `configs/ksub_maskcon_new_recluster.yaml` (same settings).
+Conflicting images excluded (Cars 211).
+```
+CONFIG=configs/eval_repr_ksub_maskcon_new_final_test.yaml sbatch slurm/eval_representation.sh
+python scripts/summarize_ksub.py --config configs/ksub_maskcon_new_final.yaml   # reports/ksub_maskcon_new_final/summary.md
+```
+
+Results (test; slurm job 463730; summary `reports/ksub_maskcon_new_final/summary.md`, per class `per_class.csv`). Mean ± std over seeds 0-2.
+
+| | ACC oracle K | ACC own | NMI | ARI boot | kNN coarse | probe coarse | d0/d1 | d1/d2 | var ratio |
+|---|---|---|---|---|---|---|---|---|---|
+| frozen DINOv3-L | 0.800 | 0.792 ± 0.002 | 0.886 | 0.874 | 0.944 | **0.973** | 0.415 | 0.877 | 0.429 |
+| earlier val choice (tau_a 0.05; `sub_var_coarse01` re-cluster) | 0.810 ± 0.008 | 0.811 | 0.886 | 0.927 | **0.978** | | 0.480 | 0.927 | 0.495 |
+| **final (tau_a 0.025)** | **0.820 ± 0.009** | **0.813 ± 0.011** | **0.887** | **0.951** | 0.974 | 0.971 | 0.473 | 0.937 | 0.487 |
+
+- **The val choice holds on test:** +0.020 ACC oracle K over frozen DINOv3-L (all three seeds above: 0.809 / 0.822 / 0.827) and +0.021 ACC own;
+  clustering is much more stable (ARI boot 0.951 vs 0.874); coarse accuracy is kept (probe 0.971 vs 0.973, kNN +0.03).
+- tau_a 0.025 adds +0.010 ACC oracle K and +0.024 ARI boot on test over tau_a 0.05, as on val (+0.018).
+- Per class (ACC oracle K, frozen -> final): Cab 0.718 -> 0.787, Sedan 0.732 -> 0.778, SUV 0.821 -> 0.859, Coupe 0.767 -> 0.806, Van 0.683 -> 0.727,
+  Wagon 0.846 -> 0.848; still below frozen: Hatchback 0.993 -> 0.960, Convertible 0.838 -> 0.792.
+- NMI is level (0.887 vs 0.886) and the subclasses are less compact relative to each other (d0/d1 0.47 vs 0.42): the gain is in how the
+  clusters are cut, not in tighter subclasses.
