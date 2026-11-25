@@ -110,7 +110,7 @@ Trained and scored from uncommitted configs on top of `6957f1b` (`6957f1b-dirty`
   above both on oracle-K ACC (Cars re-cluster 0.810, CIFAR `sub_var_coarse01` 0.919, docs/EXPERIMENT_KSUB.md), but that is the other supervision tier.
 
 ## Prototype initialisation, usage, known K, loss weights and a training diagnostic (DINOv3-L, seeds 0-4)
-Configs: `configs/geosub_{maskcon_large,cifar100}_kmeans.yaml` (prototype fixes), `configs/geosub_maskcon_large_weights.yaml` (loss weights, Cars only),
+Configs: `configs/geosub_{maskcon_large,cifar100}_kmeans.yaml` (prototype fixes), `configs/geosub_maskcon_large_weights.yaml` (loss weights, Cars; the last settings and CIFAR-100 in the next section),
 `configs/diagnose_geosub_maskcon.yaml` (`scripts/diagnose_geosub.py`). Everything as the n_proto 50 runs above except what is named. `km50` = prototypes
 start at k-means centroids (n_init 10, run seed) of each class's frozen train features instead of random train features; `K` = geosub-K, K_c k-means
 prototypes per class, all active (**uses K**). Weights `g`/`s`/`v` = L_geo / L_sub / L_var (default 1 / 1 / 0), `u` = usage (default 0.1). Chosen on
@@ -174,7 +174,39 @@ inside warmup; `consist` falls from 0.54 to 0.06 (0.004 without L_geo); L_var is
 - **Remaining errors are pairs frozen DINOv3 merges** (Rolls-Royce Ghost / Phantom, Silverado 1500 cab variants, Audi TTS / TT RS, Dodge / Mercedes
   Sprinter): L_geo keeps z on that geometry and augmentation consistency carries no trim, cab or model-year information. A signal beyond augmentation
   (e.g. nearest-neighbour consistency) would be needed for the embedding itself to learn.
-- Pending: g / s / v = 0.5 / 0.5 / 0.5, 0.5 / 0 / 1 (no L_sub: prototypes stay at their k-means start), 0.5 / 0.5 / 1 on both datasets and 0 / 1 / 1 on
-  CIFAR-100 (`configs/geosub_{maskcon_large,cifar100}_weights.yaml`).
+- The last loss-weight settings (0.5 / 0.5 / 0.5, 0.5 / 0 / 1, 0.5 / 0.5 / 1 on both datasets, 0 / 1 / 1 on CIFAR-100) are in the next section.
 - Not varied for geosub: tau_geo, tau_student / tau_teacher, min_count, lr, batch size, epochs. Diffusion-map clustering, re-clustering frequency,
   EMA vs refresh and tau_a are ksub settings (docs/EXPERIMENT_KSUB.md).
+
+## Remaining loss weights on both datasets (DINOv3-L, seeds 0-4)
+`configs/geosub_{maskcon_large,cifar100}_weights.yaml`, otherwise as `km50` above (k-means init, n_proto 50, usage 0.1). g / s / v = L_geo / L_sub / L_var:
+0.5 / 0.5 / 0.5 (with AdamW the same ratios as 1 / 1 / 1), 0.5 / 0 / 1 (no L_sub: the prototypes get no gradient and stay at their k-means start),
+0.5 / 0.5 / 1, and on CIFAR-100 0 / 1 / 1 (Cars: above). Chosen on val with the rule above; test reported for every setting, not used to choose.
+Slurm jobs 461668 / 461670 (train), 463731 / 463734 (own clusters, val), 463732 / 463735 (own clusters, test), 463733 / 463737 (R1-R5, test); git
+`2b82f53-dirty` (configs unchanged since `1bfc312`). Reports as above (`geosub_geo_sub_km50_{g05_s05_v05,g05_s0_v1,g05_s05_v1,g0_v1}_*`).
+Conflicting images excluded: Stanford Cars 211, CIFAR-100 90. Mean ± std over seeds 0-4. Own = the prototypes' clusters (Hungarian ACC, K-hat
+counted on train, true 24.5 / 5); z = k-means on the embedding (R2, R1).
+
+| | Cars own val | Cars own test | Cars own K-hat | Cars z: ACC oracle K / K-hat | Cars probe coarse | CIFAR own val | CIFAR own test | CIFAR own K-hat | CIFAR z: ACC oracle K / K-hat | CIFAR probe coarse |
+|---|---|---|---|---|---|---|---|---|---|---|
+| frozen DINOv3-L k-means, K-hat | 0.686 | 0.660 | 17.0 | 0.800 / 0.660 | 0.973 | 0.679 | **0.778** | 5.8 | 0.892 / **0.778** | 0.966 |
+| random init (`geo_sub` p50) | 0.705 | 0.677 | 21.2 | 0.797 / 0.709 | | **0.683 ± 0.017** | 0.685 | 5.0 | 0.894 / 0.782 | |
+| `km50` (1 / 1 / 0) | **0.794 ± 0.008** | **0.759 ± 0.009** | 28.7 | 0.809 / 0.706 | 0.952 | 0.602 ± 0.019 | 0.602 | 5.8 | 0.892 / 0.760 | 0.961 |
+| 0.5 / 0.5 / 0.5 | 0.795 ± 0.010 | 0.759 ± 0.008 | 28.7 | 0.805 / 0.717 | 0.952 | 0.651 ± 0.005 | 0.645 ± 0.003 | 10.3 | 0.884 / 0.749 | 0.959 |
+| 0.5 / 0.5 / 1 | 0.792 ± 0.011 | 0.760 ± 0.009 | 28.7 | 0.807 / 0.708 | 0.952 | 0.651 ± 0.011 | 0.645 ± 0.011 | 10.9 | 0.884 / 0.730 | 0.959 |
+| 0.5 / 0 / 1 (no L_sub) | 0.741 ± 0.025 | 0.694 ± 0.029 | 33.0 | 0.794 / 0.674 | 0.973 | 0.214 ± 0.005 | 0.201 ± 0.004 | 49.5 | 0.892 / 0.778 | 0.965 |
+| 0 / 1 / 1 | 0.762 ± 0.004 | 0.731 ± 0.006 | 28.9 | 0.742 / 0.636 | 0.779 | 0.640 ± 0.009 | 0.642 ± 0.010 | 9.1 | 0.733 / 0.659 | 0.917 |
+
+- **Stanford Cars: `km50` stays the val choice.** 0.5 / 0.5 / 0.5 and 0.5 / 0.5 / 1 are within 0.003 of it on val and test (std 0.008-0.011), with the
+  same K-hat and the same z (R1-R5 within 0.01; fine probe 0.950 throughout). L_var stays 0 in training (peak 2e-4).
+- **Without L_sub the prototypes keep their k-means start, and the gain over it is gone** (Cars test 0.694 vs 0.759; K-hat 33.0, the untrained count in
+  the diagnostic). z stays at frozen (probe coarse 0.973, ACC oracle K 0.794, ARI boot 0.876 vs 0.874). This confirms the diagnostic: the Cars gain comes
+  from L_sub pruning the over-split start. On CIFAR-100 the start is not pruned at all (49.5 of 50 prototypes active, ACC 0.20).
+- **CIFAR-100: halving L_geo and L_sub against L_var gives fewer collapses but over-splits** (K-hat 10.3-10.9 vs 5.8 for `km50`, true 5). Val is +0.05 over
+  `km50` (0.651 vs 0.602), but still below the random-init incumbent (0.683 ± 0.017) and frozen k-means K-hat (0.679). The best label-free CIFAR-100 geosub
+  is unchanged, and no geosub setting reaches frozen k-means K-hat on test (0.645 vs 0.778). Unlike Cars, L_var is non-zero early on CIFAR-100 (peak
+  0.002-0.007 at epoch 3, all seeds, while the collapse happens). This is the likely reason 0.5 / 0.5 / 0.5 differs from `km50` here but not on Cars. Untested:
+  `km50` v 1 was not run on CIFAR-100.
+- **Without L_geo, z collapses on CIFAR-100 too** (probe coarse 0.966 -> 0.917, ACC oracle K 0.892 -> 0.733), as on Cars.
+- Net: on Stanford Cars, geosub's label-free gain is prototype-count selection by L_sub on a k-means start. On CIFAR-100 no loss weighting
+  gives a geosub clustering above frozen DINOv3-L k-means with K-hat.
