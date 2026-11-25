@@ -410,3 +410,29 @@ Results (test; slurm job 463730; summary `reports/ksub_maskcon_new_final/summary
   Wagon 0.846 -> 0.848; still below frozen: Hatchback 0.993 -> 0.960, Convertible 0.838 -> 0.792.
 - NMI is level (0.887 vs 0.886) and the subclasses are less compact relative to each other (d0/d1 0.47 vs 0.42): the gain is in how the
   clusters are cut, not in tighter subclasses.
+
+## Final configuration on the make scheme (`configs/ksub_make_final.yaml`; test, DINOv3-L, seeds 0-2)
+Stanford Cars with coarse = 49 makes, hidden subclass = 189 make-models (K_c 1-22; 19 makes have K_c = 1). The final `maskcon_new` configuration
+is carried over unchanged (tau_a 0.025, lambda_coarse 0.1, lambda_sub 1, lambda_var 1, k-means refresh every epoch, EMA 0.99). Batching is as
+`configs/ksub_cars.yaml` (16 makes x 16 images = 256). Nothing was chosen on this scheme, and test is scored once. This supersedes the collapsed
+first runs above. Slurm jobs 470780 (train) and 470781 (R1-R5, `configs/eval_repr_ksub_make_final.yaml`); git `da60077-dirty`; summary
+`reports/ksub_make_final/summary.md`, per class `per_class.csv`. Conflicting images excluded: 154 (`make` list). Mean ± std over seeds. Clustering
+columns are over the 30 makes with K_c >= 2. Baseline rows are from `reports/repr/summary.md` (DINOv3-B, seed 0).
+
+| | kNN / probe make | Recall@1 | fine probe | ACC oracle K | NMI oracle K | ACC K-hat | ARI K-hat | d0/d1 | d1/d2 | var ratio | ARI boot | ACC own |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| frozen DINOv3-L | 0.973 / **0.983** | **0.948** | **0.967** | 0.782 | 0.703 | 0.698 | 0.551 | **0.570** | **0.709** | **0.635** | 0.886 | 0.787 |
+| **final (`tau0025`)** | **0.980** / 0.979 | 0.936 | 0.959 | **0.803 ± 0.004** | **0.710** | **0.789 ± 0.011** | **0.639** | 0.656 | 0.794 | 0.707 | **0.981 ± 0.001** | **0.801 ± 0.004** |
+| first runs, `full` (collapsed) | 0.971 | | | 0.543 | 0.292 | | | 0.936 | 0.489 | 0.951 | 0.231 | 0.460 |
+| GEORGE (DINOv3-B, best baseline) | 0.977 / 0.982 | 0.938 | 0.968 | 0.746 | 0.652 | 0.638 | 0.495 | 0.678 | 0.653 | 0.734 | 0.829 | |
+| oracle: fine classifier | 0.901 / 0.860 | 0.922 | 0.929 | 0.928 | 0.827 | 0.849 | 0.764 | 0.526 | 0.824 | 0.601 | 0.921 | |
+
+- **The `maskcon_new` configuration transfers without retuning:** +0.021 ACC oracle K over frozen DINOv3-L (seed std 0.004), the same gain as on
+  `maskcon_new` (+0.020). It is the best non-oracle encoder on subclass clustering, but still 0.13 below the oracle.
+- **Clustering becomes much more stable** (ARI boot 0.886 -> 0.981, above the oracle's 0.921). ACC K-hat rises 0.698 -> 0.789, but z was trained with
+  K: only the K estimate on top of it is label-free.
+- **As on `maskcon_new`, the subclasses do not get tighter.** d0/d1 0.570 -> 0.656 and var ratio 0.635 -> 0.707, and makes come closer relative to
+  their models (d1/d2 0.709 -> 0.794). Recall@1 and the fine probe drop slightly (-0.012 / -0.008). The gain is in how the clusters are cut.
+- Per make (ACC oracle K, frozen -> final): 10 of 30 rise by more than 0.01 (Acura 0.749 -> 0.962, Spyker 0.631 -> 0.837, Lamborghini +0.13,
+  Suzuki and Bentley +0.11, Hyundai +0.08). 6 fall (HUMMER 0.963 -> 0.712, FIAT -0.07, Aston Martin -0.05, Dodge, Honda, Land Rover -0.01 to -0.02).
+  The large swings are makes with 2-4 models and few test images.

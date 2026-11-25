@@ -1,0 +1,47 @@
+{
+ "git_hash": "da600777157d2d6d5c55e3c5b668d32c1387ed29-dirty",
+ "created_utc": "2026-11-25T08:06:46+00:00",
+ "config": {
+  "data_config": "configs/data.yaml",
+  "labels": "make",
+  "report_dir": "repr",
+  "split": "val",
+  "runs": [
+   "geosub_geo_sub_km50_make_large_s0",
+   "geosub_geo_sub_km50_make_large_s1",
+   "geosub_geo_sub_km50_make_large_s2",
+   "geosub_geo_sub_km50_make_large_s3",
+   "geosub_geo_sub_km50_make_large_s4",
+   "geosub_geo_sub_K_make_large_s0",
+   "geosub_geo_sub_K_make_large_s1",
+   "geosub_geo_sub_K_make_large_s2",
+   "geosub_geo_sub_K_make_large_s3",
+   "geosub_geo_sub_K_make_large_s4"
+  ],
+  "reference": "dinov3_large_256",
+  "subsample": 0.632,
+  "n_boot": 1000,
+  "n_jobs": 12,
+  "seed": 0
+ },
+ "config_path": "configs/eval_geosub_make_val.yaml",
+ "seed": 0,
+ "dataset_manifest_hash": "053a42cff21ab0f03c69b2c250be3e71672b9ba87740686f3e78d7fd75912fea",
+ "excluded_conflicting_images": {
+  "train": 59,
+  "val": 8,
+  "test": 87
+ },
+ "note": "conflicting images (same photo under different fine labels) are left out of every split",
+ "tables": {
+  "clusters": 124,
+  "khat": 50
+ },
+ "table_git_hash": {
+  "clusters": "da600777157d2d6d5c55e3c5b668d32c1387ed29-dirty",
+  "khat": "da600777157d2d6d5c55e3c5b668d32c1387ed29-dirty"
+ },
+ "run": "geosub_geo_sub_K_make_large_s1",
+ "split": "val",
+ "n": 807
+}

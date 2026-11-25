@@ -1,0 +1,13 @@
+# Make scheme: R1-R5 on test for frozen DINOv3-L and the final ksub runs (configs/ksub_make_final.yaml, after slurm/train_ksub.sh).
+# Run: CONFIG=configs/eval_repr_ksub_make_final.yaml sbatch slurm/eval_representation.sh
+data_config: configs/data.yaml
+labels: make
+report_dir: ksub_make_final      # = report_dir in configs/ksub_make_final.yaml
+encoders: [dinov3_large, ksub_tau0025_large_final_s0, ksub_tau0025_large_final_s1, ksub_tau0025_large_final_s2]   # frozen = dinov3_large (z = f)
+crop_sizes: [256]
+knn_k: 20
+n_boot: 1000
+subsample: 0.632
+tables: [r1, r2_within_make, r2_oracle, r2_khat, r3, r4, r5]
+n_jobs: 16            # = --cpus-per-task in slurm/eval_representation.sh
+seed: 0

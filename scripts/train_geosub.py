@@ -6,8 +6,9 @@ for a method with `known_k` (uses K: K_c prototypes per class, no K-hat). Protot
     sbatch slurm/train_geosub.sh
 The backbone is frozen, so its features are cached once (skipped when present) and every run trains on them in minutes:
     <derived_root>/features/<backbone>_<size>/{train,val,test}.csv        clean crops (scripts/extract_features.py, must exist)
-    <derived_root>/features/<backbone>_<size>_views/view<v>.csv          `views` random augmentations of the train crops
-    <derived_root>/features/<backbone>_<size>_flip/{train,val,test}.csv  mirror images (as scripts/gate0_nuisance.py)
+    <derived_root>/features/<backbone>_<size>_views<cache_tag>/view<v>.csv          `views` random augmentations of the train crops
+    <derived_root>/features/<backbone>_<size>_flip<cache_tag>/{train,val,test}.csv  mirror images (as scripts/gate0_nuisance.py)
+`cache_tag` (default empty) gives a label scheme whose exclusion list keeps other images its own cache (e.g. `_make`).
 Output per method and seed (run = geosub_<method><tag>_s<seed>):
     <derived_root>/features/<run>_<size>/{train,val,test}.csv (+ .json)  z of the clean crops, scored by scripts/eval_representation.py
     <derived_root>/geosub_clusters/<run>.csv   per image: split, coarse class, prototype assignment of the crop and of its mirror image
@@ -50,8 +51,9 @@ def cache_features(cfg, derived, ids, device, manifest):
     name = f"{cfg['backbone']}_{cfg['crop'].split('_')[-1]}"
     if not (derived / "features" / name / "train.csv").exists():
         raise FileNotFoundError(f"frozen features {name} missing: run slurm/extract_features.sh first")
-    todo = {derived / "features" / f"{name}_views" / f"view{v}.csv": ("train", v) for v in range(cfg["views"])}
-    todo |= {derived / "features" / f"{name}_flip" / f"{s}.csv": (s, None) for s in ids}
+    tag = cfg.get("cache_tag", "")
+    todo = {derived / "features" / f"{name}_views{tag}" / f"view{v}.csv": ("train", v) for v in range(cfg["views"])}
+    todo |= {derived / "features" / f"{name}_flip{tag}" / f"{s}.csv": (s, None) for s in ids}
     todo = {p: t for p, t in todo.items() if not p.exists()}
     if not todo:
         return
@@ -77,7 +79,7 @@ def train(cfg, weights, seed, views, f_train, coarse, device, val=None, k_c=None
     torch.manual_seed(seed)
     gen = torch.Generator().manual_seed(seed)
     n_coarse = int(coarse.max()) + 1
-    k = [cfg["n_proto"]] * n_coarse if k_c is None else k_c.tolist()
+    k = k_c.tolist() if k_c is not None else torch.bincount(coarse, minlength=n_coarse).clamp(max=cfg["n_proto"]).tolist()  # <= class size
     if cfg.get("proto_init", "random") == "kmeans":  # k-means (n_init 10) on the frozen train features of each class
         protos = kmeans_prototypes(f_train, coarse, k, seed)
     else:  # random train features of each class
@@ -136,8 +138,10 @@ def main():
     size = cfg["crop"].split("_")[-1]
     name = f"{cfg['backbone']}_{size}"
     feats = {s: load_features(derived / "features" / name / f"{s}.csv", ids[s]) for s in ids}
-    flips = {s: load_features(derived / "features" / f"{name}_flip" / f"{s}.csv", ids[s]) for s in ids}
-    views = torch.stack([load_features(derived / "features" / f"{name}_views" / f"view{v}.csv", ids["train"]) for v in range(cfg["views"])])
+    tag = cfg.get("cache_tag", "")
+    flips = {s: load_features(derived / "features" / f"{name}_flip{tag}" / f"{s}.csv", ids[s]) for s in ids}
+    views = torch.stack([load_features(derived / "features" / f"{name}_views{tag}" / f"view{v}.csv", ids["train"])
+                         for v in range(cfg["views"])])
     coarse = {s: torch.from_numpy(coarse_of[ids[s]].to_numpy()) for s in ids}
 
     for method, spec in cfg["methods"].items():

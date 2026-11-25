@@ -210,3 +210,47 @@ counted on train, true 24.5 / 5); z = k-means on the embedding (R2, R1).
 - **Without L_geo, z collapses on CIFAR-100 too** (probe coarse 0.966 -> 0.917, ACC oracle K 0.892 -> 0.733), as on Cars.
 - Net: on Stanford Cars, geosub's label-free gain is prototype-count selection by L_sub on a k-means start. On CIFAR-100 no loss weighting
   gives a geosub clustering above frozen DINOv3-L k-means with K-hat.
+
+## `km50` and `K` on the make scheme (`configs/geosub_make.yaml`; DINOv3-L, seeds 0-4)
+Stanford Cars with coarse = 49 makes, hidden subclass = 189 make-models (K_c 1-22; 19 makes have K_c = 1). The two `maskcon_new` choices are carried
+over unchanged: `km50` (label-free val choice) and `K` (uses K). Nothing was chosen on this scheme, and test is scored once. Two changes to
+`scripts/train_geosub.py`:
+- `cache_tag: _make` gives the scheme its own views / mirror cache (`dinov3_large_256_{views,flip}_make/`), because the make exclusion list keeps
+  39 train images that `maskcon_new` drops.
+- The prototype count is capped at the class's train size: 19 makes have fewer than 50 train images. On `maskcon_new` and CIFAR-100 every class has
+  at least 50, so earlier runs are unchanged.
+
+Slurm jobs 470782 (train), 470783 / 470784 (own clusters val / test, `configs/eval_geosub_make_{val,test}.yaml`), 470785 (R1-R5 test,
+`configs/eval_repr_make_geosub.yaml`); git `da60077-dirty`. Reports in `reports/repr/` (`geosub_geo_sub_{km50,K}_make_large_s<seed>_{256,clusters_val,clusters_test}/`).
+Conflicting images excluded: 154 (`make` list). Mean ± std over seeds. ACC / NMI / ARI are over the 30 makes with K_c >= 2.
+
+**Own prototype clusters** (K-hat counted on train):
+
+| | val ACC | test ACC | test NMI / ARI | abs K-hat error, K_c >= 2 | K-hat on the 19 K_c = 1 makes |
+|---|---|---|---|---|---|
+| frozen DINOv3-L k-means, label-free K-hat | 0.694 | 0.698 | 0.650 / 0.551 | 1.9 | never 1 (mean error 1.58) |
+| **`km50`** | **0.770 ± 0.009** | **0.769 ± 0.011** | **0.715 / 0.638** | **1.27** (signed +0.32) | 1 in 57%, 0 in 43% |
+| `K` (uses K) | 0.789 ± 0.003 | 0.777 ± 0.004 | 0.693 / 0.618 | 0 (given) | 1 (given) |
+| frozen DINOv3-L k-means, oracle K (uses K) | 0.794 | 0.782 | 0.703 / 0.634 | | |
+| ksub final, own assignment (uses K; docs/EXPERIMENT_KSUB.md) | | 0.801 | | | |
+
+**R1-R5 of z on test:**
+
+| | kNN / probe make | Recall@1 | fine probe | ACC oracle K | ACC K-hat | ARI K-hat | d0/d1 | d1/d2 | var ratio | ARI boot |
+|---|---|---|---|---|---|---|---|---|---|---|
+| frozen DINOv3-L | 0.973 / 0.983 | 0.948 | 0.967 | 0.782 | 0.698 | 0.551 | 0.570 | 0.709 | 0.635 | 0.886 |
+| `km50` | 0.968 / 0.980 | 0.948 | 0.968 | 0.791 ± 0.005 | 0.697 | 0.549 | 0.593 | 0.733 | 0.656 | 0.886 |
+| `K` (uses K) | 0.972 / 0.979 | 0.947 | 0.967 | 0.788 ± 0.005 | 0.702 | 0.552 | 0.567 | 0.717 | 0.631 | 0.904 |
+| ksub final (uses K) | 0.980 / 0.979 | 0.936 | 0.959 | 0.803 | 0.789 | 0.639 | 0.656 | 0.794 | 0.707 | 0.981 |
+
+- **`km50` is the best label-free clustering on the make scheme:** +0.07 over frozen k-means with K-hat (0.769 vs 0.698), and only 0.013 below
+  frozen k-means with the true K (0.04 on `maskcon_new`). Its counts are also better: abs K-hat error 1.27 vs 1.9 on makes with K_c >= 2, and
+  K-hat = 1 for 57% of the single-model makes, which frozen K-hat never returns.
+- **Known defect: K-hat = 0 for the other 43% of single-model makes.** They have 29-47 train images, and the cap gives them as many prototypes as
+  images, so none reaches min_count 10. ACC is unaffected (K_c = 1 makes are left out), but the counts are wrong. Keeping at least one active
+  prototype per class would fix it.
+- **The gain is in the prototypes, not z:** every R1-R5 number of z stays at frozen (ACC oracle K 0.791 vs 0.782, K-hat 0.697 vs 0.698, ARI boot
+  0.886), as in the `maskcon_new` diagnostic.
+- **Given K, geosub does not help:** `K`'s own clusters (0.777) end slightly below frozen k-means with the true K (0.782) and below ksub (0.801).
+- Make scheme overall: with the true K, ksub is best; label-free, `km50`'s own prototypes are best. Every fine-tuned baseline stays below frozen
+  DINOv3-L (`reports/repr/summary.md`).

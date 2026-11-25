@@ -1,0 +1,28 @@
+# Final ksub configuration (configs/ksub_maskcon_new_final.yaml, chosen on maskcon_new val) on the make scheme: coarse = 49 makes, K_c = make-models
+# per make (1-22; uses K). Nothing chosen on this scheme: the settings are carried over unchanged, test is scored once. Batching as configs/ksub_cars.yaml
+# (16 makes x 16 images = batch 256, the same batch size as maskcon_new). Supersedes the collapsed first runs of configs/ksub_cars.yaml.
+#   CONFIG=configs/ksub_make_final.yaml sbatch slurm/train_ksub.sh
+#   CONFIG=configs/eval_repr_ksub_make_final.yaml sbatch slurm/eval_representation.sh
+#   python scripts/summarize_ksub.py --config configs/ksub_make_final.yaml
+data_config: configs/data.yaml
+labels: make                   # configs/labels.yaml: also picks the exclusion list
+tag: _large_final              # run names ksub_<method>_large_final_s<seed>
+backbone: dinov3_large         # frozen; clean features cached by slurm/extract_features.sh
+crop: bbox15_256
+report_dir: ksub_make_final    # under reports_root: R1-R5 on test and scripts/summarize_ksub.py
+methods:
+  frozen: {}                                                                      # reference: k-means with K_c on f (z = f)
+  tau0025: {coarse: 0.1, sub: 1.0, var: 1.0, recluster_every: 1, tau_a: 0.025}   # = the final maskcon_new configuration
+seeds: [0, 1, 2]
+classes_per_batch: 16          # P makes per batch (of 49)
+per_class: 16                  # m images per class: batch 256
+hidden: 2048
+tau: 0.1                       # L_sub softmax temperature
+tau_a: 0.05                    # soft-assignment temperature (the trained method sets 0.025)
+temperature: 0.1               # L_coarse (SupCon)
+momentum: 0.99                 # prototype EMA
+epochs: 100
+lr: 1.0e-3
+weight_decay: 0.05
+warmup_epochs: 5
+eval_every: 20                 # val kNN@20 coarse accuracy (monitoring only: no model selection, last epoch is used)
