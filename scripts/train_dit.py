@@ -48,7 +48,7 @@ def main():
                                                       "config": cfg["_config_path"], "git_hash": git_hash()}))
         epochs = math.ceil(D["steps"] / (len(ids) // D["global_batch_size"]))
         log.info("%s: %d train images, %d labels, %d epochs", run, len(ids), len(pairs), epochs)
-        subprocess.run(["torchrun", "--standalone", "--nproc_per_node=1", str(REPO_ROOT / D["repo"] / "train.py"),
+        subprocess.run(["torchrun", "--standalone", f"--nproc_per_node={D['gpus']}", str(REPO_ROOT / D["repo"] / "train.py"),
                         "--data-path", str(out / "imagefolder"), "--results-dir", str(out / "results"), "--model", D["model"],
                         "--image-size", str(D["image_size"]), "--num-classes", str(len(pairs)), "--epochs", str(epochs),
                         "--global-batch-size", str(D["global_batch_size"]), "--global-seed", str(seed), "--vae", D["vae"],

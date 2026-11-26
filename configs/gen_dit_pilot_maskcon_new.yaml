@@ -14,10 +14,11 @@ dit:
   model: DiT-B/2
   image_size: 256              # official choices 256 / 512: the bbox15_256 crops, 32 x 32 x 4 SD-VAE latents
   vae: ema                     # stabilityai/sd-vae-ft-ema, as the UNet ladder
-  global_batch_size: 256       # official default
+  global_batch_size: 256       # official default, split over the GPUs by DiT's DDP
+  gpus: 4                      # = --gres in slurm/train_dit.sh; 1 GPU ran 0.63 steps/s (SD-VAE encoding every batch in fp32, as published)
   steps: 150000                # training stops after the epoch that reaches this step
   ckpt_every: 25000
-  num_workers: 8               # = --cpus-per-task in slurm/train_dit.sh
+  num_workers: 8               # per GPU; gpus x num_workers = --cpus-per-task in slurm/train_dit.sh
 
 autoencoders:                  # decoding of the samples (lsgen.methods.gen.ldm.Latents)
   sd_vae: {kind: sd_vae, weights: stabilityai/sd-vae-ft-ema, input_size: 256, uses: [sd_vae]}

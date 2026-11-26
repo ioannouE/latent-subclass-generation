@@ -230,5 +230,5 @@ decodes with the SD-VAE and resizes to 128 px. Pilot: `configs/gen_dit_pilot_mas
 
 | Step | Command | Node |
 |---|---|---|
-| train (one 24 h job; DiT has no resume: check `Train Steps/Sec` in `<run>/results/000-DiT-B-2/log.txt`, 150k steps need >= 1.8) | `CONFIG=configs/gen_dit_pilot_maskcon_new.yaml sbatch slurm/train_dit.sh` | GPU |
+| train (one 24 h job; DiT has no resume: check `Train Steps/Sec` in `<run>/results/<index>-DiT-B-2/log.txt`, 150k steps need >= 1.8; 1 GPU gave 0.63, so 4 GPUs by DiT's own DDP, global batch 256 unchanged) | `CONFIG=configs/gen_dit_pilot_maskcon_new.yaml sbatch slurm/train_dit.sh` | GPU |
 | sample every checkpoint, score against val, pilot summary | `CONFIG=configs/gen_dit_pilot_maskcon_new.yaml sbatch --dependency=afterok:<train job> slurm/sample_dit.sh` | GPU |
