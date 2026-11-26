@@ -8,7 +8,7 @@
 #SBATCH --gres=gpu:4             # = dit.gpus
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32        # = dit.gpus x dit.num_workers
-#SBATCH --mem=64G
+#SBATCH --mem=128G              # rtx needs 24-192G per GPU: 32G x 4
 #SBATCH --time=24:00:00
 #SBATCH --output=%x.%j.out
 #SBATCH --error=%x.%j.err
