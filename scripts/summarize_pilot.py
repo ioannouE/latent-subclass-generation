@@ -26,7 +26,7 @@ def main():
     cfg = load_config(ap.parse_args().config)
     dcfg = load_config(REPO_ROOT / cfg["data_config"])
     reports = Path(dcfg["reports_root"]) / f"generation{suffix(cfg['labels'], dcfg)}"
-    run = cfg["ldm"]["name"]
+    run = cfg["ldm" if "ldm" in cfg else "dit"]["name"]
     recon = pd.DataFrame([generation_row(d) for d in sorted(reports.glob("recon_*_A"))])
     pilot = pd.DataFrame([generation_row(d) for d in sorted(reports.glob(f"{run}_step*_A"))])
     if len(pilot):
@@ -49,13 +49,13 @@ def main():
     note = f"{ex['note'].capitalize()}: {ex['excluded_conflicting_images']} (train / val / test)."
     cols_recon = ["name", "psnr", "G1 FID", "G1 KID", "G1 recall", "G2 make acc", "E1 fine acc (generated)", "E1 fine acc (real val)"]
     cols_pilot = ["step", "train_hours", "ddim_steps", "sampling_seconds", "G1 FID", "G1 KID", "G1 recall", "G2 make acc", "G3 TV",
-                  "G4 covered", "G5 excess KID", "G5 coverage ratio", "G7 copies", "G7 copies, real"]
+                  "G4 covered", "G5 excess KID", "G5 coverage ratio", "G7 copies", "G7 copies, real", "CAS coarse", "CAS subclass"]
     md = [f"# G-0c pilot: {run}\n", f"Provenance: git `{p['git_hash']}`, seed {cfg['seed']}, config `{cfg['_config_path']}`, label scheme "
           f"`{cfg['labels']}`. {note}\n", "Every set is scored against **val** (G1, G3: val reference; G4/G5/G7: train as usual); test is not used. "
           f"G1 is computed at n = {n_val} (the val size), so FID is biased upwards: compare rows, not absolute values; KID is unbiased.\n",
           "## Autoencoders: val reconstructions\n", recon[cols_recon].to_markdown(index=False, floatfmt=".4g") if len(recon) else "none yet",
           f"\n## Coarse-only latent diffusion ({run}): val metrics against training step\n",
-          pilot[cols_pilot].to_markdown(index=False, floatfmt=".4g") if len(pilot) else "none yet", ""]
+          pilot[[c for c in cols_pilot if c in pilot]].to_markdown(index=False, floatfmt=".4g") if len(pilot) else "none yet", ""]
     (reports / f"{run}_pilot.md").write_text("\n".join(md))
     print("\n".join(md))
 

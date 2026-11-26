@@ -1,0 +1,29 @@
+# DiT pilot (docs/EXPERIMENT_GENERATION.md, "Generator backbones"): the official DiT code (external/DiT, facebookresearch/DiT at ed81ce2)
+# trained unchanged on the Stanford Cars maskcon_new train split, conditioned on the coarse class only, to set DiT's own budget and DDIM
+# steps with the G-0c rules. Every set is scored against val (configs/eval_generation_maskcon_new.yaml); test is not used.
+# Run: CONFIG=configs/gen_dit_pilot_maskcon_new.yaml sbatch slurm/train_dit.sh, then sbatch --dependency=afterok:<job> slurm/sample_dit.sh
+data_config: configs/data.yaml
+labels: maskcon_new
+crop: bbox15
+image_size: 128                # scored size: samples are resized to it
+seed: 0
+
+dit:
+  name: dit_pilot_coarse       # output directory and set names
+  repo: external/DiT
+  model: DiT-B/2
+  image_size: 256              # official choices 256 / 512: the bbox15_256 crops, 32 x 32 x 4 SD-VAE latents
+  vae: ema                     # stabilityai/sd-vae-ft-ema, as the UNet ladder
+  global_batch_size: 256       # official default
+  steps: 150000                # training stops after the epoch that reaches this step
+  ckpt_every: 25000
+  num_workers: 8               # = --cpus-per-task in slurm/train_dit.sh
+
+autoencoders:                  # decoding of the samples (lsgen.methods.gen.ldm.Latents)
+  sd_vae: {kind: sd_vae, weights: stabilityai/sd-vae-ft-ema, input_size: 256, uses: [sd_vae]}
+
+sampling:
+  n: 5000                      # use case A, coarse labels in train prevalence
+  ddim_steps: [25, 50, 100, 250]   # DiT's ddim_sample_loop (eta = 0)
+  guidance: 1.5                # DiT forward_with_cfg (guidance on the first 3 latent channels, as published); the UNet ladder's w
+  batch_size: 250

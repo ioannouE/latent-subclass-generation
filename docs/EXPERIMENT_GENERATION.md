@@ -199,18 +199,36 @@ record the fine class of each source image as `group` (so G6 and CAS sub are com
 | controls x metrics (must show CAS subclass `ok` for C4, C5) | `python scripts/metric_validation.py --config configs/eval_generation$BENCH.yaml` | CPU |
 | finished rungs re-scored and re-summarised (sets are not regenerated) | `BENCH=$BENCH sbatch slurm/rescore_generation.sh` | GPU |
 
-## Next: generator backbones (planned, not started)
+## Generator backbones from the literature (official code)
 
-The ladder shows that the generator, not the subclass signal, is the bound (oracle E1 0.54 on Cars vs 0.85 real). The same ladder is
-re-run with stronger backbones from the literature, everything else (SD-VAE or the representation encoder, labels, CFG, EMA, sampler,
-prevalence sampling, evaluation) unchanged, one milestone each:
+The ladder shows that the generator, not the subclass signal, is the bound (oracle E1 0.54 on Cars vs 0.85 real). Stronger published
+generators are run with their **official implementations**, pinned as git submodules in `external/` and not modified: our code only writes
+the training data in each repo's format, launches its training script, and samples with its own model and sampler code using our labels
+(use case A needs labels in train prevalence; the official sample scripts draw them uniformly). The conditioning labels, the evaluation and
+the G-0c budget rules are the ladder's. Stanford Cars `maskcon_new` only (decided 26 Nov 2026): the official scripts take 256 / 512 px only,
+so they train on the `bbox15_256` crops and their samples are resized to the scored 128 px; CIFAR-100 (32 px) would need 8x upsampling.
+Resolution therefore differs from the 128 px UNet ladder; recorded as `train_image_size` in method.json.
 
-| Backbone | Change from the UNet | Extra pretrained parts (`uses`) |
+| Backbone | Official code | What it trains | Extra pretrained parts (`uses`) | Status |
+|---|---|---|---|---|
+| DiT-B/2 (Peebles & Xie 2023) | `external/DiT` (facebookresearch/DiT `ed81ce2`, CC-BY-NC 4.0) | DiT on SD-VAE latents (32 x 32 x 4), epsilon + learned sigma, 1000-step linear schedule, label dropout 0.1, EMA, AdamW 1e-4, batch 256, fp32/TF32 | sd_vae | pilot ready |
+| SiT-B/2 + REPA (Yu et al. 2025) | sihyun-yu/REPA (`67f7145`, MIT) | SiT (velocity, linear path) + alignment of block-8 tokens to frozen DINOv2-B; `--proj-coeff 0` is plain SiT from the same code | sd_vae, dinov2_b | next |
+| RAE (Zheng et al. 2025) | bytetriper/RAE (`a4d18c4`, MIT) | DiT-DH on frozen DINOv2-B (registers) features, 16 x 16 x 768; released ImageNet ViT-XL decoder and normalisation statistics | dinov2_b_reg, rae_decoder (ImageNet) | after REPA |
+
+None of the extra encoders is an evaluator; DINOv2 is not the DINOv3 of the cluster methods. Per backbone: a pilot on coarse labels against
+val sets its own budget and DDIM steps with the G-0c rules 2 and 3, then the coarse and oracle rungs on test (3 seeds), then the cluster
+rungs if the oracle's E1 rises.
+
+### DiT
+
+`scripts/train_dit.py` writes the train split as an ImageFolder (`lsgen.methods.gen.ldm.write_imagefolder`: symlinks to the 256 px crops,
+conflicting images excluded, one folder per conditioning label) and `labels.json`, then runs DiT's `train.py` unchanged through `torchrun`
+for the whole epochs that reach `dit.steps` (checkpoints every `dit.ckpt_every`). `scripts/sample_dit.py` loads the EMA weights into DiT's
+model and samples with DiT's `ddim_sample_loop` and `forward_with_cfg` (guidance 1.5, applied to the first 3 latent channels as published),
+decodes with the SD-VAE and resizes to 128 px. Pilot: `configs/gen_dit_pilot_maskcon_new.yaml` (150k steps, checkpoints every 25k, DDIM
+25 / 50 / 100 / 250, 5,000 samples, val).
+
+| Step | Command | Node |
 |---|---|---|
-| DiT-B/2 (Peebles & Xie 2023) | transformer on 2 x 2 patches of the SD-VAE latent, adaLN-zero class conditioning | sd_vae |
-| DiT-B/2 + REPA (Yu et al. 2025) | + an MLP from an early block's tokens to frozen DINOv2-B patch features, negative-cosine loss (lambda 0.5) | sd_vae, dinov2_b |
-| RAE (Zheng et al. 2025) | frozen DINOv2-B encoder as the autoencoder (16 x 16 x 768), the released ImageNet-trained ViT decoder, DiT-DH, noise schedule shifted for the latent dimension | dinov2_b, rae_decoder |
-
-Per backbone: the G-0c pilot rules (val only) set its own budget and DDIM steps, then the coarse and oracle rungs on test (the two ends of
-the ladder), then the cluster rungs if the oracle's E1 rises. None of the extra encoders is an evaluator; DINOv2 is not the DINOv3 of the
-cluster methods.
+| train (one 24 h job; DiT has no resume: check `Train Steps/Sec` in `<run>/results/000-DiT-B-2/log.txt`, 150k steps need >= 1.8) | `CONFIG=configs/gen_dit_pilot_maskcon_new.yaml sbatch slurm/train_dit.sh` | GPU |
+| sample every checkpoint, score against val, pilot summary | `CONFIG=configs/gen_dit_pilot_maskcon_new.yaml sbatch --dependency=afterok:<train job> slurm/sample_dit.sh` | GPU |

@@ -1,7 +1,10 @@
 """Controlled latent diffusion generator (docs/EXPERIMENT_GENERATION.md): an autoencoder (own MONAI AutoencoderKL or the frozen SD-VAE),
 a MONAI latent UNet conditioned on one class label with classifier-free guidance, and DDIM sampling. Only the conditioning label changes
 between variants: the coarse class (G-0c pilot, coarse rung), or one label per (coarse class, cluster) pair (condition_labels)."""
+import shutil
+
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn.functional as F
 from monai.networks.nets import AutoencoderKL, DiffusionModelUNet
@@ -60,11 +63,12 @@ def load_latents(name, spec, image_size, ae_dir):
     return Latents(spec["kind"], image_size, spec.get("weights"), spec.get("input_size"), ckpt)
 
 
-def runs(cfg):
-    """[(seed, run name)]: `<ldm.name>_s<seed>` for each of `seeds`; a config without `seeds` (the G-0c pilot) is one run, `ldm.name`."""
+def runs(cfg, section="ldm"):
+    """[(seed, run name)]: `<section.name>_s<seed>` for each of `seeds`; a config without `seeds` (a pilot) is one run, `<section.name>`.
+    section: the generator's config section (`ldm`, or `dit` for scripts/train_dit.py)."""
     if "seeds" not in cfg:
-        return [(cfg["seed"], cfg["ldm"]["name"])]
-    return [(s, f"{cfg['ldm']['name']}_s{s}") for s in cfg["seeds"]]
+        return [(cfg["seed"], cfg[section]["name"])]
+    return [(s, f"{cfg[section]['name']}_s{s}") for s in cfg["seeds"]]
 
 
 def build_unet(arch, latent_channels, n_classes):
@@ -129,3 +133,23 @@ def condition_labels(coarse, cluster):
     order. With a single cluster per class the labels are the coarse classes."""
     pairs, label = np.unique(np.stack([coarse, cluster], 1), axis=0, return_inverse=True)
     return label.ravel(), pairs
+
+
+def image_labels(cfg, derived, ids, coarse, seed):
+    """(conditioning label per train image, (n_labels, 2) table of (coarse, cluster) pairs) for one seed: the coarse class, or with
+    `conditioning` the (coarse, cluster) pairs of the per-image cluster file <derived>/<conditioning.labels> ({seed} = the run's seed)."""
+    if "conditioning" not in cfg:
+        return condition_labels(coarse, np.zeros_like(coarse))
+    clusters = pd.read_csv(derived / cfg["conditioning"]["labels"].format(seed=seed)).set_index("id").loc[ids]
+    if not (clusters.make_id.to_numpy() == coarse).all():
+        raise ValueError("the cluster file's coarse classes differ from the label scheme's")
+    return condition_labels(coarse, clusters.cluster.to_numpy())
+
+
+def write_imagefolder(out, images, ids, label):
+    """Training data for the official generators that read a torchvision ImageFolder (scripts/train_dit.py): out/<label>/<id>.png, a
+    symlink to images/<id>.png. Folder names are zero-padded to 4 digits, so ImageFolder's sorted class index is the label itself."""
+    shutil.rmtree(out, ignore_errors=True)
+    for i, y in zip(ids, label):
+        (out / f"{y:04d}").mkdir(parents=True, exist_ok=True)
+        (out / f"{y:04d}" / f"{i}.png").symlink_to((images / f"{i}.png").resolve())

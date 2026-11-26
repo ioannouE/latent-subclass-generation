@@ -1,0 +1,3 @@
+[submodule "external/DiT"]
+	path = external/DiT
+	url = https://github.com/facebookresearch/DiT

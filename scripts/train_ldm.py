@@ -16,13 +16,12 @@ import time
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import torch
 
 from lsgen.data.datasets import CarsCoarseDataset
 from lsgen.data.labels import load_labels, suffix
 from lsgen.data.splits import load_split
-from lsgen.methods.gen.ldm import build_unet, condition_labels, diffusion_loss, drop_labels, ema_update, load_latents, runs, schedulers
+from lsgen.methods.gen.ldm import build_unet, diffusion_loss, drop_labels, ema_update, image_labels, load_latents, runs, schedulers
 from lsgen.utils import REPO_ROOT, load_config, provenance, setup_logging, write_json
 
 log = logging.getLogger("train_ldm")
@@ -38,16 +37,6 @@ def encode_train(ae, meta, derived, ids, cfg, device):
         z.append(ae.encode(x))
         z_flip.append(ae.encode(x.flip(-1)))
     return torch.cat(z + z_flip)
-
-
-def image_labels(cfg, derived, ids, coarse, seed):
-    """(conditioning label per train image, (n_labels, 2) table of (coarse, cluster) pairs) for one seed."""
-    if "conditioning" not in cfg:
-        return condition_labels(coarse, np.zeros_like(coarse))
-    clusters = pd.read_csv(derived / cfg["conditioning"]["labels"].format(seed=seed)).set_index("id").loc[ids]
-    if not (clusters.make_id.to_numpy() == coarse).all():
-        raise ValueError("the cluster file's coarse classes differ from the label scheme's")
-    return condition_labels(coarse, clusters.cluster.to_numpy())
 
 
 def main():

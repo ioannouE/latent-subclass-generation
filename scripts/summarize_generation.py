@@ -1,4 +1,4 @@
-"""Summary of one rung of the generation ladder (CPU, seconds): the test scores of every seed of `ldm.name` and their mean and standard
+"""Summary of one rung of the generation ladder (CPU, seconds): the test scores of every seed of `ldm.name` (or `dit.name`) and their mean and standard
 deviation across seeds, from <reports_root>/generation[_<labels>]/<name>_s<seed>_step*_A/ (slurm/generate.sh):
     python scripts/summarize_generation.py --config configs/gen_coarse_maskcon_new.yaml
 Output: <reports_root>/generation[_<labels>]/<name>.{csv,md}, with links to the seed-0 figures.
@@ -23,7 +23,7 @@ def main():
     ap.add_argument("--config", default="configs/gen_coarse_maskcon_new.yaml")
     cfg = load_config(ap.parse_args().config)
     dcfg = load_config(REPO_ROOT / cfg["data_config"])
-    reports, name = Path(dcfg["reports_root"]) / f"generation{suffix(cfg['labels'], dcfg)}", cfg["ldm"]["name"]
+    reports, name = Path(dcfg["reports_root"]) / f"generation{suffix(cfg['labels'], dcfg)}", cfg["ldm" if "ldm" in cfg else "dit"]["name"]
     dirs = sorted(reports.glob(f"{name}_s*_step*_A"))
     rows = pd.DataFrame([generation_row(d) for d in dirs])
     metrics = METRICS + [m for m in OPTIONAL if m in rows]

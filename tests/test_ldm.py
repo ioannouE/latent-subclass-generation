@@ -1,8 +1,11 @@
 """Controlled latent diffusion generator (lsgen/methods/gen/ldm.py): prevalence-matching labels, classifier-free guidance, sampling."""
+from pathlib import Path
+
 import numpy as np
 import torch
 
-from lsgen.methods.gen.ldm import build_unet, condition_labels, drop_labels, ema_update, guided_eps, kl_loss, prevalence_labels, runs, sample, schedulers
+from lsgen.methods.gen.ldm import (build_unet, condition_labels, drop_labels, ema_update, guided_eps, kl_loss, prevalence_labels, runs, sample, schedulers,
+                                  write_imagefolder)
 
 SCHEDULE = {"num_train_timesteps": 1000, "schedule": "scaled_linear_beta", "beta_start": 0.0015, "beta_end": 0.0195}
 
@@ -66,3 +69,17 @@ def test_condition_labels_one_per_coarse_cluster_pair():
     assert np.array_equal(pairs[label], np.stack([coarse, cluster], 1))
     label, pairs = condition_labels(coarse, np.zeros_like(coarse))  # coarse-only rung: the labels are the coarse classes
     assert np.array_equal(label, coarse) and np.array_equal(pairs[:, 0], [0, 1, 2])
+
+
+def test_imagefolder_class_index_is_the_label(tmp_path):
+    from PIL import Image
+    from torchvision.datasets import ImageFolder
+    images = tmp_path / "crops"
+    images.mkdir()
+    ids, label = [f"im{i}" for i in range(12)], [0, 2, 10, 1, 2, 10, 9, 0, 1, 11, 9, 11]  # labels >= 10 sort after 9 only if padded
+    for i in ids:
+        Image.new("RGB", (4, 4)).save(images / f"{i}.png")
+    write_imagefolder(tmp_path / "folder", images, ids, label)
+    ds = ImageFolder(tmp_path / "folder")
+    got = {Path(p).stem: y for p, y in ds.samples}
+    assert all(got[i] == y for i, y in zip(ids, label))
