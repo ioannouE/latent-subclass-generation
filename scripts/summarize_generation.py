@@ -14,7 +14,8 @@ from lsgen.utils import REPO_ROOT, load_config, provenance
 
 METRICS = ["G1 FID", "G1 KID", "G1 recall", "G2 make acc", "G3 TV", "G3 KL", "G4 covered", "G4 rare covered", "G5 excess KID",
            "G5 coverage ratio", "G7 copies", "G7 copies, real"]
-OPTIONAL = ["G6 matched KID", "G6 purity", "G6 unmatched real", "E1 fine acc (generated)", "E1 fine acc (real val)"]  # cluster rungs; oracle (E1)
+OPTIONAL = ["CAS coarse", "CAS subclass", "CAS subclass, real train", "G6 matched KID", "G6 purity", "G6 unmatched real",
+            "E1 fine acc (generated)", "E1 fine acc (real val)"]  # CAS: sets scored after 26 Nov 2026; G6: cluster rungs; E1: oracle
 
 
 def main():

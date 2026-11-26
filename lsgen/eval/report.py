@@ -30,7 +30,7 @@ def write_results(out_dir, tables, cfg, seed, dataset_hash, splits_dir, **extra)
 
 def generation_row(run_dir):
     """One row per scored generated set (use case A): the method's fields, the headline metrics, G2 macro accuracy, the G7 null (the share of
-    real reference images above the copy threshold, `G7 copies, real`), and G6 (macro) and E1 if present."""
+    real reference images above the copy threshold, `G7 copies, real`), and the real-train CAS ceiling, G6 (macro) and E1 if present."""
     method = json.loads((run_dir / "summary.json").read_text())["method"]
     row = {k: v for k, v in method.items() if k not in ("uses", "git_hash", "autoencoder")} | {"autoencoder": str(method.get("autoencoder"))}
     row |= pd.read_csv(run_dir / "headline.csv").set_index("metric").value.to_dict()
@@ -40,6 +40,9 @@ def generation_row(run_dir):
     if (run_dir / "g6.csv").exists():
         g6 = pd.read_csv(run_dir / "g6.csv").query("group == 'macro'").set_index("metric")["mean"]
         row |= {"G6 matched KID": g6["matched_kid"], "G6 purity": g6["purity"], "G6 unmatched real": g6["n_unmatched_real"]}
+    if (run_dir / "cas_real_train.csv").exists():
+        cas = pd.read_csv(run_dir / "cas_real_train.csv").query("group == 'macro'").set_index("metric")["mean"]
+        row |= {"CAS coarse, real train": cas["cas_coarse"], "CAS subclass, real train": cas["cas_sub"]}
     if (run_dir / "e1_evaluator.csv").exists():
         e1 = pd.read_csv(run_dir / "e1_evaluator.csv").set_index("set")
         row |= {"E1 fine acc (generated)": e1.at["generated", "acc"], "E1 fine acc (real val)": e1.at["real val", "acc"]}

@@ -1,7 +1,7 @@
 import numpy as np
 
-from lsgen.eval.synthesis import (ClassFidelity, choose_tau, evaluator_agreement, frechet_distance, g3_metric, g6_make, kid, make_correct,
-                                  prdc, prevalence_tv, rare_classes, smoothed_kl, tv_distance)
+from lsgen.eval.synthesis import (ClassFidelity, cas_predict, choose_tau, evaluator_agreement, frechet_distance, g3_metric, g6_make, kid,
+                                  make_correct, matched_correct, prdc, prevalence_tv, rare_classes, smoothed_kl, tv_distance)
 
 rng = np.random.default_rng(0)
 
@@ -133,3 +133,28 @@ def test_evaluator_agreement():
     e = evaluator_agreement(probs, np.array([0, 1, 1, 0]), tau=0.7)
     assert e["n"] == 4 and e["acc"] == 0.75 and np.isclose(e["mean_conf"], .7125)
     assert e["frac_confident"] == 0.5 and e["frac_confident_correct"] == 0.5  # rows 0 and 2 are confident and right
+
+
+def test_cas_probe_learns_from_the_generated_set_only():
+    centres = 5 * np.eye(8)[:3]
+    real = np.concatenate([gauss(c, 50) for c in centres])
+    real_y = np.repeat([0, 1, 2], 50)
+    gen = np.concatenate([gauss(c, 30) for c in centres])
+    assert (cas_predict(gen, np.repeat([0, 1, 2], 30), real) == real_y).mean() > 0.95
+    assert (cas_predict(gen, np.repeat([2, 0, 1], 30), real) == real_y).mean() < 0.05  # wrong labels on the generated set: no credit
+    collapsed = gen[:60]  # classes 0 and 1 only: class 2 can never be predicted
+    assert (cas_predict(collapsed, np.repeat([0, 1], 30), real) == real_y).mean() < 0.7
+
+
+def test_matched_correct_matches_groups_within_their_coarse_class():
+    make_of_fine = np.array([0, 0, 1, 1])
+    fine = np.array([0, 0, 1, 1, 2, 2, 3, 3])
+    # groups 10 / 11 are a relabelling of the fine classes of coarse class 0, group 20 merges both classes of coarse class 1
+    group = np.array([11, 11, 10, 10, 20, 20, 20, 20])
+    ok = matched_correct(fine, group, make_of_fine, {10: 0, 11: 0, 20: 1})
+    assert ok.tolist() == [True, True, True, True, True, True, False, False]
+    assert matched_correct(fine, fine, make_of_fine, make_of_fine).all()  # the fine classes as groups: plain accuracy
+    # a group of the wrong coarse class is never matched, even if it is the best count
+    assert not matched_correct(fine[:2], np.array([20, 20]), make_of_fine, {20: 1}).any()
+    # coarse classes as groups: the largest subclass of each class
+    assert matched_correct(np.array([0, 0, 0, 1]), np.zeros(4, int), make_of_fine, [0]).tolist() == [True, True, True, False]

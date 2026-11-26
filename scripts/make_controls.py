@@ -3,7 +3,8 @@ C4 prototype collapse, C5 majority-only, C6 degraded; use case B: C1b copy-suppo
 the subclass, C4 prototype collapse. Score them with slurm/eval_controls.sh, which also runs this script.
     python scripts/make_controls.py --config configs/controls.yaml
 Output: <derived_root>/controls[_<labels>]/<control>_<A|B>/ (suffix only for a scheme other than the data config's own,
-lsgen.data.labels.suffix); the directories are printed on stdout, one per line, for slurm/eval_controls.sh.
+lsgen.data.labels.suffix); the directories are printed on stdout, one per line, for slurm/eval_controls.sh. Use case A sets record the
+fine class of each source image as its `group` (what a subclass-conditioned generator would have requested: CAS, G6).
 """
 import argparse
 import json
@@ -74,10 +75,10 @@ class Builder:
         for i, (name, (mode, image_of, transform)) in enumerate(specs.items()):
             rng = np.random.default_rng([seed, i])
             ids = C.draw_set(requested, self.make_of_fine, C.fine_weights(train_fine, self.make_of_fine, mode), image_of, rng)
-            self.write(name, "A", [({"make_id": m}, i, transform) for m, i in zip(requested, ids)],
+            self.write(name, "A", [({"make_id": m, "group": int(self.meta.fine_id[i])}, i, transform) for m, i in zip(requested, ids)],
                        uses=[self.cfg["features"]] if name == "c4_prototype_collapse" else [])
         half = self.ids["test_A"]  # C2: scored against the other half of test
-        self.write("c2_oracle_split", "A", [({"make_id": mk[i]}, i, None) for i in half], reference_split="test_B")
+        self.write("c2_oracle_split", "A", [({"make_id": mk[i], "group": int(self.meta.fine_id[i])}, i, None) for i in half], reference_split="test_B")
 
     # ---- use case B
     def use_case_b(self):

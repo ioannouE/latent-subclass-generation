@@ -4,6 +4,7 @@
 # ratio is ill-conditioned even for the floor (-1.9, CI [-61, 72]): excess KID takes its place in `expected` and the ratio stays as a
 # descriptive column; (2) the bootstrap CIs of G3 and of the count / coverage metrics of G4 and G5 were biased (the floor's point estimate lay
 # outside its own CI), so those metrics have no CI and are judged by `margin` like the other set-level metrics. Nothing else was changed.
+# Added 26 Nov 2026, before its first run: CAS (train a probe on the generated set, test on real images), with its expected failures.
 # Run with an eval config (scripts/metric_validation.py --config configs/eval_generation[_<benchmark>].yaml), which gives the data, label
 # scheme and results; these metrics and expected failures are shared by every benchmark and are not changed per benchmark.
 margin: 0.25                 # metrics without a CI (set-level) must be worse than C2 by this share of |C2| to count as moved
@@ -25,6 +26,8 @@ metrics:
     G5 KID ratio (ill-conditioned): [g4_g5, kid_ratio, lower]   # descriptive: its denominator is centred on 0
     G5 coverage ratio: [g4_g5, coverage_ratio, higher]
     G7 copies: [g7, frac_gt, lower]
+    CAS coarse: [cas, cas_coarse, higher]
+    CAS subclass: [cas, cas_sub, higher]
   B:
     B1 hit rate: [by_set, hit, higher]
     B2 KID vs T: [by_set, kid_T, lower]
@@ -37,8 +40,8 @@ expected:
   A:
     c1_copy_train: [G7 copies]
     c3_coarse_only: [G3 TV, G3 KL]
-    c4_prototype_collapse: [G5 excess KID, G5 coverage ratio, G1 recall]
-    c5_majority_only: [G3 TV, G3 KL, G4 covered, G4 rare covered]
+    c4_prototype_collapse: [G5 excess KID, G5 coverage ratio, G1 recall, CAS subclass]
+    c5_majority_only: [G3 TV, G3 KL, G4 covered, G4 rare covered, CAS subclass]
     c6_degraded: [G1 FID, G1 KID]
   B:
     c1b_copy_support: [B2 KID vs T, B3 ratio to S]
@@ -54,6 +57,7 @@ headline:
     subclass coverage: [G4 covered, G4 rare covered]
     within-subclass variation: [G5 excess KID, G5 coverage ratio]
     copying of training images: [G7 copies]
+    use as training data: [CAS coarse, CAS subclass]
   B:
     subclass identity: [B1 hit rate]
     new images, not the support: [B2 KID vs T]

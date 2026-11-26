@@ -184,3 +184,33 @@ Mean over seeds (sd in `reports/generation_maskcon_new/<rung>.md`, `reports/cifa
   oracle's samples still occupy their own region of CLIP-L space (`embedding.png`). Better encoders (ksub, geosub) can only move the
   narrow cluster-to-oracle gap at this generator.
 - Finer labels raise copying on Cars (G7 0.03 -> 0.15-0.16, above the real rate 0.13; ~35 train images per label, some clusters of 2-6).
+
+## CAS added to use case A (26 Nov 2026)
+
+Classification Accuracy Score (docs/METRICS.md): a linear probe on CLIP-L fit on the generated set only, tested on real test images;
+`cas_coarse` on the requested coarse class, `cas_sub` on the requested group (cluster / fine class / coarse class), its groups matched
+one-to-one to the real fine classes within each coarse class. `cas_real_train.csv` is the ceiling (the same probe on real train).
+Registered before its first run in `configs/metric_validation.yaml`: CAS subclass must fail for C4 and C5. The use-case-A controls now
+record the fine class of each source image as `group` (so G6 and CAS sub are computed for them too).
+
+| Step | Command | Node |
+|---|---|---|
+| controls rebuilt and re-scored | `BENCH=$BENCH sbatch slurm/eval_controls.sh` | GPU |
+| controls x metrics (must show CAS subclass `ok` for C4, C5) | `python scripts/metric_validation.py --config configs/eval_generation$BENCH.yaml` | CPU |
+| finished rungs re-scored and re-summarised (sets are not regenerated) | `BENCH=$BENCH sbatch slurm/rescore_generation.sh` | GPU |
+
+## Next: generator backbones (planned, not started)
+
+The ladder shows that the generator, not the subclass signal, is the bound (oracle E1 0.54 on Cars vs 0.85 real). The same ladder is
+re-run with stronger backbones from the literature, everything else (SD-VAE or the representation encoder, labels, CFG, EMA, sampler,
+prevalence sampling, evaluation) unchanged, one milestone each:
+
+| Backbone | Change from the UNet | Extra pretrained parts (`uses`) |
+|---|---|---|
+| DiT-B/2 (Peebles & Xie 2023) | transformer on 2 x 2 patches of the SD-VAE latent, adaLN-zero class conditioning | sd_vae |
+| DiT-B/2 + REPA (Yu et al. 2025) | + an MLP from an early block's tokens to frozen DINOv2-B patch features, negative-cosine loss (lambda 0.5) | sd_vae, dinov2_b |
+| RAE (Zheng et al. 2025) | frozen DINOv2-B encoder as the autoencoder (16 x 16 x 768), the released ImageNet-trained ViT decoder, DiT-DH, noise schedule shifted for the latent dimension | dinov2_b, rae_decoder |
+
+Per backbone: the G-0c pilot rules (val only) set its own budget and DDIM steps, then the coarse and oracle rungs on test (the two ends of
+the ladder), then the cluster rungs if the oracle's E1 rises. None of the extra encoders is an evaluator; DINOv2 is not the DINOv3 of the
+cluster methods.

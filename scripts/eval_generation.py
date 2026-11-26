@@ -1,4 +1,4 @@
-"""Score generated images (docs/METRICS.md): use case A (G1-G7) or B (B1-B6), per configs/eval_generation.yaml. GPU:
+"""Score generated images (docs/METRICS.md): use case A (G1-G7, CAS) or B (B1-B6), per configs/eval_generation.yaml. GPU:
     sbatch slurm/eval_generation.sh
 Refuses to run if the method declares an encoder that is also an evaluator (lsgen/eval/evaluators.py).
 Output: <reports_root>/generation[_<labels>]/<method name>_<use case>/*.csv + summary.json, and for use case A the figures g7_nn_grid.png and
@@ -123,6 +123,11 @@ def run_a(ctx, samples, paths, test="test"):
         t["g6"] = bootstrap(synthesis.g6_metric(feats["clip_l"], group, fine_probs, req, ctx.make_of_fine, ref["clip_l", test], test_fine),
                             groups, cfg["n_boot"], seed, cfg["n_jobs"])
 
+    group = samples.group.to_numpy() if "group" in samples else req  # coarse-only generators: one group per coarse class
+    t["cas"] = cas_table(feats["clip_l"], req, group, ref["clip_l", test], test_make, test_fine, ctx.make_of_fine, cfg)
+    train_make = ctx.labels(train_ids, "make_id")  # the same probe fit on the real train images: the ceiling
+    t["cas_real_train"] = cas_table(ref["clip_l", "train"], train_make, train_fine, ref["clip_l", test], test_make, test_fine, ctx.make_of_fine, cfg)
+
     sim, nn = memorization.nearest_similarity(feats["sscd"], ref["sscd", "train"])
     null = memorization.nearest_similarity(ref["sscd", test], ref["sscd", "train"])[0]
     t["g7"] = pd.DataFrame([memorization.copy_summary(sim, null, cfg["copy_threshold"]) | {"tau": tau, "n": len(sim)}])
@@ -140,6 +145,16 @@ def run_a(ctx, samples, paths, test="test"):
         sample_plots.embedding_map(ref["clip_l", test], test_make, feats["clip_l"], req, coarse_names, cfg["viz"] | {"n_jobs": cfg["n_jobs"]},
                                    out / "embedding.png", seed)
     return t, figures
+
+
+def cas_table(x, make, group, real, real_make, real_fine, make_of_fine, cfg):
+    """CAS (lsgen.eval.synthesis.cas_predict) of a labelled set x, per real reference image, with CIs by coarse class: `cas_coarse` (probe
+    on the requested coarse class) and `cas_sub` (probe on the group: cluster, fine class or coarse class; its predictions scored by
+    matched_correct against the real fine classes)."""
+    make_of_group = pd.Series(make).groupby(group).first()
+    df = pd.DataFrame({"make_id": real_make, "cas_coarse": synthesis.cas_predict(x, make, real) == real_make,
+                       "cas_sub": synthesis.matched_correct(real_fine, synthesis.cas_predict(x, group, real), make_of_fine, make_of_group)})
+    return bootstrap_table(df, "make_id", ["cas_coarse", "cas_sub"], cfg["n_boot"], cfg["seed"], cfg["n_jobs"])
 
 
 def load_episodes(episodes_dir):

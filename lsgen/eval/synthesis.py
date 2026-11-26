@@ -1,10 +1,11 @@
-"""Use case A metrics G1-G6 (docs/METRICS.md). All functions take embeddings / evaluator probabilities (not images).
+"""Use case A metrics G1-G6 and CAS (docs/METRICS.md). All functions take embeddings / evaluator probabilities (not images).
 
 Subclass-level sets are small (about 40 test images per class): use KID (unbiased) and coverage, never FID there.
 """
 import numpy as np
 import pandas as pd
 from scipy.optimize import linear_sum_assignment
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics.pairwise import euclidean_distances
 
 
@@ -168,3 +169,27 @@ def g6_metric(gen, group, fine_probs, requested_make, make_of_fine, test, test_f
         classes = np.flatnonzero(make_of_fine == requested_make[idx[0]])
         return g6_make(gen[idx], group[idx], fine_probs[idx][:, classes], [test[test_fine == g] for g in classes])
     return metric
+
+
+# ---- CAS: Classification Accuracy Score (Ravuri & Vinyals 2019), train on generated images, test on real ones
+def cas_predict(gen, gen_label, real, C=10.0):
+    """Labels predicted for the real embeddings by a multinomial logistic-regression probe (fixed C, the R1 / R2 probe of
+    lsgen/eval/representation.py) fit on the generated embeddings and their requested labels only. Embeddings are L2-normalised."""
+    unit = lambda x: x / np.linalg.norm(x, axis=1, keepdims=True)  # noqa: E731
+    return LogisticRegression(C=C, max_iter=1000).fit(unit(gen), gen_label).predict(unit(real))
+
+
+def matched_correct(fine, group, make_of_fine, make_of_group):
+    """fine, group: true fine class and predicted group of each real image; make_of_group: coarse class of every group id (mapping).
+    Per real image: is its predicted group the one matched to its fine class? Groups are matched one-to-one to fine classes of
+    their own coarse class (Hungarian on the counts), so groups and classes left over (K-hat != K, collapsed groups) count as errors.
+    With the fine classes as groups this is plain accuracy; with one group per coarse class it is the share of each class's largest
+    subclass (the coarse-only floor)."""
+    gid, group = np.unique(group, return_inverse=True)
+    same = make_of_fine[:, None] == np.array([make_of_group[g] for g in gid])[None, :]
+    m = np.zeros(same.shape, int)
+    np.add.at(m, (fine, group), 1)
+    r, c = linear_sum_assignment(-np.where(same, m, 0))
+    match = np.full(len(gid), -1)
+    match[c[same[r, c]]] = r[same[r, c]]  # a pair across coarse classes is never a match
+    return match[group] == fine
